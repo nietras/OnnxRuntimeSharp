@@ -1,0 +1,21 @@
+<Solution>
+  <Folder Name="/ci/">
+    <File Path=".github/dependabot.yml" />
+    <File Path=".github/workflows/dotnet.yml" />
+  </Folder>
+  <Folder Name="/root/">
+    <File Path=".editorconfig" />
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="global.json" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <File Path="src/Directory.Build.props" />
+    <File Path="src/Directory.Build.targets" />
+  </Folder>
+  <Project Path="src/OnnxRuntimeSharp/OnnxRuntimeSharp.csproj" />
+  <Project Path="src/OnnxRuntimeSharp.Test/OnnxRuntimeSharp.Test.csproj" />
+  <Project Path="src/OnnxRuntimeSharp.Profiler/OnnxRuntimeSharp.Profiler.csproj" />
+</Solution>
