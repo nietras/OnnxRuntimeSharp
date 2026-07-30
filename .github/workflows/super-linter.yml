@@ -1,0 +1,58 @@
+---
+name: super-linter
+
+permissions: read-all
+
+on: # yamllint disable-line rule:truthy
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    name: super-linter
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: read
+      # Required: super-linter uses the GitHub Commit Statuses API
+      # (/repos/{owner}/{repo}/statuses/{sha}), not the Checks API,
+      # so statuses:write is the correct minimum permission (not checks:write)
+      statuses: write
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # super-linter needs the full git history to get the
+          # list of files that changed across commits
+          fetch-depth: 0
+
+      - name: Super-linter
+        uses: super-linter/super-linter@4ce20838b8ab83717e78138c5b3a1407148e0918 # v8.7.0
+        env:
+          VALIDATE_GITHUB_ACTIONS: false
+          VALIDATE_GITHUB_ACTIONS_ZIZMOR: false
+          VALIDATE_BIOME_FORMAT: false
+          VALIDATE_BIOME_LINT: false
+          VALIDATE_EDITORCONFIG: false
+          # format not working, checked during build instead
+          VALIDATE_CSHARP: false
+          VALIDATE_DOTNET_SLN_FORMAT_ANALYZERS: false
+          VALIDATE_DOTNET_SLN_FORMAT_STYLE: false
+          VALIDATE_DOTNET_SLN_FORMAT_WHITESPACE: false
+          # prettier defaults are very different than current markdown
+          VALIDATE_MARKDOWN_PRETTIER: false
+          VALIDATE_GIT_COMMITLINT: false
+          VALIDATE_JSCPD: false
+          ENABLE_GITHUB_PULL_REQUEST_SUMMARY_COMMENT: false
+          FILTER_REGEX_EXCLUDE: "./(benchmarks/.*|\\.gitignore)"
+          # To report GitHub Actions status checks
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

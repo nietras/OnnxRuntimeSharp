@@ -1,38 +1,56 @@
-# New Repo Project
+# OnnxRuntimeSharp
 
-The new-repo project is a default template for .NET Foundation projects. It's also probably a fine start for other .NET projects (have at it, but change the license). It contains the correct license, a decent README, and initial project structure (including a standard .gitignore for the Visual Studio family of products).
+![.NET](https://img.shields.io/badge/net10.0-5C2D91?logo=.NET&labelColor=gray)
+![C#](https://img.shields.io/badge/C%23-14.0-239120?labelColor=gray)
+[![Build Status](https://github.com/nietras/OnnxRuntimeSharp/actions/workflows/dotnet.yml/badge.svg?branch=main)](https://github.com/nietras/OnnxRuntimeSharp/actions/workflows/dotnet.yml)
+[![Super-Linter](https://github.com/nietras/OnnxRuntimeSharp/actions/workflows/super-linter.yml/badge.svg)](https://github.com/marketplace/actions/super-linter)
+[![NuGet](https://img.shields.io/nuget/v/OnnxRuntimeSharp?color=purple)](https://www.nuget.org/packages/OnnxRuntimeSharp/)
+[![Release](https://img.shields.io/github/v/release/nietras/OnnxRuntimeSharp)](https://github.com/nietras/OnnxRuntimeSharp/releases/)
+[![License](https://img.shields.io/github/license/nietras/OnnxRuntimeSharp)](https://github.com/nietras/OnnxRuntimeSharp/blob/main/LICENSE)
 
-You can learn more about the project from the project [Documentation](Documentation).
+Low-level ONNX Runtime C API interop in modern C#. Cross-platform, trimmable,
+and AOT/NativeAOT compatible.
 
-## Using New Repo
+## Example
 
-You can simply `git clone` this project to get started. It is recommended that you don't preserve history of the project (it isn't generally meaningful) for your repo, but make a copy and `git init` your project from source.
+The application supplies the native ONNX Runtime runtime package and owns the
+managed input and output buffers. Tensors pin those buffers once, so steady
+state inference does not allocate managed memory.
 
-Consult [CHECKLIST.md] for helpful suggestions on preparing your repo to go public.
+```csharp
+using OnnxRuntimeSharp;
+
+using var environment = new OrtEnvironment();
+using var session = new OrtSession(environment, File.ReadAllBytes("mnist-8.onnx"));
+using var input = new OrtTensor<float>(new float[28 * 28], [1, 1, 28, 28]);
+using var output = new OrtTensor<float>(new float[10], [1, 10]);
+
+session.Run(input, output);
+```
+
+## Profiling
+
+Enable profiling before creating the session, run inference, and finish the
+profile to retrieve the trace file path.
+
+```csharp
+using var options = new OrtSessionOptions();
+options.EnableProfiling("mnist-profile");
+using var session = new OrtSession(environment, model, options);
+// Run inference.
+var profilePath = session.EndProfiling();
+```
+
+The `OnnxRuntimeSharp.Profiler` project runs the bundled `mnist-8.onnx` model
+and emits an ONNX Runtime JSON trace.
 
 ## Building
 
-You don't "build" New Repo, however, this will be meaningful for many other projects.
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for information on contributing to this project.
-
-This project has adopted the code of conduct defined by the [Contributor Covenant](http://contributor-covenant.org/) 
-to clarify expected behavior in our community. For more information, see the [.NET Foundation Code of Conduct](http://www.dotnetfoundation.org/code-of-conduct).
+```powershell
+dotnet test
+dotnet run --project src\OnnxRuntimeSharp.Profiler
+```
 
 ## License
 
-This project is licensed with the [MIT license](LICENSE).
-
-## .NET Foundation
-
-New Repo is a [.NET Foundation project](https://dotnetfoundation.org/projects).
-
-## Related Projects
-
-You should take a look at these related projects:
-
-- [.NET Core](https://github.com/dotnet/core)
-- [ASP.NET](https://github.com/aspnet)
-- [Mono](https://github.com/mono)
+This project is licensed under the [MIT license](LICENSE).
