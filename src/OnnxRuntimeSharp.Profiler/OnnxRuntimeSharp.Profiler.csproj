@@ -5,7 +5,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../OnnxRuntimeSharp/OnnxRuntimeSharp.csproj" />
-    <PackageReference Include="IHFood.DependencyResolving" Version="1.0.1" />
     <PackageReference Include="NtvLibs.OnnxRuntime.CPU.cuda13.Tensorrt.runtime.win-x64" Version="1.28.0" />
     <PackageReference Include="NtvLibs.TensorRT.cuda13.runtime.win-x64" Version="10.14.1.48" />
     <PackageReference Include="NtvLibs.cuDNN.cuda13.runtime.win-x64" Version="9.23.0.39" />
