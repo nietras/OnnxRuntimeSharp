@@ -45,4 +45,15 @@ public class OrtRunOptionsTest
 
         Assert.ThrowsExactly<ObjectDisposedException>(() => options.RequestTermination());
     }
+
+    [TestMethod]
+    public void InvalidPropertiesAndConfigAreRejected()
+    {
+        using var options = new OrtRunOptions();
+
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => options.LogVerbosityLevel = -1);
+        Assert.ThrowsExactly<ArgumentNullException>(() => options.Tag = null!);
+        Assert.ThrowsExactly<ArgumentException>(() => options.AddConfigEntry("", "value"));
+        Assert.ThrowsExactly<ArgumentNullException>(() => options.AddConfigEntry("key", null!));
+    }
 }

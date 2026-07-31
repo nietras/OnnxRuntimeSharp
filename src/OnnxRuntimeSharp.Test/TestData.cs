@@ -14,6 +14,11 @@ static class TestData
     public static OrtSession CreateMnistSession(OrtEnvironment environment, OrtSessionOptions? options = null) =>
         new(environment, ReadMnistModel(), options);
 
+    public static OrtSession CreateTwoInputSession(
+        OrtEnvironment environment,
+        OrtSessionOptions? options = null) =>
+        new(environment, TestOnnxModels.TwoInputTwoOutput, options);
+
     public static OrtTensor<float> CreateMnistInput() =>
         new(new float[28 * 28], [1, 1, 28, 28]);
 

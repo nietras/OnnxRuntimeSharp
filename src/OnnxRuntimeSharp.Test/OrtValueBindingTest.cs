@@ -30,4 +30,15 @@ public class OrtValueBindingTest
 
         Assert.ThrowsExactly<ArgumentException>(() => secondSession.Run(inputs, outputs));
     }
+
+    [TestMethod]
+    public void DefaultBindingIsRejected()
+    {
+        using var environment = new OrtEnvironment();
+        using var session = TestData.CreateMnistSession(environment);
+        using var output = TestData.CreateMnistOutput();
+
+        Assert.ThrowsExactly<ArgumentException>(() =>
+            session.Run([default], [session.CreateOutputBinding(0, output)]));
+    }
 }

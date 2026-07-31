@@ -1,9 +1,8 @@
-using System;
 using System.Runtime.InteropServices;
 
 namespace OnnxRuntimeSharp;
 
-public sealed unsafe class OrtValueBinding
+public readonly unsafe struct OrtValueBinding
 {
     internal OrtValueBinding(OrtSession session, OrtTensorInfo info, SafeHandle value)
     {

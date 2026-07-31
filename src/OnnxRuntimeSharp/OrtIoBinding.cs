@@ -30,23 +30,23 @@ public sealed unsafe class OrtIoBinding : SafeHandle
     }
 
     public void BindInput<T>(int index, OrtTensor<T> value) where T : unmanaged =>
-        BindInput(index, value, (Ort.OrtValue*)value.DangerousGetHandle());
+        BindInput(index, (SafeHandle)value);
 
     public void BindInput(int index, OrtValue value) =>
-        BindInput(index, value, value.Pointer);
+        BindInput(index, (SafeHandle)value);
 
     public void BindOutput<T>(int index, OrtTensor<T> value) where T : unmanaged =>
-        BindOutput(index, value, (Ort.OrtValue*)value.DangerousGetHandle());
+        BindOutput(index, (SafeHandle)value);
 
     public void BindOutput(int index, OrtValue value) =>
-        BindOutput(index, value, value.Pointer);
+        BindOutput(index, (SafeHandle)value);
 
     public void BindOutputToDevice(int index, OrtMemoryInfo memoryInfo)
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(memoryInfo);
         var info = GetInfo(_session.Outputs, index, nameof(index));
-        AddBoundValue(
+        AddBoundResource(
             _boundOutputs,
             memoryInfo,
             () => Ort.BindOutputToDevice(Pointer, info.NamePointer, memoryInfo.Pointer));
@@ -134,20 +134,26 @@ public sealed unsafe class OrtIoBinding : SafeHandle
         return true;
     }
 
-    void BindInput(int index, SafeHandle owner, Ort.OrtValue* value)
+    void BindInput(int index, SafeHandle owner)
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(owner);
         var info = GetInfo(_session.Inputs, index, nameof(index));
-        AddBoundValue(_boundInputs, owner, () => Ort.BindInput(Pointer, info.NamePointer, value));
+        AddBoundValue(
+            _boundInputs,
+            owner,
+            value => Ort.BindInput(Pointer, info.NamePointer, value));
     }
 
-    void BindOutput(int index, SafeHandle owner, Ort.OrtValue* value)
+    void BindOutput(int index, SafeHandle owner)
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(owner);
         var info = GetInfo(_session.Outputs, index, nameof(index));
-        AddBoundValue(_boundOutputs, owner, () => Ort.BindOutput(Pointer, info.NamePointer, value));
+        AddBoundValue(
+            _boundOutputs,
+            owner,
+            value => Ort.BindOutput(Pointer, info.NamePointer, value));
     }
 
     static OrtTensorInfo GetInfo(IReadOnlyList<OrtTensorInfo> infos, int index, string parameterName)
@@ -158,6 +164,25 @@ public sealed unsafe class OrtIoBinding : SafeHandle
     }
 
     static void AddBoundValue(List<SafeHandle> values, SafeHandle value, BindAction bind)
+    {
+        var referenceAdded = false;
+        try
+        {
+            value.DangerousAddRef(ref referenceAdded);
+            Ort.ThrowIfError(bind((Ort.OrtValue*)value.DangerousGetHandle()));
+            values.Add(value);
+            referenceAdded = false;
+        }
+        finally
+        {
+            if (referenceAdded)
+            {
+                value.DangerousRelease();
+            }
+        }
+    }
+
+    static void AddBoundResource(List<SafeHandle> values, SafeHandle value, BindResourceAction bind)
     {
         var referenceAdded = false;
         try
@@ -198,5 +223,6 @@ public sealed unsafe class OrtIoBinding : SafeHandle
         _sessionReferenceAdded = false;
     }
 
-    delegate Ort.OrtStatus* BindAction();
+    delegate Ort.OrtStatus* BindAction(Ort.OrtValue* value);
+    delegate Ort.OrtStatus* BindResourceAction();
 }

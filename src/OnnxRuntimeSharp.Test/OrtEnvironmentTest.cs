@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 
 namespace OnnxRuntimeSharp.Test;
@@ -43,5 +44,52 @@ public class OrtEnvironmentTest
         environment.Dispose();
 
         Assert.ThrowsExactly<ObjectDisposedException>(() => environment.GetExecutionProviderDevices());
+    }
+
+    [TestMethod]
+    public void ExecutionProviderLibraryArgumentsAreValidated()
+    {
+        using var environment = new OrtEnvironment();
+
+        Assert.ThrowsExactly<ArgumentException>(() =>
+            environment.RegisterExecutionProviderLibrary("", "provider.dll"));
+        Assert.ThrowsExactly<ArgumentException>(() =>
+            environment.RegisterExecutionProviderLibrary("provider", ""));
+        Assert.ThrowsExactly<ArgumentException>(() =>
+            environment.UnregisterExecutionProviderLibrary(""));
+    }
+
+    [TestMethod]
+    public void MissingExecutionProviderLibraryReturnsStructuredError()
+    {
+        using var environment = new OrtEnvironment();
+
+        var exception = Assert.ThrowsExactly<OrtException>(() =>
+            environment.RegisterExecutionProviderLibrary(
+                "missing-test-provider",
+                Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.dll")));
+
+        Assert.AreNotEqual(Ort.OrtErrorCode.ORT_OK, exception.ErrorCode);
+    }
+
+    [TestMethod]
+    public void MissingExecutionProviderRegistrationReturnsStructuredError()
+    {
+        using var environment = new OrtEnvironment();
+
+        var exception = Assert.ThrowsExactly<OrtException>(() =>
+            environment.UnregisterExecutionProviderLibrary($"missing-{Guid.NewGuid():N}"));
+
+        Assert.AreNotEqual(Ort.OrtErrorCode.ORT_OK, exception.ErrorCode);
+    }
+
+    [TestMethod]
+    public void DisposedEnvironmentRejectsLogLevelChanges()
+    {
+        var environment = new OrtEnvironment();
+        environment.Dispose();
+
+        Assert.ThrowsExactly<ObjectDisposedException>(() =>
+            environment.SetLogLevel(Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_ERROR));
     }
 }

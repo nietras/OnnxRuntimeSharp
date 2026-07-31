@@ -23,6 +23,11 @@ public class OrtSessionMetadataTest
         CollectionAssert.AreEqual(new long[] { 1, 10 }, output.Dimensions.ToArray());
         Assert.IsEmpty(session.OverridableInitializers);
         Assert.IsNotNull(session.ModelMetadata.ProducerName);
+        Assert.IsNotNull(session.ModelMetadata.GraphName);
+        Assert.IsNotNull(session.ModelMetadata.GraphDescription);
+        Assert.IsNotNull(session.ModelMetadata.Domain);
+        Assert.IsNotNull(session.ModelMetadata.Description);
+        _ = session.ModelMetadata.Version;
         Assert.IsNotNull(session.ModelMetadata.CustomMetadata);
     }
 
@@ -34,5 +39,32 @@ public class OrtSessionMetadataTest
 
         Assert.HasCount(1, session.Inputs);
         Assert.HasCount(1, session.Outputs);
+    }
+
+    [TestMethod]
+    public void TensorInfoDisposalIsIdempotent()
+    {
+        using var environment = new OrtEnvironment();
+        using var session = TestData.CreateMnistSession(environment);
+        var info = session.Inputs[0];
+
+        info.Dispose();
+        info.Dispose();
+    }
+
+    [TestMethod]
+    public void GeneratedModelMetadataAndMultipleValuesAreAvailable()
+    {
+        using var environment = new OrtEnvironment();
+        using var session = TestData.CreateTwoInputSession(environment);
+
+        Assert.HasCount(2, session.Inputs);
+        Assert.HasCount(2, session.Outputs);
+        Assert.AreEqual("OnnxRuntimeSharp.Test", session.ModelMetadata.ProducerName);
+        Assert.AreEqual("TwoInputTwoOutput", session.ModelMetadata.GraphName);
+        Assert.AreEqual("test", session.ModelMetadata.Domain);
+        Assert.AreEqual("Two independent identity operations.", session.ModelMetadata.Description);
+        Assert.AreEqual(1, session.ModelMetadata.Version);
+        Assert.AreEqual("coverage", session.ModelMetadata.CustomMetadata["purpose"]);
     }
 }

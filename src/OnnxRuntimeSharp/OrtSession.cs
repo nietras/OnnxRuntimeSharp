@@ -517,7 +517,6 @@ public sealed unsafe class OrtSession : SafeHandle
         int index,
         string parameterName)
     {
-        ArgumentNullException.ThrowIfNull(binding, parameterName);
         if (!ReferenceEquals(binding.Session, this) || !ReferenceEquals(binding.Info, expectedInfos[index]))
         {
             throw new ArgumentException(
@@ -532,7 +531,6 @@ public sealed unsafe class OrtSession : SafeHandle
         ReadOnlySpan<OrtValueBinding> precedingBindings,
         string parameterName)
     {
-        ArgumentNullException.ThrowIfNull(binding, parameterName);
         if (!ReferenceEquals(binding.Session, this) || Array.IndexOf(_outputs, binding.Info) < 0)
         {
             throw new ArgumentException($"Output binding at index {index} does not belong to this session.", parameterName);

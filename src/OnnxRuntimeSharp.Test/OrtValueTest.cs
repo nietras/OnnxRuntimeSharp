@@ -7,6 +7,12 @@ namespace OnnxRuntimeSharp.Test;
 public class OrtValueTest
 {
     [TestMethod]
+    public unsafe void NullNativeValueIsRejected()
+    {
+        Assert.ThrowsExactly<ArgumentNullException>(() => new OrtValue(null));
+    }
+
+    [TestMethod]
     public void OrtAllocatedTensorExposesTypedData()
     {
         using var environment = new OrtEnvironment();

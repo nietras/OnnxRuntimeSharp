@@ -32,6 +32,28 @@ public class InferenceSafetyTest
     }
 
     [TestMethod]
+    public void BindingCreationDoesNotAllocate()
+    {
+        using var environment = new OrtEnvironment();
+        using var session = TestData.CreateMnistSession(environment);
+        using var input = TestData.CreateMnistInput();
+        using var output = TestData.CreateMnistOutput();
+        _ = session.CreateInputBinding(0, input);
+        _ = session.CreateOutputBinding(0, output);
+
+        var allocatedBytesBefore = GC.GetAllocatedBytesForCurrentThread();
+        for (var iteration = 0; iteration < 1_000; ++iteration)
+        {
+            var inputBinding = session.CreateInputBinding(0, input);
+            var outputBinding = session.CreateOutputBinding(0, output);
+            _ = inputBinding.Info;
+            _ = outputBinding.Info;
+        }
+
+        Assert.AreEqual(0, GC.GetAllocatedBytesForCurrentThread() - allocatedBytesBefore);
+    }
+
+    [TestMethod]
     public void ConcurrentRunsOnSharedSessionComplete()
     {
         using var environment = new OrtEnvironment();
