@@ -7,13 +7,13 @@ namespace OnnxRuntimeSharp;
 public sealed class OrtSessionOptions : SafeHandle
 {
     public OrtSessionOptions()
-        : base(nint.Zero, ownsHandle: true)
+        : base(IntPtr.Zero, ownsHandle: true)
     {
         unsafe
         {
             Ort.OrtSessionOptions* options;
             Ort.ThrowIfError(Ort.CreateSessionOptions(&options));
-            SetHandle((nint)options);
+            SetHandle((IntPtr)options);
         }
     }
 
@@ -118,7 +118,7 @@ public sealed class OrtSessionOptions : SafeHandle
         }
     }
 
-    public override bool IsInvalid => handle == nint.Zero;
+    public override bool IsInvalid => handle == IntPtr.Zero;
 
     protected override unsafe bool ReleaseHandle()
     {

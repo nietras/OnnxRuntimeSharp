@@ -6,12 +6,12 @@ namespace OnnxRuntimeSharp;
 public sealed unsafe class OrtEnvironment : SafeHandle
 {
     public OrtEnvironment(string logId = "OnnxRuntimeSharp")
-        : base(nint.Zero, ownsHandle: true)
+        : base(IntPtr.Zero, ownsHandle: true)
     {
-        SetHandle((nint)Ort.CreateEnvironment(logId));
+        SetHandle((IntPtr)Ort.CreateEnvironment(logId));
     }
 
-    public override bool IsInvalid => handle == nint.Zero;
+    public override bool IsInvalid => handle == IntPtr.Zero;
 
     protected override unsafe bool ReleaseHandle()
     {

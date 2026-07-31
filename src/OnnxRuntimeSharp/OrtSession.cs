@@ -11,7 +11,7 @@ public sealed unsafe class OrtSession : SafeHandle
     readonly OrtTensorInfo[] _outputs = [];
 
     public OrtSession(OrtEnvironment environment, ReadOnlySpan<byte> model, OrtSessionOptions? options = null)
-        : base(nint.Zero, ownsHandle: true)
+        : base(IntPtr.Zero, ownsHandle: true)
     {
         ArgumentNullException.ThrowIfNull(environment);
         if (model.IsEmpty)
@@ -33,7 +33,7 @@ public sealed unsafe class OrtSession : SafeHandle
                     (nuint)model.Length,
                     (Ort.OrtSessionOptions*)options.DangerousGetHandle(),
                     &session));
-                SetHandle((nint)session);
+                SetHandle((IntPtr)session);
             }
 
             _inputs = GetTensorInfos(isInput: true);
@@ -79,19 +79,19 @@ public sealed unsafe class OrtSession : SafeHandle
     {
         ArgumentNullException.ThrowIfNull(input);
         ArgumentNullException.ThrowIfNull(output);
-        var inputName = _inputs[0].NameHandle;
-        var outputName = _outputs[0].NameHandle;
-        nint inputValue = input.DangerousGetHandle();
-        nint outputValue = output.DangerousGetHandle();
+        var inputName = _inputs[0].NamePointer;
+        var outputName = _outputs[0].NamePointer;
+        var inputValue = (Ort.OrtValue*)input.DangerousGetHandle();
+        var outputValue = (Ort.OrtValue*)output.DangerousGetHandle();
         Ort.ThrowIfError(Ort.Run(
             (Ort.OrtSession*)handle,
             null,
-            (sbyte**)&inputName,
-            (Ort.OrtValue**)&inputValue,
+            &inputName,
+            &inputValue,
             1,
-            (sbyte**)&outputName,
+            &outputName,
             1,
-            (Ort.OrtValue**)&outputValue));
+            &outputValue));
     }
 
     public void Run(ReadOnlySpan<OrtValueBinding> inputs, ReadOnlySpan<OrtValueBinding> outputs)
@@ -105,36 +105,30 @@ public sealed unsafe class OrtSession : SafeHandle
             throw new ArgumentException("At least one output binding is required.", nameof(outputs));
         }
 
-        Span<nint> inputNames = stackalloc nint[inputs.Length];
-        Span<nint> inputValues = stackalloc nint[inputs.Length];
-        Span<nint> outputNames = stackalloc nint[outputs.Length];
-        Span<nint> outputValues = stackalloc nint[outputs.Length];
+        var inputNames = stackalloc sbyte*[inputs.Length];
+        var inputValues = stackalloc Ort.OrtValue*[inputs.Length];
+        var outputNames = stackalloc sbyte*[outputs.Length];
+        var outputValues = stackalloc Ort.OrtValue*[outputs.Length];
         for (var index = 0; index < inputs.Length; ++index)
         {
-            inputNames[index] = inputs[index].NameHandle;
-            inputValues[index] = inputs[index].ValueHandle;
+            inputNames[index] = inputs[index].NamePointer;
+            inputValues[index] = inputs[index].ValuePointer;
         }
         for (var index = 0; index < outputs.Length; ++index)
         {
-            outputNames[index] = outputs[index].NameHandle;
-            outputValues[index] = outputs[index].ValueHandle;
+            outputNames[index] = outputs[index].NamePointer;
+            outputValues[index] = outputs[index].ValuePointer;
         }
 
-        fixed (nint* inputNamesPointer = inputNames)
-        fixed (nint* inputValuesPointer = inputValues)
-        fixed (nint* outputNamesPointer = outputNames)
-        fixed (nint* outputValuesPointer = outputValues)
-        {
-            Ort.ThrowIfError(Ort.Run(
-                (Ort.OrtSession*)handle,
-                null,
-                (sbyte**)inputNamesPointer,
-                (Ort.OrtValue**)inputValuesPointer,
-                (nuint)inputs.Length,
-                (sbyte**)outputNamesPointer,
-                (nuint)outputs.Length,
-                (Ort.OrtValue**)outputValuesPointer));
-        }
+        Ort.ThrowIfError(Ort.Run(
+            (Ort.OrtSession*)handle,
+            null,
+            inputNames,
+            inputValues,
+            (nuint)inputs.Length,
+            outputNames,
+            (nuint)outputs.Length,
+            outputValues));
     }
 
     public string EndProfiling()
@@ -145,7 +139,7 @@ public sealed unsafe class OrtSession : SafeHandle
         Ort.ThrowIfError(Ort.SessionEndProfiling((Ort.OrtSession*)handle, allocator, &profilePath));
         try
         {
-            return Marshal.PtrToStringUTF8((nint)profilePath) ?? string.Empty;
+            return Marshal.PtrToStringUTF8((IntPtr)profilePath) ?? string.Empty;
         }
         finally
         {
@@ -153,7 +147,7 @@ public sealed unsafe class OrtSession : SafeHandle
         }
     }
 
-    public override bool IsInvalid => handle == nint.Zero;
+    public override bool IsInvalid => handle == IntPtr.Zero;
 
     protected override bool ReleaseHandle()
     {
@@ -192,11 +186,24 @@ public sealed unsafe class OrtSession : SafeHandle
             ? Ort.SessionGetInputCount((Ort.OrtSession*)handle, &count)
             : Ort.SessionGetOutputCount((Ort.OrtSession*)handle, &count));
         var infos = new OrtTensorInfo[checked((int)count)];
-        for (nuint index = 0; index < count; ++index)
+        var initializedCount = 0;
+        try
         {
-            infos[checked((int)index)] = GetTensorInfo(index, isInput);
+            for (nuint index = 0; index < count; ++index)
+            {
+                infos[checked((int)index)] = GetTensorInfo(index, isInput);
+                ++initializedCount;
+            }
+            return infos;
         }
-        return infos;
+        catch
+        {
+            for (var index = 0; index < initializedCount; ++index)
+            {
+                infos[index].Dispose();
+            }
+            throw;
+        }
     }
 
     OrtTensorInfo GetTensorInfo(nuint index, bool isInput)
@@ -207,21 +214,10 @@ public sealed unsafe class OrtSession : SafeHandle
         Ort.ThrowIfError(isInput
             ? Ort.SessionGetInputName((Ort.OrtSession*)handle, index, allocator, &nativeName)
             : Ort.SessionGetOutputName((Ort.OrtSession*)handle, index, allocator, &nativeName));
-        string name;
-        nint nameHandle;
         try
         {
-            name = Marshal.PtrToStringUTF8((nint)nativeName) ??
+            var name = Marshal.PtrToStringUTF8((IntPtr)nativeName) ??
                 throw new InvalidOperationException("ONNX Runtime returned a null node name.");
-            nameHandle = Marshal.StringToCoTaskMemUTF8(name);
-        }
-        finally
-        {
-            Ort.ThrowIfError(Ort.AllocatorFree(allocator, nativeName));
-        }
-
-        try
-        {
             Ort.OrtTypeInfo* typeInfo;
             Ort.ThrowIfError(isInput
                 ? Ort.SessionGetInputTypeInfo((Ort.OrtSession*)handle, index, &typeInfo)
@@ -239,7 +235,7 @@ public sealed unsafe class OrtSession : SafeHandle
                 }
                 Ort.ONNXTensorElementDataType elementType;
                 Ort.ThrowIfError(Ort.GetTensorElementType(tensorInfo, &elementType));
-                return new OrtTensorInfo(nameHandle, name, dimensions, elementType);
+                return new OrtTensorInfo(allocator, nativeName, name, dimensions, elementType);
             }
             finally
             {
@@ -248,7 +244,7 @@ public sealed unsafe class OrtSession : SafeHandle
         }
         catch
         {
-            Marshal.FreeCoTaskMem(nameHandle);
+            Ort.ReleaseAllocatorValue(allocator, nativeName);
             throw;
         }
     }

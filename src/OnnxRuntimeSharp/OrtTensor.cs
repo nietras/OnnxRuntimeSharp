@@ -8,7 +8,7 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
     readonly GCHandle _dataHandle;
 
     public OrtTensor(T[] data, ReadOnlySpan<long> dimensions)
-        : base(nint.Zero, ownsHandle: true)
+        : base(IntPtr.Zero, ownsHandle: true)
     {
         ArgumentNullException.ThrowIfNull(data);
         if (data.Length == 0)
@@ -38,7 +38,7 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
                     (nuint)dimensions.Length,
                     GetElementType(),
                     &value));
-                SetHandle((nint)value);
+                SetHandle((IntPtr)value);
             }
         }
         catch
@@ -59,7 +59,7 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
 
     public Ort.ONNXTensorElementDataType ElementType => GetElementType();
 
-    public override bool IsInvalid => handle == nint.Zero;
+    public override bool IsInvalid => handle == IntPtr.Zero;
 
     protected override bool ReleaseHandle()
     {

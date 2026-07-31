@@ -1,19 +1,20 @@
 using System;
-using System.Runtime.InteropServices;
-
 namespace OnnxRuntimeSharp;
 
-public sealed class OrtTensorInfo
+public sealed unsafe class OrtTensorInfo
 {
-    readonly nint _nameHandle;
+    readonly Ort.OrtAllocator* _allocator;
+    sbyte* _name;
 
     internal OrtTensorInfo(
-        nint nameHandle,
+        Ort.OrtAllocator* allocator,
+        sbyte* nativeName,
         string name,
         long[] dimensions,
         Ort.ONNXTensorElementDataType elementType)
     {
-        _nameHandle = nameHandle;
+        _allocator = allocator;
+        _name = nativeName;
         Name = name;
         Dimensions = dimensions;
         ElementType = elementType;
@@ -25,7 +26,16 @@ public sealed class OrtTensorInfo
 
     public Ort.ONNXTensorElementDataType ElementType { get; }
 
-    internal nint NameHandle => _nameHandle;
+    internal sbyte* NamePointer => _name;
 
-    internal void Dispose() => Marshal.FreeCoTaskMem(_nameHandle);
+    internal void Dispose()
+    {
+        if (_name is null)
+        {
+            return;
+        }
+
+        Ort.ReleaseAllocatorValue(_allocator, _name);
+        _name = null;
+    }
 }

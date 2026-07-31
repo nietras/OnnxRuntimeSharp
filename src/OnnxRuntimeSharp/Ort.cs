@@ -36,9 +36,18 @@ public static unsafe partial class Ort
         }
         try
         {
-            throw new OrtException(Marshal.PtrToStringUTF8((nint)GetErrorMessage(status)) ?? "Unknown ONNX Runtime error.");
+            throw new OrtException(Marshal.PtrToStringUTF8((IntPtr)GetErrorMessage(status)) ?? "Unknown ONNX Runtime error.");
         }
         finally
+        {
+            ReleaseStatus(status);
+        }
+    }
+
+    internal static void ReleaseAllocatorValue(OrtAllocator* allocator, void* value)
+    {
+        var status = AllocatorFree(allocator, value);
+        if (status is not null)
         {
             ReleaseStatus(status);
         }
@@ -70,7 +79,7 @@ public static unsafe partial class Ort
             var result = new string[providerCount];
             for (var index = 0; index < result.Length; ++index)
             {
-                result[index] = Marshal.PtrToStringUTF8((nint)providers[index]) ??
+                result[index] = Marshal.PtrToStringUTF8((IntPtr)providers[index]) ??
                     throw new InvalidOperationException("ONNX Runtime returned a null execution provider name.");
             }
             return result;
