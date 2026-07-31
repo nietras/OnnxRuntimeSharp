@@ -121,8 +121,8 @@ static NodeProfileReport RunModel(
     var beforeCreate = Stopwatch.GetTimestamp();
     using var session = new OrtSession(environment, model, options);
     var createMilliseconds = ElapsedMilliseconds(beforeCreate);
-    using var input = new OrtTensor<float>(new float[28 * 28], [1, 1, 28, 28]);
-    using var output = new OrtTensor<float>(new float[10], [1, 10]);
+    using var input = CreateFloatTensor(session.InputDimensions.Span);
+    using var output = CreateFloatTensor(session.OutputDimensions.Span);
 
     var beforeFirstInference = Stopwatch.GetTimestamp();
     session.Run(input, output);
@@ -186,6 +186,8 @@ static void RunModelConcurrent(
         using var environment = new OrtEnvironment();
         using var options = CreateSessionOptions(configuration, null);
         using var session = new OrtSession(environment, model, options);
+        var inputDimensions = session.InputDimensions;
+        var outputDimensions = session.OutputDimensions;
         using var barrier = new Barrier(threadCount + 1);
         var iterationsPerThread = new long[threadCount];
         var totalMillisecondsPerThread = new double[threadCount];
@@ -202,8 +204,8 @@ static void RunModelConcurrent(
                 var barrierSignaled = false;
                 try
                 {
-                    using var input = new OrtTensor<float>(new float[28 * 28], [1, 1, 28, 28]);
-                    using var output = new OrtTensor<float>(new float[10], [1, 10]);
+                    using var input = CreateFloatTensor(inputDimensions.Span);
+                    using var output = CreateFloatTensor(outputDimensions.Span);
                     for (var warmup = 0; warmup < WarmupCount; ++warmup)
                     {
                         input.Data[0] = warmup;
@@ -363,6 +365,28 @@ static void WriteNodeProfileSummary(
             item.NodeName, item.CallCount, item.TotalMicroseconds / 1_000.0, item.MeanMilliseconds));
     }
     log("```");
+}
+
+static OrtTensor<float> CreateFloatTensor(ReadOnlySpan<long> dimensions) =>
+    new(new float[GetTensorElementCount(dimensions)], dimensions);
+
+static int GetTensorElementCount(ReadOnlySpan<long> dimensions)
+{
+    long elementCount = 1;
+    foreach (var dimension in dimensions)
+    {
+        if (dimension <= 0)
+        {
+            throw new NotSupportedException("The profiler requires model inputs and outputs with fixed, positive dimensions.");
+        }
+
+        checked
+        {
+            elementCount *= dimension;
+        }
+    }
+
+    return checked((int)elementCount);
 }
 
 static double ElapsedMilliseconds(long beforeTimestamp) =>

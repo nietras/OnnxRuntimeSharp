@@ -8,6 +8,8 @@ public sealed unsafe class OrtSession : SafeHandle
     readonly OrtEnvironment _environment;
     readonly nint _inputName;
     readonly nint _outputName;
+    readonly long[] _inputDimensions;
+    readonly long[] _outputDimensions;
 
     public OrtSession(OrtEnvironment environment, ReadOnlySpan<byte> model, OrtSessionOptions? options = null)
         : base(nint.Zero, ownsHandle: true)
@@ -37,6 +39,8 @@ public sealed unsafe class OrtSession : SafeHandle
 
             _inputName = GetInputName();
             _outputName = GetOutputName();
+            _inputDimensions = GetTensorDimensions(isInput: true);
+            _outputDimensions = GetTensorDimensions(isInput: false);
         }
         catch
         {
@@ -55,6 +59,10 @@ public sealed unsafe class OrtSession : SafeHandle
     public string InputName => Marshal.PtrToStringUTF8(_inputName)!;
 
     public string OutputName => Marshal.PtrToStringUTF8(_outputName)!;
+
+    public ReadOnlyMemory<long> InputDimensions => _inputDimensions;
+
+    public ReadOnlyMemory<long> OutputDimensions => _outputDimensions;
 
     public void Run<TInput, TOutput>(OrtTensor<TInput> input, OrtTensor<TOutput> output)
         where TInput : unmanaged
@@ -132,6 +140,31 @@ public sealed unsafe class OrtSession : SafeHandle
         finally
         {
             Ort.ThrowIfError(Ort.AllocatorFree(allocator, nativeName));
+        }
+    }
+
+    long[] GetTensorDimensions(bool isInput)
+    {
+        Ort.OrtTypeInfo* typeInfo;
+        Ort.ThrowIfError(isInput
+            ? Ort.SessionGetInputTypeInfo((Ort.OrtSession*)handle, 0, &typeInfo)
+            : Ort.SessionGetOutputTypeInfo((Ort.OrtSession*)handle, 0, &typeInfo));
+        try
+        {
+            Ort.OrtTensorTypeAndShapeInfo* tensorInfo;
+            Ort.ThrowIfError(Ort.CastTypeInfoToTensorInfo(typeInfo, &tensorInfo));
+            nuint dimensionCount;
+            Ort.ThrowIfError(Ort.GetDimensionsCount(tensorInfo, &dimensionCount));
+            var dimensions = new long[checked((int)dimensionCount)];
+            fixed (long* dimensionsPointer = dimensions)
+            {
+                Ort.ThrowIfError(Ort.GetDimensions(tensorInfo, dimensionsPointer, dimensionCount));
+            }
+            return dimensions;
+        }
+        finally
+        {
+            Ort.ReleaseTypeInfo(typeInfo);
         }
     }
 }

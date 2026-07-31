@@ -20,6 +20,16 @@ public class OrtSessionTest
     }
 
     [Fact]
+    public void SessionProvidesModelTensorDimensions()
+    {
+        using var environment = new OrtEnvironment();
+        using var session = new OrtSession(environment, File.ReadAllBytes(GetModelPath()));
+
+        Assert.Equal([1, 1, 28, 28], session.InputDimensions.ToArray());
+        Assert.Equal([1, 10], session.OutputDimensions.ToArray());
+    }
+
+    [Fact]
     public void CachedTensorsRunWithoutManagedAllocations()
     {
         using var environment = new OrtEnvironment();
