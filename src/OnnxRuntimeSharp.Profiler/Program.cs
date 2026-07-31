@@ -154,7 +154,7 @@ static NodeProfileReport RunModel(
         $"{iterations,10};{meanPerBatchMilliseconds,11:F3};{meanPerBatchMilliseconds / BatchSize,11:F3}");
     if (allocatedBytes != 0)
     {
-        log($"WARNING: `{configuration.Name}` single-request inference allocated {allocatedBytes} managed bytes.");
+        log($"WARNING: `{configuration.Name}` inference allocated {allocatedBytes} managed bytes.");
     }
 
     if (!configuration.EnableProfiling)
