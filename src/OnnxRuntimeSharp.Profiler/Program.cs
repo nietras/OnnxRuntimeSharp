@@ -56,7 +56,7 @@ foreach (var modelPath in modelPaths)
 
     report($"# `{Path.GetRelativePath(workingDirectory, modelPath)}` ({new FileInfo(modelPath).Length} bytes)");
     report(string.Empty);
-    report("## Single-request performance");
+    report("## Execution provider performance");
     report("```");
     report($"{"Execution Provider",-32};BatchSize;Create [ms];First [ms];Iterations;Mean/b [ms];Mean/s [ms]");
     var configurationToProfilingInfo = new List<(ProfilingConfiguration Configuration, NodeProfileReport Report)>();
