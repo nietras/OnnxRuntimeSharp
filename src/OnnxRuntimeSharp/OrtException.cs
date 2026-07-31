@@ -2,4 +2,7 @@
 
 namespace OnnxRuntimeSharp;
 
-public sealed class OrtException(string message) : Exception(message);
+public sealed class OrtException(Ort.OrtErrorCode errorCode, string message) : Exception(message)
+{
+    public Ort.OrtErrorCode ErrorCode { get; } = errorCode;
+}

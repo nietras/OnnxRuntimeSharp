@@ -6,11 +6,11 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../OnnxRuntimeSharp/OnnxRuntimeSharp.csproj" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+
     <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.win-x64" Version="1.28.0" />
+    
+    <PackageReference Include="MSTest" Version="4.3.3" />
     <PackageReference Include="coverlet.collector" Version="10.0.1" PrivateAssets="all" />
-    <PackageReference Include="xunit.v3" Version="3.2.1" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\models\mnist-8.onnx" Link="mnist-8.onnx" CopyToOutputDirectory="PreserveNewest" />

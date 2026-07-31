@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 
@@ -14,11 +15,15 @@ public sealed class OrtSessionOptions : SafeHandle
             Ort.OrtSessionOptions* options;
             Ort.ThrowIfError(Ort.CreateSessionOptions(&options));
             SetHandle((IntPtr)options);
+            Ort.ThrowIfError(Ort.SetSessionGraphOptimizationLevel(
+                options,
+                Ort.GraphOptimizationLevel.ORT_ENABLE_ALL));
         }
     }
 
     public unsafe void EnableProfiling(string profileFilePrefix)
     {
+        ThrowIfDisposed();
         ArgumentException.ThrowIfNullOrWhiteSpace(profileFilePrefix);
         if (OperatingSystem.IsWindows())
         {
@@ -41,88 +46,396 @@ public sealed class OrtSessionOptions : SafeHandle
         }
     }
 
+    public unsafe void DisableProfiling()
+    {
+        ThrowIfDisposed();
+        Ort.ThrowIfError(Ort.DisableProfiling(Pointer));
+    }
+
     public unsafe void SetIntraOpThreadCount(int threadCount)
     {
+        ThrowIfDisposed();
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(threadCount);
-        Ort.ThrowIfError(Ort.SetIntraOpNumThreads((Ort.OrtSessionOptions*)handle, threadCount));
+        Ort.ThrowIfError(Ort.SetIntraOpNumThreads(Pointer, threadCount));
     }
 
     public unsafe void SetInterOpThreadCount(int threadCount)
     {
+        ThrowIfDisposed();
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(threadCount);
-        Ort.ThrowIfError(Ort.SetInterOpNumThreads((Ort.OrtSessionOptions*)handle, threadCount));
+        Ort.ThrowIfError(Ort.SetInterOpNumThreads(Pointer, threadCount));
     }
 
-    public unsafe void SetGraphOptimizationLevel(Ort.GraphOptimizationLevel graphOptimizationLevel) =>
-        Ort.ThrowIfError(Ort.SetSessionGraphOptimizationLevel((Ort.OrtSessionOptions*)handle, graphOptimizationLevel));
+    public unsafe void SetGraphOptimizationLevel(Ort.GraphOptimizationLevel graphOptimizationLevel)
+    {
+        ThrowIfDisposed();
+        Ort.ThrowIfError(Ort.SetSessionGraphOptimizationLevel(Pointer, graphOptimizationLevel));
+    }
+
+    public unsafe void SetExecutionMode(Ort.ExecutionMode executionMode)
+    {
+        ThrowIfDisposed();
+        Ort.ThrowIfError(Ort.SetSessionExecutionMode(Pointer, executionMode));
+    }
+
+    public unsafe void SetMemoryPatternEnabled(bool enabled)
+    {
+        ThrowIfDisposed();
+        Ort.ThrowIfError(enabled ? Ort.EnableMemPattern(Pointer) : Ort.DisableMemPattern(Pointer));
+    }
+
+    public unsafe void SetCpuMemoryArenaEnabled(bool enabled)
+    {
+        ThrowIfDisposed();
+        Ort.ThrowIfError(enabled ? Ort.EnableCpuMemArena(Pointer) : Ort.DisableCpuMemArena(Pointer));
+    }
+
+    public unsafe void SetDeterministicCompute(bool enabled)
+    {
+        ThrowIfDisposed();
+        Ort.ThrowIfError(Ort.SetDeterministicCompute(Pointer, enabled ? (byte)1 : (byte)0));
+    }
+
+    public unsafe void DisablePerSessionThreads()
+    {
+        ThrowIfDisposed();
+        Ort.ThrowIfError(Ort.DisablePerSessionThreads(Pointer));
+    }
+
+    public unsafe void SetLogVerbosityLevel(int level)
+    {
+        ThrowIfDisposed();
+        ArgumentOutOfRangeException.ThrowIfNegative(level);
+        Ort.ThrowIfError(Ort.SetSessionLogVerbosityLevel(Pointer, level));
+    }
+
+    public unsafe void SetLogSeverityLevel(Ort.OrtLoggingLevel level)
+    {
+        ThrowIfDisposed();
+        Ort.ThrowIfError(Ort.SetSessionLogSeverityLevel(Pointer, (int)level));
+    }
+
+    public unsafe void SetLogId(string logId)
+    {
+        ThrowIfDisposed();
+        InvokeUtf8(logId, static (options, value) => Ort.SetSessionLogId(options, value));
+    }
+
+    public unsafe void AddFreeDimensionOverride(string denotation, long value)
+    {
+        ThrowIfDisposed();
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value);
+        InvokeUtf8(denotation, (options, name) => Ort.AddFreeDimensionOverride(options, name, value));
+    }
+
+    public unsafe void AddFreeDimensionOverrideByName(string name, long value)
+    {
+        ThrowIfDisposed();
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value);
+        InvokeUtf8(name, (options, dimensionName) => Ort.AddFreeDimensionOverrideByName(options, dimensionName, value));
+    }
+
+    public unsafe void AddConfigEntry(string key, string value)
+    {
+        ThrowIfDisposed();
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+        ArgumentNullException.ThrowIfNull(value);
+        var utf8Key = Utf8StringMarshaller.ConvertToUnmanaged(key);
+        var utf8Value = Utf8StringMarshaller.ConvertToUnmanaged(value);
+        try
+        {
+            Ort.ThrowIfError(Ort.AddSessionConfigEntry(Pointer, (sbyte*)utf8Key, (sbyte*)utf8Value));
+        }
+        finally
+        {
+            Utf8StringMarshaller.Free(utf8Value);
+            Utf8StringMarshaller.Free(utf8Key);
+        }
+    }
+
+    public unsafe void SetOptimizedModelFilePath(string path)
+    {
+        ThrowIfDisposed();
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        if (OperatingSystem.IsWindows())
+        {
+            fixed (char* pathPointer = path)
+            {
+                Ort.ThrowIfError(Ort.SetOptimizedModelFilePath(Pointer, (ushort*)pathPointer));
+            }
+            return;
+        }
+
+        var utf8Path = Utf8StringMarshaller.ConvertToUnmanaged(path);
+        try
+        {
+            Ort.ThrowIfError(Ort.SetOptimizedModelFilePath(Pointer, (ushort*)utf8Path));
+        }
+        finally
+        {
+            Utf8StringMarshaller.Free(utf8Path);
+        }
+    }
 
     public unsafe void AppendExecutionProvider(string providerName)
+        => AppendExecutionProvider(providerName, null);
+
+    public unsafe void AppendExecutionProvider(
+        string providerName,
+        IReadOnlyDictionary<string, string>? providerOptions)
     {
+        ThrowIfDisposed();
         ArgumentException.ThrowIfNullOrWhiteSpace(providerName);
         if (string.Equals(providerName, "CUDAExecutionProvider", StringComparison.Ordinal))
         {
-            AppendCudaExecutionProvider();
+            AppendCudaExecutionProvider(providerOptions);
             return;
         }
         if (string.Equals(providerName, "TensorrtExecutionProvider", StringComparison.Ordinal))
         {
-            AppendTensorRtExecutionProvider();
+            AppendTensorRtExecutionProvider(providerOptions);
             return;
         }
 
         var utf8ProviderName = Utf8StringMarshaller.ConvertToUnmanaged(providerName);
+        var optionCount = providerOptions?.Count ?? 0;
+        var keys = stackalloc sbyte*[optionCount];
+        var values = stackalloc sbyte*[optionCount];
+        var initializedCount = 0;
         try
         {
+            if (providerOptions is not null)
+            {
+                foreach (var option in providerOptions)
+                {
+                    keys[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Key);
+                    values[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Value);
+                    ++initializedCount;
+                }
+            }
+
             Ort.ThrowIfError(Ort.SessionOptionsAppendExecutionProvider(
-                (Ort.OrtSessionOptions*)handle,
+                Pointer,
                 (sbyte*)utf8ProviderName,
-                null,
-                null,
-                0));
+                keys,
+                values,
+                (nuint)optionCount));
         }
         finally
         {
+            for (var index = 0; index < initializedCount; ++index)
+            {
+                Utf8StringMarshaller.Free((byte*)values[index]);
+                Utf8StringMarshaller.Free((byte*)keys[index]);
+            }
             Utf8StringMarshaller.Free(utf8ProviderName);
         }
     }
 
-    public unsafe void AppendCudaExecutionProvider()
+    public unsafe void AppendExecutionProvider(
+        OrtEnvironment environment,
+        ReadOnlySpan<OrtEpDevice> devices,
+        IReadOnlyDictionary<string, string>? providerOptions = null)
     {
-        Ort.OrtCUDAProviderOptionsV2* providerOptions;
-        Ort.ThrowIfError(Ort.CreateCUDAProviderOptions(&providerOptions));
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(environment);
+        if (devices.IsEmpty)
+        {
+            throw new ArgumentException("At least one execution-provider device is required.", nameof(devices));
+        }
+
+        var nativeDevices = stackalloc Ort.OrtEpDevice*[devices.Length];
+        for (var index = 0; index < devices.Length; ++index)
+        {
+            ArgumentNullException.ThrowIfNull(devices[index], nameof(devices));
+            if (!ReferenceEquals(devices[index].Environment, environment))
+            {
+                throw new ArgumentException("All devices must originate from the supplied environment.", nameof(devices));
+            }
+            if (index > 0 &&
+                !string.Equals(
+                    devices[0].ExecutionProviderName,
+                    devices[index].ExecutionProviderName,
+                    StringComparison.Ordinal))
+            {
+                throw new ArgumentException("All devices must belong to the same execution provider.", nameof(devices));
+            }
+            nativeDevices[index] = devices[index].Pointer;
+        }
+
+        var optionCount = providerOptions?.Count ?? 0;
+        var keys = stackalloc sbyte*[optionCount];
+        var values = stackalloc sbyte*[optionCount];
+        var initializedCount = 0;
+        var environmentReferenceAdded = false;
         try
         {
-            Ort.ThrowIfError(Ort.SessionOptionsAppendExecutionProvider_CUDA_V2(
-                (Ort.OrtSessionOptions*)handle,
-                providerOptions));
+            environment.DangerousAddRef(ref environmentReferenceAdded);
+            if (providerOptions is not null)
+            {
+                foreach (var option in providerOptions)
+                {
+                    keys[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Key);
+                    values[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Value);
+                    ++initializedCount;
+                }
+            }
+            Ort.ThrowIfError(Ort.SessionOptionsAppendExecutionProvider_V2(
+                Pointer,
+                environment.Pointer,
+                nativeDevices,
+                (nuint)devices.Length,
+                keys,
+                values,
+                (nuint)optionCount));
         }
         finally
         {
-            Ort.ReleaseCUDAProviderOptions(providerOptions);
+            for (var index = 0; index < initializedCount; ++index)
+            {
+                Utf8StringMarshaller.Free((byte*)values[index]);
+                Utf8StringMarshaller.Free((byte*)keys[index]);
+            }
+            if (environmentReferenceAdded)
+            {
+                environment.DangerousRelease();
+            }
         }
     }
 
-    public unsafe void AppendTensorRtExecutionProvider()
+    public unsafe void SetExecutionProviderSelectionPolicy(Ort.OrtExecutionProviderDevicePolicy policy)
     {
-        Ort.OrtTensorRTProviderOptionsV2* providerOptions;
-        Ort.ThrowIfError(Ort.CreateTensorRTProviderOptions(&providerOptions));
+        ThrowIfDisposed();
+        Ort.ThrowIfError(Ort.SessionOptionsSetEpSelectionPolicy(Pointer, policy));
+    }
+
+    public unsafe void AppendCudaExecutionProvider(IReadOnlyDictionary<string, string>? providerOptions = null)
+    {
+        ThrowIfDisposed();
+        Ort.OrtCUDAProviderOptionsV2* nativeProviderOptions;
+        Ort.ThrowIfError(Ort.CreateCUDAProviderOptions(&nativeProviderOptions));
         try
         {
-            Ort.ThrowIfError(Ort.SessionOptionsAppendExecutionProvider_TensorRT_V2(
-                (Ort.OrtSessionOptions*)handle,
-                providerOptions));
+            UpdateCudaProviderOptions(nativeProviderOptions, providerOptions);
+            Ort.ThrowIfError(Ort.SessionOptionsAppendExecutionProvider_CUDA_V2(
+                Pointer,
+                nativeProviderOptions));
         }
         finally
         {
-            Ort.ReleaseTensorRTProviderOptions(providerOptions);
+            Ort.ReleaseCUDAProviderOptions(nativeProviderOptions);
+        }
+    }
+
+    public unsafe void AppendTensorRtExecutionProvider(IReadOnlyDictionary<string, string>? providerOptions = null)
+    {
+        ThrowIfDisposed();
+        Ort.OrtTensorRTProviderOptionsV2* nativeProviderOptions;
+        Ort.ThrowIfError(Ort.CreateTensorRTProviderOptions(&nativeProviderOptions));
+        try
+        {
+            UpdateTensorRtProviderOptions(nativeProviderOptions, providerOptions);
+            Ort.ThrowIfError(Ort.SessionOptionsAppendExecutionProvider_TensorRT_V2(
+                Pointer,
+                nativeProviderOptions));
+        }
+        finally
+        {
+            Ort.ReleaseTensorRTProviderOptions(nativeProviderOptions);
         }
     }
 
     public override bool IsInvalid => handle == IntPtr.Zero;
+
+    internal unsafe Ort.OrtSessionOptions* Pointer => (Ort.OrtSessionOptions*)handle;
 
     protected override unsafe bool ReleaseHandle()
     {
         Ort.ReleaseSessionOptions((Ort.OrtSessionOptions*)handle);
         return true;
     }
+
+    unsafe void InvokeUtf8(
+        string value,
+        Utf8Action action)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(value);
+        var utf8Value = Utf8StringMarshaller.ConvertToUnmanaged(value);
+        try
+        {
+            Ort.ThrowIfError(action(Pointer, (sbyte*)utf8Value));
+        }
+        finally
+        {
+            Utf8StringMarshaller.Free(utf8Value);
+        }
+    }
+
+    static unsafe void UpdateCudaProviderOptions(
+        Ort.OrtCUDAProviderOptionsV2* nativeOptions,
+        IReadOnlyDictionary<string, string>? options)
+    {
+        if (options is null || options.Count == 0)
+        {
+            return;
+        }
+
+        var keys = stackalloc sbyte*[options.Count];
+        var values = stackalloc sbyte*[options.Count];
+        var initializedCount = 0;
+        try
+        {
+            foreach (var option in options)
+            {
+                keys[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Key);
+                values[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Value);
+                ++initializedCount;
+            }
+            Ort.ThrowIfError(Ort.UpdateCUDAProviderOptions(nativeOptions, keys, values, (nuint)options.Count));
+        }
+        finally
+        {
+            for (var index = 0; index < initializedCount; ++index)
+            {
+                Utf8StringMarshaller.Free((byte*)values[index]);
+                Utf8StringMarshaller.Free((byte*)keys[index]);
+            }
+        }
+    }
+
+    static unsafe void UpdateTensorRtProviderOptions(
+        Ort.OrtTensorRTProviderOptionsV2* nativeOptions,
+        IReadOnlyDictionary<string, string>? options)
+    {
+        if (options is null || options.Count == 0)
+        {
+            return;
+        }
+
+        var keys = stackalloc sbyte*[options.Count];
+        var values = stackalloc sbyte*[options.Count];
+        var initializedCount = 0;
+        try
+        {
+            foreach (var option in options)
+            {
+                keys[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Key);
+                values[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Value);
+                ++initializedCount;
+            }
+            Ort.ThrowIfError(Ort.UpdateTensorRTProviderOptions(nativeOptions, keys, values, (nuint)options.Count));
+        }
+        finally
+        {
+            for (var index = 0; index < initializedCount; ++index)
+            {
+                Utf8StringMarshaller.Free((byte*)values[index]);
+                Utf8StringMarshaller.Free((byte*)keys[index]);
+            }
+        }
+    }
+
+    void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(IsClosed || IsInvalid, this);
+
+    unsafe delegate Ort.OrtStatus* Utf8Action(Ort.OrtSessionOptions* options, sbyte* value);
 }

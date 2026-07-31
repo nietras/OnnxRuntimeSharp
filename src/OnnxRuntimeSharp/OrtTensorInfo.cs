@@ -11,18 +11,22 @@ public sealed unsafe class OrtTensorInfo
         sbyte* nativeName,
         string name,
         long[] dimensions,
+        string?[] symbolicDimensions,
         Ort.ONNXTensorElementDataType elementType)
     {
         _allocator = allocator;
         _name = nativeName;
         Name = name;
         Dimensions = dimensions;
+        SymbolicDimensions = symbolicDimensions;
         ElementType = elementType;
     }
 
     public string Name { get; }
 
     public ReadOnlyMemory<long> Dimensions { get; }
+
+    public ReadOnlyMemory<string?> SymbolicDimensions { get; }
 
     public Ort.ONNXTensorElementDataType ElementType { get; }
 

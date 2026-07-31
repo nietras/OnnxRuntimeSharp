@@ -6,6 +6,8 @@ namespace OnnxRuntimeSharp;
 public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
 {
     readonly GCHandle _dataHandle;
+    readonly OrtMemoryInfo? _memoryInfo;
+    readonly bool _memoryInfoReferenceAdded;
 
     public OrtTensor(T[] data, ReadOnlySpan<long> dimensions)
         : base(IntPtr.Zero, ownsHandle: true)
@@ -36,7 +38,7 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
                     checked((nuint)(data.Length * sizeof(T))),
                     dimensionsPointer,
                     (nuint)dimensions.Length,
-                    GetElementType(),
+                    OrtTensorElementType.Get<T>(),
                     &value));
                 SetHandle((IntPtr)value);
             }
@@ -55,16 +57,82 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
         }
     }
 
-    public Span<T> Data => ((T[])_dataHandle.Target!).AsSpan();
+    public OrtTensor(
+        T* data,
+        int elementCount,
+        ReadOnlySpan<long> dimensions,
+        OrtMemoryInfo memoryInfo)
+        : base(IntPtr.Zero, ownsHandle: true)
+    {
+        if (data is null)
+        {
+            throw new ArgumentNullException(nameof(data));
+        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(elementCount);
+        ArgumentNullException.ThrowIfNull(memoryInfo);
+        if (GetElementCount(dimensions) != elementCount)
+        {
+            throw new ArgumentException("Tensor dimensions do not match element count.", nameof(dimensions));
+        }
 
-    public Ort.ONNXTensorElementDataType ElementType => GetElementType();
+        var memoryInfoReferenceAdded = false;
+        try
+        {
+            memoryInfo.DangerousAddRef(ref memoryInfoReferenceAdded);
+            fixed (long* dimensionsPointer = dimensions)
+            {
+                Ort.OrtValue* value;
+                Ort.ThrowIfError(Ort.CreateTensorWithDataAsOrtValue(
+                    memoryInfo.Pointer,
+                    data,
+                    checked((nuint)(elementCount * sizeof(T))),
+                    dimensionsPointer,
+                    (nuint)dimensions.Length,
+                    OrtTensorElementType.Get<T>(),
+                    &value));
+                SetHandle((IntPtr)value);
+            }
+            _memoryInfo = memoryInfo;
+            _memoryInfoReferenceAdded = memoryInfoReferenceAdded;
+            memoryInfoReferenceAdded = false;
+        }
+        finally
+        {
+            if (memoryInfoReferenceAdded)
+            {
+                memoryInfo.DangerousRelease();
+            }
+        }
+    }
+
+    public Span<T> Data
+    {
+        get
+        {
+            ObjectDisposedException.ThrowIf(IsClosed || IsInvalid, this);
+            if (!_dataHandle.IsAllocated)
+            {
+                throw new InvalidOperationException("The tensor wraps externally owned native memory.");
+            }
+            return ((T[])_dataHandle.Target!).AsSpan();
+        }
+    }
+
+    public Ort.ONNXTensorElementDataType ElementType => OrtTensorElementType.Get<T>();
 
     public override bool IsInvalid => handle == IntPtr.Zero;
 
     protected override bool ReleaseHandle()
     {
         Ort.ReleaseValue((Ort.OrtValue*)handle);
-        _dataHandle.Free();
+        if (_dataHandle.IsAllocated)
+        {
+            _dataHandle.Free();
+        }
+        if (_memoryInfoReferenceAdded)
+        {
+            _memoryInfo!.DangerousRelease();
+        }
         return true;
     }
 
@@ -92,15 +160,4 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
         return checked((int)count);
     }
 
-    static Ort.ONNXTensorElementDataType GetElementType() => typeof(T) == typeof(float) ? Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT
-        : typeof(T) == typeof(byte) ? Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT8
-        : typeof(T) == typeof(sbyte) ? Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_INT8
-        : typeof(T) == typeof(ushort) ? Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT16
-        : typeof(T) == typeof(short) ? Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_INT16
-        : typeof(T) == typeof(int) ? Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_INT32
-        : typeof(T) == typeof(long) ? Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_INT64
-        : typeof(T) == typeof(bool) ? Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_BOOL
-        : typeof(T) == typeof(Half) ? Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT16
-        : typeof(T) == typeof(double) ? Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_DOUBLE
-        : throw new NotSupportedException($"ONNX Runtime does not support {typeof(T)} tensor interop.");
 }

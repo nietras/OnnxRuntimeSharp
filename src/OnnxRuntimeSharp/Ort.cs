@@ -36,7 +36,9 @@ public static unsafe partial class Ort
         }
         try
         {
-            throw new OrtException(Marshal.PtrToStringUTF8((IntPtr)GetErrorMessage(status)) ?? "Unknown ONNX Runtime error.");
+            throw new OrtException(
+                GetErrorCode(status),
+                Marshal.PtrToStringUTF8((IntPtr)GetErrorMessage(status)) ?? "Unknown ONNX Runtime error.");
         }
         finally
         {
@@ -53,15 +55,24 @@ public static unsafe partial class Ort
         }
     }
 
-    internal static OrtEnv* CreateEnvironment(string logId)
+    internal static OrtEnv* CreateEnvironment(string logId, OrtLoggingLevel loggingLevel)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(logId);
         var utf8LogId = Utf8StringMarshaller.ConvertToUnmanaged(logId);
         try
         {
             OrtEnv* environment;
-            ThrowIfError(CreateEnv(OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING, (sbyte*)utf8LogId, &environment));
-            return environment;
+            ThrowIfError(CreateEnv(loggingLevel, (sbyte*)utf8LogId, &environment));
+            try
+            {
+                ThrowIfError(SetLanguageProjection(environment, OrtLanguageProjection.ORT_PROJECTION_CSHARP));
+                return environment;
+            }
+            catch
+            {
+                ReleaseEnv(environment);
+                throw;
+            }
         }
         finally
         {

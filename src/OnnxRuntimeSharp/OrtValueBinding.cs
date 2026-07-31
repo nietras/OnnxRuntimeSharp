@@ -5,13 +5,16 @@ namespace OnnxRuntimeSharp;
 
 public sealed unsafe class OrtValueBinding
 {
-    internal OrtValueBinding(OrtTensorInfo info, SafeHandle value)
+    internal OrtValueBinding(OrtSession session, OrtTensorInfo info, SafeHandle value)
     {
+        Session = session;
         Info = info;
         Value = value;
     }
 
     public OrtTensorInfo Info { get; }
+
+    internal OrtSession Session { get; }
 
     internal sbyte* NamePointer => Info.NamePointer;
 
