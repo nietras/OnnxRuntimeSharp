@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace OnnxRuntimeSharp;
@@ -6,10 +7,8 @@ namespace OnnxRuntimeSharp;
 public sealed unsafe class OrtSession : SafeHandle
 {
     readonly OrtEnvironment _environment;
-    readonly nint _inputName;
-    readonly nint _outputName;
-    readonly long[] _inputDimensions;
-    readonly long[] _outputDimensions;
+    readonly OrtTensorInfo[] _inputs = [];
+    readonly OrtTensorInfo[] _outputs = [];
 
     public OrtSession(OrtEnvironment environment, ReadOnlySpan<byte> model, OrtSessionOptions? options = null)
         : base(nint.Zero, ownsHandle: true)
@@ -37,10 +36,8 @@ public sealed unsafe class OrtSession : SafeHandle
                 SetHandle((nint)session);
             }
 
-            _inputName = GetInputName();
-            _outputName = GetOutputName();
-            _inputDimensions = GetTensorDimensions(isInput: true);
-            _outputDimensions = GetTensorDimensions(isInput: false);
+            _inputs = GetTensorInfos(isInput: true);
+            _outputs = GetTensorInfos(isInput: false);
         }
         catch
         {
@@ -56,13 +53,25 @@ public sealed unsafe class OrtSession : SafeHandle
         }
     }
 
-    public string InputName => Marshal.PtrToStringUTF8(_inputName)!;
+    public IReadOnlyList<OrtTensorInfo> Inputs => _inputs;
 
-    public string OutputName => Marshal.PtrToStringUTF8(_outputName)!;
+    public IReadOnlyList<OrtTensorInfo> Outputs => _outputs;
 
-    public ReadOnlyMemory<long> InputDimensions => _inputDimensions;
+    public string InputName => _inputs[0].Name;
 
-    public ReadOnlyMemory<long> OutputDimensions => _outputDimensions;
+    public string OutputName => _outputs[0].Name;
+
+    public ReadOnlyMemory<long> InputDimensions => _inputs[0].Dimensions;
+
+    public ReadOnlyMemory<long> OutputDimensions => _outputs[0].Dimensions;
+
+    public OrtValueBinding CreateInputBinding<T>(int index, OrtTensor<T> value)
+        where T : unmanaged =>
+        CreateBinding(_inputs, index, value, nameof(index));
+
+    public OrtValueBinding CreateOutputBinding<T>(int index, OrtTensor<T> value)
+        where T : unmanaged =>
+        CreateBinding(_outputs, index, value, nameof(index));
 
     public void Run<TInput, TOutput>(OrtTensor<TInput> input, OrtTensor<TOutput> output)
         where TInput : unmanaged
@@ -70,8 +79,8 @@ public sealed unsafe class OrtSession : SafeHandle
     {
         ArgumentNullException.ThrowIfNull(input);
         ArgumentNullException.ThrowIfNull(output);
-        var inputName = _inputName;
-        var outputName = _outputName;
+        var inputName = _inputs[0].NameHandle;
+        var outputName = _outputs[0].NameHandle;
         nint inputValue = input.DangerousGetHandle();
         nint outputValue = output.DangerousGetHandle();
         Ort.ThrowIfError(Ort.Run(
@@ -83,6 +92,49 @@ public sealed unsafe class OrtSession : SafeHandle
             (sbyte**)&outputName,
             1,
             (Ort.OrtValue**)&outputValue));
+    }
+
+    public void Run(ReadOnlySpan<OrtValueBinding> inputs, ReadOnlySpan<OrtValueBinding> outputs)
+    {
+        if (inputs.Length != _inputs.Length)
+        {
+            throw new ArgumentException($"Expected {_inputs.Length} input bindings, got {inputs.Length}.", nameof(inputs));
+        }
+        if (outputs.Length == 0)
+        {
+            throw new ArgumentException("At least one output binding is required.", nameof(outputs));
+        }
+
+        Span<nint> inputNames = stackalloc nint[inputs.Length];
+        Span<nint> inputValues = stackalloc nint[inputs.Length];
+        Span<nint> outputNames = stackalloc nint[outputs.Length];
+        Span<nint> outputValues = stackalloc nint[outputs.Length];
+        for (var index = 0; index < inputs.Length; ++index)
+        {
+            inputNames[index] = inputs[index].NameHandle;
+            inputValues[index] = inputs[index].ValueHandle;
+        }
+        for (var index = 0; index < outputs.Length; ++index)
+        {
+            outputNames[index] = outputs[index].NameHandle;
+            outputValues[index] = outputs[index].ValueHandle;
+        }
+
+        fixed (nint* inputNamesPointer = inputNames)
+        fixed (nint* inputValuesPointer = inputValues)
+        fixed (nint* outputNamesPointer = outputNames)
+        fixed (nint* outputValuesPointer = outputValues)
+        {
+            Ort.ThrowIfError(Ort.Run(
+                (Ort.OrtSession*)handle,
+                null,
+                (sbyte**)inputNamesPointer,
+                (Ort.OrtValue**)inputValuesPointer,
+                (nuint)inputs.Length,
+                (sbyte**)outputNamesPointer,
+                (nuint)outputs.Length,
+                (Ort.OrtValue**)outputValuesPointer));
+        }
     }
 
     public string EndProfiling()
@@ -105,66 +157,99 @@ public sealed unsafe class OrtSession : SafeHandle
 
     protected override bool ReleaseHandle()
     {
-        Marshal.FreeCoTaskMem(_inputName);
-        Marshal.FreeCoTaskMem(_outputName);
+        foreach (var input in _inputs)
+        {
+            input.Dispose();
+        }
+        foreach (var output in _outputs)
+        {
+            output.Dispose();
+        }
         Ort.ReleaseSession((Ort.OrtSession*)handle);
         return true;
     }
 
-    nint GetInputName()
+    OrtValueBinding CreateBinding<T>(OrtTensorInfo[] infos, int index, OrtTensor<T> value, string parameterName)
+        where T : unmanaged
     {
-        Ort.OrtAllocator* allocator;
-        Ort.ThrowIfError(Ort.GetAllocatorWithDefaultOptions(&allocator));
-        sbyte* nativeName;
-        Ort.ThrowIfError(Ort.SessionGetInputName((Ort.OrtSession*)handle, 0, allocator, &nativeName));
-        try
+        ArgumentOutOfRangeException.ThrowIfNegative(index);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, infos.Length);
+        ArgumentNullException.ThrowIfNull(value);
+        if (infos[index].ElementType != value.ElementType)
         {
-            return Marshal.StringToCoTaskMemUTF8(Marshal.PtrToStringUTF8((nint)nativeName));
+            throw new ArgumentException(
+                $"Tensor '{infos[index].Name}' expects {infos[index].ElementType}, but received {value.ElementType}.",
+                parameterName);
         }
-        finally
-        {
-            Ort.ThrowIfError(Ort.AllocatorFree(allocator, nativeName));
-        }
+
+        return new OrtValueBinding(infos[index], value);
     }
 
-    nint GetOutputName()
+    OrtTensorInfo[] GetTensorInfos(bool isInput)
     {
-        Ort.OrtAllocator* allocator;
-        Ort.ThrowIfError(Ort.GetAllocatorWithDefaultOptions(&allocator));
-        sbyte* nativeName;
-        Ort.ThrowIfError(Ort.SessionGetOutputName((Ort.OrtSession*)handle, 0, allocator, &nativeName));
-        try
-        {
-            return Marshal.StringToCoTaskMemUTF8(Marshal.PtrToStringUTF8((nint)nativeName));
-        }
-        finally
-        {
-            Ort.ThrowIfError(Ort.AllocatorFree(allocator, nativeName));
-        }
-    }
-
-    long[] GetTensorDimensions(bool isInput)
-    {
-        Ort.OrtTypeInfo* typeInfo;
+        nuint count;
         Ort.ThrowIfError(isInput
-            ? Ort.SessionGetInputTypeInfo((Ort.OrtSession*)handle, 0, &typeInfo)
-            : Ort.SessionGetOutputTypeInfo((Ort.OrtSession*)handle, 0, &typeInfo));
+            ? Ort.SessionGetInputCount((Ort.OrtSession*)handle, &count)
+            : Ort.SessionGetOutputCount((Ort.OrtSession*)handle, &count));
+        var infos = new OrtTensorInfo[checked((int)count)];
+        for (nuint index = 0; index < count; ++index)
+        {
+            infos[checked((int)index)] = GetTensorInfo(index, isInput);
+        }
+        return infos;
+    }
+
+    OrtTensorInfo GetTensorInfo(nuint index, bool isInput)
+    {
+        Ort.OrtAllocator* allocator;
+        Ort.ThrowIfError(Ort.GetAllocatorWithDefaultOptions(&allocator));
+        sbyte* nativeName;
+        Ort.ThrowIfError(isInput
+            ? Ort.SessionGetInputName((Ort.OrtSession*)handle, index, allocator, &nativeName)
+            : Ort.SessionGetOutputName((Ort.OrtSession*)handle, index, allocator, &nativeName));
+        string name;
+        nint nameHandle;
         try
         {
-            Ort.OrtTensorTypeAndShapeInfo* tensorInfo;
-            Ort.ThrowIfError(Ort.CastTypeInfoToTensorInfo(typeInfo, &tensorInfo));
-            nuint dimensionCount;
-            Ort.ThrowIfError(Ort.GetDimensionsCount(tensorInfo, &dimensionCount));
-            var dimensions = new long[checked((int)dimensionCount)];
-            fixed (long* dimensionsPointer = dimensions)
-            {
-                Ort.ThrowIfError(Ort.GetDimensions(tensorInfo, dimensionsPointer, dimensionCount));
-            }
-            return dimensions;
+            name = Marshal.PtrToStringUTF8((nint)nativeName) ??
+                throw new InvalidOperationException("ONNX Runtime returned a null node name.");
+            nameHandle = Marshal.StringToCoTaskMemUTF8(name);
         }
         finally
         {
-            Ort.ReleaseTypeInfo(typeInfo);
+            Ort.ThrowIfError(Ort.AllocatorFree(allocator, nativeName));
+        }
+
+        try
+        {
+            Ort.OrtTypeInfo* typeInfo;
+            Ort.ThrowIfError(isInput
+                ? Ort.SessionGetInputTypeInfo((Ort.OrtSession*)handle, index, &typeInfo)
+                : Ort.SessionGetOutputTypeInfo((Ort.OrtSession*)handle, index, &typeInfo));
+            try
+            {
+                Ort.OrtTensorTypeAndShapeInfo* tensorInfo;
+                Ort.ThrowIfError(Ort.CastTypeInfoToTensorInfo(typeInfo, &tensorInfo));
+                nuint dimensionCount;
+                Ort.ThrowIfError(Ort.GetDimensionsCount(tensorInfo, &dimensionCount));
+                var dimensions = new long[checked((int)dimensionCount)];
+                fixed (long* dimensionsPointer = dimensions)
+                {
+                    Ort.ThrowIfError(Ort.GetDimensions(tensorInfo, dimensionsPointer, dimensionCount));
+                }
+                Ort.ONNXTensorElementDataType elementType;
+                Ort.ThrowIfError(Ort.GetTensorElementType(tensorInfo, &elementType));
+                return new OrtTensorInfo(nameHandle, name, dimensions, elementType);
+            }
+            finally
+            {
+                Ort.ReleaseTypeInfo(typeInfo);
+            }
+        }
+        catch
+        {
+            Marshal.FreeCoTaskMem(nameHandle);
+            throw;
         }
     }
 }

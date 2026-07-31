@@ -47,6 +47,12 @@ public sealed class OrtSessionOptions : SafeHandle
         Ort.ThrowIfError(Ort.SetIntraOpNumThreads((Ort.OrtSessionOptions*)handle, threadCount));
     }
 
+    public unsafe void SetInterOpThreadCount(int threadCount)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(threadCount);
+        Ort.ThrowIfError(Ort.SetInterOpNumThreads((Ort.OrtSessionOptions*)handle, threadCount));
+    }
+
     public unsafe void SetGraphOptimizationLevel(Ort.GraphOptimizationLevel graphOptimizationLevel) =>
         Ort.ThrowIfError(Ort.SetSessionGraphOptimizationLevel((Ort.OrtSessionOptions*)handle, graphOptimizationLevel));
 

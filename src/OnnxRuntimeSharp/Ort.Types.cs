@@ -18,9 +18,9 @@ sealed class NativeTypeNameAttribute(string name) : Attribute
 
 public static unsafe partial class Ort
 {
-    public partial struct OrtEpApi { }
-    public partial struct OrtExternalMemoryHandle { }
-    public partial struct OrtExternalSemaphoreHandle { }
+    public readonly struct OrtEpApi;
+    public readonly struct OrtExternalMemoryHandle;
+    public readonly struct OrtExternalSemaphoreHandle;
 
     public enum OrtErrorCode
     {
@@ -122,177 +122,49 @@ public static unsafe partial class Ort
         ORT_OP_ATTR_TENSOR,
     }
 
-    public partial struct OrtEnv
-    {
-    }
-
-    public partial struct OrtStatus
-    {
-    }
-
-    public partial struct OrtMemoryInfo
-    {
-    }
-
-    public partial struct OrtIoBinding
-    {
-    }
-
-    public partial struct OrtSession
-    {
-    }
-
-    public partial struct OrtValue
-    {
-    }
-
-    public partial struct OrtRunOptions
-    {
-    }
-
-    public partial struct OrtTypeInfo
-    {
-    }
-
-    public partial struct OrtTensorTypeAndShapeInfo
-    {
-    }
-
-    public partial struct OrtMapTypeInfo
-    {
-    }
-
-    public partial struct OrtSequenceTypeInfo
-    {
-    }
-
-    public partial struct OrtOptionalTypeInfo
-    {
-    }
-
-    public partial struct OrtSessionOptions
-    {
-    }
-
-    public partial struct OrtCustomOpDomain
-    {
-    }
-
-    public partial struct OrtModelMetadata
-    {
-    }
-
-    public partial struct OrtThreadPoolParams
-    {
-    }
-
-    public partial struct OrtThreadingOptions
-    {
-    }
-
-    public partial struct OrtArenaCfg
-    {
-    }
-
-    public partial struct OrtPrepackedWeightsContainer
-    {
-    }
-
-    public partial struct OrtTensorRTProviderOptionsV2
-    {
-    }
-
-    public partial struct OrtNvTensorRtRtxProviderOptions
-    {
-    }
-
-    public partial struct OrtCUDAProviderOptionsV2
-    {
-    }
-
-    public partial struct OrtCANNProviderOptions
-    {
-    }
-
-    public partial struct OrtDnnlProviderOptions
-    {
-    }
-
-    public partial struct OrtOp
-    {
-    }
-
-    public partial struct OrtOpAttr
-    {
-    }
-
-    public partial struct OrtLogger
-    {
-    }
-
-    public partial struct OrtShapeInferContext
-    {
-    }
-
-    public partial struct OrtLoraAdapter
-    {
-    }
-
-    public partial struct OrtValueInfo
-    {
-    }
-
-    public partial struct OrtNode
-    {
-    }
-
-    public partial struct OrtGraph
-    {
-    }
-
-    public partial struct OrtModel
-    {
-    }
-
-    public partial struct OrtModelCompilationOptions
-    {
-    }
-
-    public partial struct OrtHardwareDevice
-    {
-    }
-
-    public partial struct OrtEpDevice
-    {
-    }
-
-    public partial struct OrtKeyValuePairs
-    {
-    }
-
-    public partial struct OrtSyncStream
-    {
-    }
-
-    public partial struct OrtExternalInitializerInfo
-    {
-    }
-
-    public partial struct OrtExternalResourceImporter
-    {
-    }
-
-    public partial struct OrtDeviceEpIncompatibilityDetails
-    {
-    }
-
-    public partial struct OrtEpAssignedSubgraph
-    {
-    }
-
-    public partial struct OrtEpAssignedNode
-    {
-    }
+    public readonly struct OrtEnv;
+    public readonly struct OrtStatus;
+    public readonly struct OrtMemoryInfo;
+    public readonly struct OrtIoBinding;
+    public readonly struct OrtSession;
+    public readonly struct OrtValue;
+    public readonly struct OrtRunOptions;
+    public readonly struct OrtTypeInfo;
+    public readonly struct OrtTensorTypeAndShapeInfo;
+    public readonly struct OrtMapTypeInfo;
+    public readonly struct OrtSequenceTypeInfo;
+    public readonly struct OrtOptionalTypeInfo;
+    public readonly struct OrtSessionOptions;
+    public readonly struct OrtCustomOpDomain;
+    public readonly struct OrtModelMetadata;
+    public readonly struct OrtThreadPoolParams;
+    public readonly struct OrtThreadingOptions;
+    public readonly struct OrtArenaCfg;
+    public readonly struct OrtPrepackedWeightsContainer;
+    public readonly struct OrtTensorRTProviderOptionsV2;
+    public readonly struct OrtNvTensorRtRtxProviderOptions;
+    public readonly struct OrtCUDAProviderOptionsV2;
+    public readonly struct OrtCANNProviderOptions;
+    public readonly struct OrtDnnlProviderOptions;
+    public readonly struct OrtOp;
+    public readonly struct OrtOpAttr;
+    public readonly struct OrtLogger;
+    public readonly struct OrtShapeInferContext;
+    public readonly struct OrtLoraAdapter;
+    public readonly struct OrtValueInfo;
+    public readonly struct OrtNode;
+    public readonly struct OrtGraph;
+    public readonly struct OrtModel;
+    public readonly struct OrtModelCompilationOptions;
+    public readonly struct OrtHardwareDevice;
+    public readonly struct OrtEpDevice;
+    public readonly struct OrtKeyValuePairs;
+    public readonly struct OrtSyncStream;
+    public readonly struct OrtExternalInitializerInfo;
+    public readonly struct OrtExternalResourceImporter;
+    public readonly struct OrtDeviceEpIncompatibilityDetails;
+    public readonly struct OrtEpAssignedSubgraph;
+    public readonly struct OrtEpAssignedNode;
 
     public unsafe partial struct OrtAllocator
     {
@@ -347,13 +219,8 @@ public static unsafe partial class Ort
         ORT_PROJECTION_NODEJS = 6,
     }
 
-    public partial struct OrtKernelInfo
-    {
-    }
-
-    public partial struct OrtKernelContext
-    {
-    }
+    public readonly struct OrtKernelInfo;
+    public readonly struct OrtKernelContext;
 
     public enum OrtAllocatorType
     {
@@ -576,9 +443,7 @@ public static unsafe partial class Ort
         public byte enable_dynamic_shapes;
     }
 
-    public partial struct OrtTrainingApi
-    {
-    }
+    public readonly struct OrtTrainingApi;
 
     public unsafe partial struct OrtApiBase
     {

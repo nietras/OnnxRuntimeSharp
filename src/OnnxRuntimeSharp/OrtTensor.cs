@@ -57,6 +57,8 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
 
     public Span<T> Data => ((T[])_dataHandle.Target!).AsSpan();
 
+    public Ort.ONNXTensorElementDataType ElementType => GetElementType();
+
     public override bool IsInvalid => handle == nint.Zero;
 
     protected override bool ReleaseHandle()

@@ -20,13 +20,11 @@ public static unsafe partial class Ort
         {
             throw new InvalidOperationException("ONNX Runtime did not return an API base.");
         }
-
         var api = apiBase->GetApi(ApiVersion);
         if (api is null)
         {
             throw new NotSupportedException($"ONNX Runtime C API version {ApiVersion} is unavailable.");
         }
-
         return api;
     }
 
@@ -36,7 +34,6 @@ public static unsafe partial class Ort
         {
             return;
         }
-
         try
         {
             throw new OrtException(Marshal.PtrToStringUTF8((nint)GetErrorMessage(status)) ?? "Unknown ONNX Runtime error.");

@@ -14,7 +14,7 @@ const int MinimumIterations = 10;
 const int ProfilingSamples = 10;
 const double TargetRunDurationMilliseconds = 1_000;
 var concurrentTestDuration = TimeSpan.FromSeconds(1);
-int[] concurrentThreadCountsToTest = [1, 2, 4, 8, 16];
+int[] concurrentThreadCountsToTest = []; //[1, 2, 4, 8, 16]; // SKIP CONCURRENT FOR NOW
 string[] preferredExecutionProviders =
 [
     "TensorrtExecutionProvider",
@@ -121,18 +121,18 @@ static NodeProfileReport RunModel(
     var beforeCreate = Stopwatch.GetTimestamp();
     using var session = new OrtSession(environment, model, options);
     var createMilliseconds = ElapsedMilliseconds(beforeCreate);
-    using var input = CreateFloatTensor(session.InputDimensions.Span);
-    using var output = CreateFloatTensor(session.OutputDimensions.Span);
+    using var inputs = CreateInputBindings(session);
+    using var outputs = CreateOutputBindings(session);
 
     var beforeFirstInference = Stopwatch.GetTimestamp();
-    session.Run(input, output);
+    session.Run(inputs.Values, outputs.Values);
     var firstInferenceMilliseconds = ElapsedMilliseconds(beforeFirstInference);
 
     for (var warmup = 0; warmup < WarmupCount; ++warmup)
     {
-        input.Data[0] = warmup;
-        session.Run(input, output);
-        _ = output.Data[0];
+        inputs.Tensors[0].Data[0] = warmup;
+        session.Run(inputs.Values, outputs.Values);
+        _ = outputs.Tensors[0].Data[0];
     }
 
     var iterations = 0;
@@ -140,10 +140,10 @@ static NodeProfileReport RunModel(
     var allocatedBytesBefore = GC.GetAllocatedBytesForCurrentThread();
     while (totalMilliseconds < TargetRunDurationMilliseconds || iterations < MinimumIterations)
     {
-        input.Data[0] = iterations;
+        inputs.Tensors[0].Data[0] = iterations;
         var beforeInference = Stopwatch.GetTimestamp();
-        session.Run(input, output);
-        _ = output.Data[0];
+        session.Run(inputs.Values, outputs.Values);
+        _ = outputs.Tensors[0].Data[0];
         totalMilliseconds += ElapsedMilliseconds(beforeInference);
         ++iterations;
     }
@@ -164,8 +164,8 @@ static NodeProfileReport RunModel(
 
     for (var sample = 0; sample < ProfilingSamples; ++sample)
     {
-        input.Data[0] = sample;
-        session.Run(input, output);
+        inputs.Tensors[0].Data[0] = sample;
+        session.Run(inputs.Values, outputs.Values);
     }
 
     var profilePath = session.EndProfiling();
@@ -186,8 +186,6 @@ static void RunModelConcurrent(
         using var environment = new OrtEnvironment();
         using var options = CreateSessionOptions(configuration, null);
         using var session = new OrtSession(environment, model, options);
-        var inputDimensions = session.InputDimensions;
-        var outputDimensions = session.OutputDimensions;
         using var barrier = new Barrier(threadCount + 1);
         var iterationsPerThread = new long[threadCount];
         var totalMillisecondsPerThread = new double[threadCount];
@@ -204,31 +202,31 @@ static void RunModelConcurrent(
                 var barrierSignaled = false;
                 try
                 {
-                    using var input = CreateFloatTensor(inputDimensions.Span);
-                    using var output = CreateFloatTensor(outputDimensions.Span);
+                    using var inputs = CreateInputBindings(session);
+                    using var outputs = CreateOutputBindings(session);
                     for (var warmup = 0; warmup < WarmupCount; ++warmup)
                     {
-                        input.Data[0] = warmup;
-                        session.Run(input, output);
-                        _ = output.Data[0];
+                        inputs.Tensors[0].Data[0] = warmup;
+                        session.Run(inputs.Values, outputs.Values);
+                        _ = outputs.Tensors[0].Data[0];
                     }
 
                     barrier.SignalAndWait();
                     barrierSignaled = true;
                     _ = GC.GetAllocatedBytesForCurrentThread();
-                    input.Data[0] = 0;
-                    session.Run(input, output);
-                    _ = output.Data[0];
+                    inputs.Tensors[0].Data[0] = 0;
+                    session.Run(inputs.Values, outputs.Values);
+                    _ = outputs.Tensors[0].Data[0];
 
                     var iterations = 0L;
                     var totalMilliseconds = 0.0;
                     var allocatedBytesBefore = GC.GetAllocatedBytesForCurrentThread();
                     while (Volatile.Read(ref running) != 0)
                     {
-                        input.Data[0] = iterations;
+                        inputs.Tensors[0].Data[0] = iterations;
                         var beforeInference = Stopwatch.GetTimestamp();
-                        session.Run(input, output);
-                        _ = output.Data[0];
+                        session.Run(inputs.Values, outputs.Values);
+                        _ = outputs.Tensors[0].Data[0];
                         totalMilliseconds += ElapsedMilliseconds(beforeInference);
                         ++iterations;
                     }
@@ -291,6 +289,10 @@ static OrtSessionOptions CreateSessionOptions(ProfilingConfiguration configurati
     if (configuration.IntraOpThreadCount is { } threadCount)
     {
         options.SetIntraOpThreadCount(threadCount);
+    }
+    if (configuration.InterOpThreadCount is { } interOpThreadCount)
+    {
+        options.SetInterOpThreadCount(interOpThreadCount);
     }
     options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
     if (configuration.ProviderName is { } providerName)
@@ -370,6 +372,43 @@ static void WriteNodeProfileSummary(
 static OrtTensor<float> CreateFloatTensor(ReadOnlySpan<long> dimensions) =>
     new(new float[GetTensorElementCount(dimensions)], dimensions);
 
+static TensorBindings CreateInputBindings(OrtSession session) =>
+    CreateBindings(session.Inputs, session.CreateInputBinding);
+
+static TensorBindings CreateOutputBindings(OrtSession session) =>
+    CreateBindings(session.Outputs, session.CreateOutputBinding);
+
+static TensorBindings CreateBindings(
+    IReadOnlyList<OrtTensorInfo> infos,
+    Func<int, OrtTensor<float>, OrtValueBinding> createBinding)
+{
+    var tensors = new OrtTensor<float>[infos.Count];
+    var values = new OrtValueBinding[infos.Count];
+    try
+    {
+        for (var index = 0; index < tensors.Length; ++index)
+        {
+            if (infos[index].ElementType != Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT)
+            {
+                throw new NotSupportedException(
+                    $"The profiler supports float tensors only. '{infos[index].Name}' is {infos[index].ElementType}.");
+            }
+
+            tensors[index] = CreateFloatTensor(infos[index].Dimensions.Span);
+            values[index] = createBinding(index, tensors[index]);
+        }
+        return new(tensors, values);
+    }
+    catch
+    {
+        foreach (var tensor in tensors)
+        {
+            tensor?.Dispose();
+        }
+        throw;
+    }
+}
+
 static int GetTensorElementCount(ReadOnlySpan<long> dimensions)
 {
     long elementCount = 1;
@@ -435,12 +474,12 @@ static ProfilingConfiguration[] CreateConfigurations(
 
         if (string.Equals(providerName, "CPUExecutionProvider", StringComparison.Ordinal))
         {
-            configurations.Add(new("CPU", null, null, false));
-            configurations.Add(new("CPU 1 intra-op thread", null, 1, true));
+            configurations.Add(new("CPU", null, null, null, false));
+            configurations.Add(new("CPU 1×Intra 1×Inter", null, 1, 1, true));
         }
         else
         {
-            configurations.Add(new(providerName, providerName, null, false));
+            configurations.Add(new(providerName, providerName, null, null, false));
         }
     }
 
@@ -451,9 +490,24 @@ sealed record ProfilingConfiguration(
     string Name,
     string? ProviderName,
     int? IntraOpThreadCount,
+    int? InterOpThreadCount,
     bool EnableProfiling);
 
 sealed record NodeProfileReport(string? TracePath, IReadOnlyList<NodeProfile> Profiles);
+
+sealed class TensorBindings(OrtTensor<float>[] tensors, OrtValueBinding[] values) : IDisposable
+{
+    public OrtTensor<float>[] Tensors { get; } = tensors;
+    public OrtValueBinding[] Values { get; } = values;
+
+    public void Dispose()
+    {
+        foreach (var tensor in Tensors)
+        {
+            tensor.Dispose();
+        }
+    }
+}
 
 sealed class NodeProfile(string nodeName)
 {
