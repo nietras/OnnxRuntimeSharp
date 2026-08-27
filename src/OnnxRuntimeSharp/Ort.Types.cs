@@ -125,9 +125,9 @@ public static unsafe partial class Ort
     public readonly struct OrtEnv;
     public readonly struct OrtStatusHandle
     {
-        readonly IntPtr _value;
+        internal readonly IntPtr Value;
 
-        internal bool IsNull => _value == IntPtr.Zero;
+        internal bool IsNull => Value == IntPtr.Zero;
     }
     public readonly struct OrtMemoryInfo;
     public readonly struct OrtIoBinding;
