@@ -30,7 +30,7 @@ Action<string> log = message =>
 };
 
 var workingDirectory = Environment.CurrentDirectory;
-var modelPaths = Directory.GetFiles(workingDirectory, SearchPattern, SearchOption.AllDirectories);
+var modelPaths = Directory.GetFiles(workingDirectory, SearchPattern, SearchOption.TopDirectoryOnly);
 Array.Sort(modelPaths, StringComparer.Ordinal);
 AddNativeRuntimeDirectoryToPath();
 var availableExecutionProviders = Ort.GetAvailableExecutionProviders();

@@ -8,10 +8,8 @@
     <File Path=".gitattributes" />
     <File Path=".gitignore" />
     <File Path=".pre-commit-config.yaml" />
-    <File Path="bench.ps1" />
     <File Path="codecov.yml" />
     <File Path="CODE_OF_CONDUCT.md" />
-    <File Path="comparison-bench.ps1" />
     <File Path="CONTRIBUTING.md" />
     <File Path="disasm-tester.ps1" />
     <File Path="global.json" />
@@ -23,6 +21,7 @@
     <File Path="publish-tester.ps1" />
     <File Path="README.md" />
     <File Path="rename.ps1" />
+    <File Path="run-profiler.ps1" />
     <File Path="SECURITY.md" />
     <File Path="test.ps1" />
     <File Path="validate-codecov.ps1" />
