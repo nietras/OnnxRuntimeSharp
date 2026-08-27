@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 namespace OnnxRuntimeSharp;
 
 public sealed unsafe class OrtTensorInfo
