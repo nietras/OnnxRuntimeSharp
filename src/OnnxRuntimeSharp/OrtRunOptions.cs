@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 
@@ -10,7 +10,7 @@ public sealed unsafe class OrtRunOptions : SafeHandle
         : base(IntPtr.Zero, ownsHandle: true)
     {
         Ort.OrtRunOptions* options;
-        Ort.ThrowIfError(Ort.CreateRunOptions(&options));
+        Ort.Ok(Ort.CreateRunOptions(&options));
         SetHandle((IntPtr)options);
     }
 
@@ -20,14 +20,14 @@ public sealed unsafe class OrtRunOptions : SafeHandle
         {
             ThrowIfDisposed();
             int value;
-            Ort.ThrowIfError(Ort.RunOptionsGetRunLogVerbosityLevel(Pointer, &value));
+            Ort.Ok(Ort.RunOptionsGetRunLogVerbosityLevel(Pointer, &value));
             return value;
         }
         set
         {
             ThrowIfDisposed();
             ArgumentOutOfRangeException.ThrowIfNegative(value);
-            Ort.ThrowIfError(Ort.RunOptionsSetRunLogVerbosityLevel(Pointer, value));
+            Ort.Ok(Ort.RunOptionsSetRunLogVerbosityLevel(Pointer, value));
         }
     }
 
@@ -37,13 +37,13 @@ public sealed unsafe class OrtRunOptions : SafeHandle
         {
             ThrowIfDisposed();
             int value;
-            Ort.ThrowIfError(Ort.RunOptionsGetRunLogSeverityLevel(Pointer, &value));
+            Ort.Ok(Ort.RunOptionsGetRunLogSeverityLevel(Pointer, &value));
             return (Ort.OrtLoggingLevel)value;
         }
         set
         {
             ThrowIfDisposed();
-            Ort.ThrowIfError(Ort.RunOptionsSetRunLogSeverityLevel(Pointer, (int)value));
+            Ort.Ok(Ort.RunOptionsSetRunLogSeverityLevel(Pointer, (int)value));
         }
     }
 
@@ -53,7 +53,7 @@ public sealed unsafe class OrtRunOptions : SafeHandle
         {
             ThrowIfDisposed();
             sbyte* value;
-            Ort.ThrowIfError(Ort.RunOptionsGetRunTag(Pointer, &value));
+            Ort.Ok(Ort.RunOptionsGetRunTag(Pointer, &value));
             return Marshal.PtrToStringUTF8((IntPtr)value) ?? string.Empty;
         }
         set
@@ -63,7 +63,7 @@ public sealed unsafe class OrtRunOptions : SafeHandle
             var utf8Value = Utf8StringMarshaller.ConvertToUnmanaged(value);
             try
             {
-                Ort.ThrowIfError(Ort.RunOptionsSetRunTag(Pointer, (sbyte*)utf8Value));
+                Ort.Ok(Ort.RunOptionsSetRunTag(Pointer, (sbyte*)utf8Value));
             }
             finally
             {
@@ -81,7 +81,7 @@ public sealed unsafe class OrtRunOptions : SafeHandle
         var utf8Value = Utf8StringMarshaller.ConvertToUnmanaged(value);
         try
         {
-            Ort.ThrowIfError(Ort.AddRunConfigEntry(Pointer, (sbyte*)utf8Key, (sbyte*)utf8Value));
+            Ort.Ok(Ort.AddRunConfigEntry(Pointer, (sbyte*)utf8Key, (sbyte*)utf8Value));
         }
         finally
         {
@@ -93,13 +93,13 @@ public sealed unsafe class OrtRunOptions : SafeHandle
     public void RequestTermination()
     {
         ThrowIfDisposed();
-        Ort.ThrowIfError(Ort.RunOptionsSetTerminate(Pointer));
+        Ort.Ok(Ort.RunOptionsSetTerminate(Pointer));
     }
 
     public void ResetTermination()
     {
         ThrowIfDisposed();
-        Ort.ThrowIfError(Ort.RunOptionsUnsetTerminate(Pointer));
+        Ort.Ok(Ort.RunOptionsUnsetTerminate(Pointer));
     }
 
     public override bool IsInvalid => handle == IntPtr.Zero;

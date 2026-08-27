@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 
@@ -18,7 +18,7 @@ public sealed unsafe class OrtMemoryInfo : SafeHandle
         try
         {
             Ort.OrtMemoryInfo* info;
-            Ort.ThrowIfError(Ort.CreateMemoryInfo(
+            Ort.Ok(Ort.CreateMemoryInfo(
                 (sbyte*)utf8Name,
                 allocatorType,
                 deviceId,
@@ -37,7 +37,7 @@ public sealed unsafe class OrtMemoryInfo : SafeHandle
         Ort.OrtMemType memoryType = Ort.OrtMemType.OrtMemTypeDefault)
     {
         Ort.OrtMemoryInfo* info;
-        Ort.ThrowIfError(Ort.CreateCpuMemoryInfo(allocatorType, memoryType, &info));
+        Ort.Ok(Ort.CreateCpuMemoryInfo(allocatorType, memoryType, &info));
         return new OrtMemoryInfo(info);
     }
 
@@ -51,7 +51,7 @@ public sealed unsafe class OrtMemoryInfo : SafeHandle
         {
             ThrowIfDisposed();
             sbyte* value;
-            Ort.ThrowIfError(Ort.MemoryInfoGetName(Pointer, &value));
+            Ort.Ok(Ort.MemoryInfoGetName(Pointer, &value));
             return Marshal.PtrToStringUTF8((IntPtr)value) ?? string.Empty;
         }
     }
@@ -62,7 +62,7 @@ public sealed unsafe class OrtMemoryInfo : SafeHandle
         {
             ThrowIfDisposed();
             int value;
-            Ort.ThrowIfError(Ort.MemoryInfoGetId(Pointer, &value));
+            Ort.Ok(Ort.MemoryInfoGetId(Pointer, &value));
             return value;
         }
     }
@@ -73,7 +73,7 @@ public sealed unsafe class OrtMemoryInfo : SafeHandle
         {
             ThrowIfDisposed();
             Ort.OrtMemType value;
-            Ort.ThrowIfError(Ort.MemoryInfoGetMemType(Pointer, &value));
+            Ort.Ok(Ort.MemoryInfoGetMemType(Pointer, &value));
             return value;
         }
     }
@@ -84,7 +84,7 @@ public sealed unsafe class OrtMemoryInfo : SafeHandle
         {
             ThrowIfDisposed();
             Ort.OrtAllocatorType value;
-            Ort.ThrowIfError(Ort.MemoryInfoGetType(Pointer, &value));
+            Ort.Ok(Ort.MemoryInfoGetType(Pointer, &value));
             return value;
         }
     }

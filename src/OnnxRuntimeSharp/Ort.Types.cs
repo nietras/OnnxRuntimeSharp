@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 
 namespace OnnxRuntimeSharp;
@@ -123,7 +123,12 @@ public static unsafe partial class Ort
     }
 
     public readonly struct OrtEnv;
-    public readonly struct OrtStatus;
+    public readonly struct OrtStatusHandle
+    {
+        readonly IntPtr _value;
+
+        internal bool IsNull => _value == IntPtr.Zero;
+    }
     public readonly struct OrtMemoryInfo;
     public readonly struct OrtIoBinding;
     public readonly struct OrtSession;
@@ -184,13 +189,13 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtAllocator*, nuint, void*> Reserve;
 
         [NativeTypeName("OrtStatusPtr (*)(const struct OrtAllocator *, OrtKeyValuePairs **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtAllocator*, OrtKeyValuePairs**, OrtStatus*> GetStats;
+        public delegate* unmanaged[Stdcall]<OrtAllocator*, OrtKeyValuePairs**, OrtStatusHandle> GetStats;
 
         [NativeTypeName("void *(*)(struct OrtAllocator *, size_t, OrtSyncStream *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtAllocator*, nuint, OrtSyncStream*, void*> AllocOnStream;
 
         [NativeTypeName("OrtStatusPtr (*)(struct OrtAllocator *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtAllocator*, OrtStatus*> Shrink;
+        public delegate* unmanaged[Stdcall]<OrtAllocator*, OrtStatusHandle> Shrink;
     }
 
     public enum GraphOptimizationLevel
@@ -592,286 +597,286 @@ public static unsafe partial class Ort
     public unsafe partial struct OrtApi
     {
         [NativeTypeName("OrtStatus *(*)(OrtErrorCode, const char *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtErrorCode, sbyte*, OrtStatus*> CreateStatus;
+        public delegate* unmanaged[Stdcall]<OrtErrorCode, sbyte*, OrtStatusHandle> CreateStatus;
 
         [NativeTypeName("OrtErrorCode (*)(const OrtStatus *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtStatus*, OrtErrorCode> GetErrorCode;
+        public delegate* unmanaged[Stdcall]<OrtStatusHandle, OrtErrorCode> GetErrorCode;
 
         [NativeTypeName("const char *(*)(const OrtStatus *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtStatus*, sbyte*> GetErrorMessage;
+        public delegate* unmanaged[Stdcall]<OrtStatusHandle, sbyte*> GetErrorMessage;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtLoggingLevel, const char *, OrtEnv **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtLoggingLevel, sbyte*, OrtEnv**, OrtStatus*> CreateEnv;
+        public delegate* unmanaged[Stdcall]<OrtLoggingLevel, sbyte*, OrtEnv**, OrtStatusHandle> CreateEnv;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtLoggingFunction, void *, OrtLoggingLevel, const char *, OrtEnv **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<delegate* unmanaged[Stdcall]<void*, OrtLoggingLevel, sbyte*, sbyte*, sbyte*, sbyte*, void>, void*, OrtLoggingLevel, sbyte*, OrtEnv**, OrtStatus*> CreateEnvWithCustomLogger;
+        public delegate* unmanaged[Stdcall]<delegate* unmanaged[Stdcall]<void*, OrtLoggingLevel, sbyte*, sbyte*, sbyte*, sbyte*, void>, void*, OrtLoggingLevel, sbyte*, OrtEnv**, OrtStatusHandle> CreateEnvWithCustomLogger;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtStatus*> EnableTelemetryEvents;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtStatusHandle> EnableTelemetryEvents;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtStatus*> DisableTelemetryEvents;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtStatusHandle> DisableTelemetryEvents;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *, const wchar_t *, const OrtSessionOptions *, OrtSession **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, ushort*, OrtSessionOptions*, OrtSession**, OrtStatus*> CreateSession;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, ushort*, OrtSessionOptions*, OrtSession**, OrtStatusHandle> CreateSession;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *, const void *, size_t, const OrtSessionOptions *, OrtSession **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, void*, nuint, OrtSessionOptions*, OrtSession**, OrtStatus*> CreateSessionFromArray;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, void*, nuint, OrtSessionOptions*, OrtSession**, OrtStatusHandle> CreateSessionFromArray;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSession *, const OrtRunOptions *, const char *const *, const OrtValue *const *, size_t, const char *const *, size_t, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, OrtRunOptions*, sbyte**, OrtValue**, nuint, sbyte**, nuint, OrtValue**, OrtStatus*> Run;
+        public delegate* unmanaged[Stdcall]<OrtSession*, OrtRunOptions*, sbyte**, OrtValue**, nuint, sbyte**, nuint, OrtValue**, OrtStatusHandle> Run;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions**, OrtStatus*> CreateSessionOptions;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions**, OrtStatusHandle> CreateSessionOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const wchar_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, ushort*, OrtStatus*> SetOptimizedModelFilePath;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, ushort*, OrtStatusHandle> SetOptimizedModelFilePath;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSessionOptions *, OrtSessionOptions **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtSessionOptions**, OrtStatus*> CloneSessionOptions;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtSessionOptions**, OrtStatusHandle> CloneSessionOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, ExecutionMode) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, ExecutionMode, OrtStatus*> SetSessionExecutionMode;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, ExecutionMode, OrtStatusHandle> SetSessionExecutionMode;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const wchar_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, ushort*, OrtStatus*> EnableProfiling;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, ushort*, OrtStatusHandle> EnableProfiling;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtStatus*> DisableProfiling;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtStatusHandle> DisableProfiling;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtStatus*> EnableMemPattern;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtStatusHandle> EnableMemPattern;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtStatus*> DisableMemPattern;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtStatusHandle> DisableMemPattern;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtStatus*> EnableCpuMemArena;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtStatusHandle> EnableCpuMemArena;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtStatus*> DisableCpuMemArena;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtStatusHandle> DisableCpuMemArena;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const char *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, OrtStatus*> SetSessionLogId;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, OrtStatusHandle> SetSessionLogId;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, int) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, int, OrtStatus*> SetSessionLogVerbosityLevel;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, int, OrtStatusHandle> SetSessionLogVerbosityLevel;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, int) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, int, OrtStatus*> SetSessionLogSeverityLevel;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, int, OrtStatusHandle> SetSessionLogSeverityLevel;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, GraphOptimizationLevel) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, GraphOptimizationLevel, OrtStatus*> SetSessionGraphOptimizationLevel;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, GraphOptimizationLevel, OrtStatusHandle> SetSessionGraphOptimizationLevel;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, int) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, int, OrtStatus*> SetIntraOpNumThreads;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, int, OrtStatusHandle> SetIntraOpNumThreads;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, int) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, int, OrtStatus*> SetInterOpNumThreads;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, int, OrtStatusHandle> SetInterOpNumThreads;
 
         [NativeTypeName("OrtStatusPtr (*)(const char *, OrtCustomOpDomain **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<sbyte*, OrtCustomOpDomain**, OrtStatus*> CreateCustomOpDomain;
+        public delegate* unmanaged[Stdcall]<sbyte*, OrtCustomOpDomain**, OrtStatusHandle> CreateCustomOpDomain;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtCustomOpDomain *, const OrtCustomOp *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtCustomOpDomain*, OrtCustomOp*, OrtStatus*> CustomOpDomain_Add;
+        public delegate* unmanaged[Stdcall]<OrtCustomOpDomain*, OrtCustomOp*, OrtStatusHandle> CustomOpDomain_Add;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, OrtCustomOpDomain *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtCustomOpDomain*, OrtStatus*> AddCustomOpDomain;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtCustomOpDomain*, OrtStatusHandle> AddCustomOpDomain;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const char *, void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, void**, OrtStatus*> RegisterCustomOpsLibrary;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, void**, OrtStatusHandle> RegisterCustomOpsLibrary;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSession *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, nuint*, OrtStatus*> SessionGetInputCount;
+        public delegate* unmanaged[Stdcall]<OrtSession*, nuint*, OrtStatusHandle> SessionGetInputCount;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSession *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, nuint*, OrtStatus*> SessionGetOutputCount;
+        public delegate* unmanaged[Stdcall]<OrtSession*, nuint*, OrtStatusHandle> SessionGetOutputCount;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSession *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, nuint*, OrtStatus*> SessionGetOverridableInitializerCount;
+        public delegate* unmanaged[Stdcall]<OrtSession*, nuint*, OrtStatusHandle> SessionGetOverridableInitializerCount;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSession *, size_t, OrtTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, nuint, OrtTypeInfo**, OrtStatus*> SessionGetInputTypeInfo;
+        public delegate* unmanaged[Stdcall]<OrtSession*, nuint, OrtTypeInfo**, OrtStatusHandle> SessionGetInputTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSession *, size_t, OrtTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, nuint, OrtTypeInfo**, OrtStatus*> SessionGetOutputTypeInfo;
+        public delegate* unmanaged[Stdcall]<OrtSession*, nuint, OrtTypeInfo**, OrtStatusHandle> SessionGetOutputTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSession *, size_t, OrtTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, nuint, OrtTypeInfo**, OrtStatus*> SessionGetOverridableInitializerTypeInfo;
+        public delegate* unmanaged[Stdcall]<OrtSession*, nuint, OrtTypeInfo**, OrtStatusHandle> SessionGetOverridableInitializerTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSession *, size_t, OrtAllocator *, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, nuint, OrtAllocator*, sbyte**, OrtStatus*> SessionGetInputName;
+        public delegate* unmanaged[Stdcall]<OrtSession*, nuint, OrtAllocator*, sbyte**, OrtStatusHandle> SessionGetInputName;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSession *, size_t, OrtAllocator *, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, nuint, OrtAllocator*, sbyte**, OrtStatus*> SessionGetOutputName;
+        public delegate* unmanaged[Stdcall]<OrtSession*, nuint, OrtAllocator*, sbyte**, OrtStatusHandle> SessionGetOutputName;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSession *, size_t, OrtAllocator *, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, nuint, OrtAllocator*, sbyte**, OrtStatus*> SessionGetOverridableInitializerName;
+        public delegate* unmanaged[Stdcall]<OrtSession*, nuint, OrtAllocator*, sbyte**, OrtStatusHandle> SessionGetOverridableInitializerName;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtRunOptions **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtRunOptions**, OrtStatus*> CreateRunOptions;
+        public delegate* unmanaged[Stdcall]<OrtRunOptions**, OrtStatusHandle> CreateRunOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtRunOptions *, int) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtRunOptions*, int, OrtStatus*> RunOptionsSetRunLogVerbosityLevel;
+        public delegate* unmanaged[Stdcall]<OrtRunOptions*, int, OrtStatusHandle> RunOptionsSetRunLogVerbosityLevel;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtRunOptions *, int) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtRunOptions*, int, OrtStatus*> RunOptionsSetRunLogSeverityLevel;
+        public delegate* unmanaged[Stdcall]<OrtRunOptions*, int, OrtStatusHandle> RunOptionsSetRunLogSeverityLevel;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtRunOptions *, const char *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtRunOptions*, sbyte*, OrtStatus*> RunOptionsSetRunTag;
+        public delegate* unmanaged[Stdcall]<OrtRunOptions*, sbyte*, OrtStatusHandle> RunOptionsSetRunTag;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtRunOptions *, int *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtRunOptions*, int*, OrtStatus*> RunOptionsGetRunLogVerbosityLevel;
+        public delegate* unmanaged[Stdcall]<OrtRunOptions*, int*, OrtStatusHandle> RunOptionsGetRunLogVerbosityLevel;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtRunOptions *, int *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtRunOptions*, int*, OrtStatus*> RunOptionsGetRunLogSeverityLevel;
+        public delegate* unmanaged[Stdcall]<OrtRunOptions*, int*, OrtStatusHandle> RunOptionsGetRunLogSeverityLevel;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtRunOptions *, const char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtRunOptions*, sbyte**, OrtStatus*> RunOptionsGetRunTag;
+        public delegate* unmanaged[Stdcall]<OrtRunOptions*, sbyte**, OrtStatusHandle> RunOptionsGetRunTag;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtRunOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtRunOptions*, OrtStatus*> RunOptionsSetTerminate;
+        public delegate* unmanaged[Stdcall]<OrtRunOptions*, OrtStatusHandle> RunOptionsSetTerminate;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtRunOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtRunOptions*, OrtStatus*> RunOptionsUnsetTerminate;
+        public delegate* unmanaged[Stdcall]<OrtRunOptions*, OrtStatusHandle> RunOptionsUnsetTerminate;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtAllocator *, const int64_t *, size_t, ONNXTensorElementDataType, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtAllocator*, long*, nuint, ONNXTensorElementDataType, OrtValue**, OrtStatus*> CreateTensorAsOrtValue;
+        public delegate* unmanaged[Stdcall]<OrtAllocator*, long*, nuint, ONNXTensorElementDataType, OrtValue**, OrtStatusHandle> CreateTensorAsOrtValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtMemoryInfo *, void *, size_t, const int64_t *, size_t, ONNXTensorElementDataType, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, void*, nuint, long*, nuint, ONNXTensorElementDataType, OrtValue**, OrtStatus*> CreateTensorWithDataAsOrtValue;
+        public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, void*, nuint, long*, nuint, ONNXTensorElementDataType, OrtValue**, OrtStatusHandle> CreateTensorWithDataAsOrtValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, int *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, int*, OrtStatus*> IsTensor;
+        public delegate* unmanaged[Stdcall]<OrtValue*, int*, OrtStatusHandle> IsTensor;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, void**, OrtStatus*> GetTensorMutableData;
+        public delegate* unmanaged[Stdcall]<OrtValue*, void**, OrtStatusHandle> GetTensorMutableData;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, const char *const *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, sbyte**, nuint, OrtStatus*> FillStringTensor;
+        public delegate* unmanaged[Stdcall]<OrtValue*, sbyte**, nuint, OrtStatusHandle> FillStringTensor;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, nuint*, OrtStatus*> GetStringTensorDataLength;
+        public delegate* unmanaged[Stdcall]<OrtValue*, nuint*, OrtStatusHandle> GetStringTensorDataLength;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, void *, size_t, size_t *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, void*, nuint, nuint*, nuint, OrtStatus*> GetStringTensorContent;
+        public delegate* unmanaged[Stdcall]<OrtValue*, void*, nuint, nuint*, nuint, OrtStatusHandle> GetStringTensorContent;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTypeInfo *, const OrtTensorTypeAndShapeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTypeInfo*, OrtTensorTypeAndShapeInfo**, OrtStatus*> CastTypeInfoToTensorInfo;
+        public delegate* unmanaged[Stdcall]<OrtTypeInfo*, OrtTensorTypeAndShapeInfo**, OrtStatusHandle> CastTypeInfoToTensorInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTypeInfo *, enum ONNXType *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTypeInfo*, ONNXType*, OrtStatus*> GetOnnxTypeFromTypeInfo;
+        public delegate* unmanaged[Stdcall]<OrtTypeInfo*, ONNXType*, OrtStatusHandle> GetOnnxTypeFromTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtTensorTypeAndShapeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo**, OrtStatus*> CreateTensorTypeAndShapeInfo;
+        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo**, OrtStatusHandle> CreateTensorTypeAndShapeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtTensorTypeAndShapeInfo *, enum ONNXTensorElementDataType) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, ONNXTensorElementDataType, OrtStatus*> SetTensorElementType;
+        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, ONNXTensorElementDataType, OrtStatusHandle> SetTensorElementType;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtTensorTypeAndShapeInfo *, const int64_t *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, long*, nuint, OrtStatus*> SetDimensions;
+        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, long*, nuint, OrtStatusHandle> SetDimensions;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTensorTypeAndShapeInfo *, enum ONNXTensorElementDataType *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, ONNXTensorElementDataType*, OrtStatus*> GetTensorElementType;
+        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, ONNXTensorElementDataType*, OrtStatusHandle> GetTensorElementType;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTensorTypeAndShapeInfo *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, nuint*, OrtStatus*> GetDimensionsCount;
+        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, nuint*, OrtStatusHandle> GetDimensionsCount;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTensorTypeAndShapeInfo *, int64_t *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, long*, nuint, OrtStatus*> GetDimensions;
+        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, long*, nuint, OrtStatusHandle> GetDimensions;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTensorTypeAndShapeInfo *, const char **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, sbyte*, nuint, OrtStatus*> GetSymbolicDimensions;
+        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, sbyte*, nuint, OrtStatusHandle> GetSymbolicDimensions;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTensorTypeAndShapeInfo *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, nuint*, OrtStatus*> GetTensorShapeElementCount;
+        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, nuint*, OrtStatusHandle> GetTensorShapeElementCount;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, OrtTensorTypeAndShapeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtTensorTypeAndShapeInfo**, OrtStatus*> GetTensorTypeAndShape;
+        public delegate* unmanaged[Stdcall]<OrtValue*, OrtTensorTypeAndShapeInfo**, OrtStatusHandle> GetTensorTypeAndShape;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, OrtTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtTypeInfo**, OrtStatus*> GetTypeInfo;
+        public delegate* unmanaged[Stdcall]<OrtValue*, OrtTypeInfo**, OrtStatusHandle> GetTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, enum ONNXType *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, ONNXType*, OrtStatus*> GetValueType;
+        public delegate* unmanaged[Stdcall]<OrtValue*, ONNXType*, OrtStatusHandle> GetValueType;
 
         [NativeTypeName("OrtStatusPtr (*)(const char *, enum OrtAllocatorType, int, enum OrtMemType, OrtMemoryInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<sbyte*, OrtAllocatorType, int, OrtMemType, OrtMemoryInfo**, OrtStatus*> CreateMemoryInfo;
+        public delegate* unmanaged[Stdcall]<sbyte*, OrtAllocatorType, int, OrtMemType, OrtMemoryInfo**, OrtStatusHandle> CreateMemoryInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(enum OrtAllocatorType, enum OrtMemType, OrtMemoryInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtAllocatorType, OrtMemType, OrtMemoryInfo**, OrtStatus*> CreateCpuMemoryInfo;
+        public delegate* unmanaged[Stdcall]<OrtAllocatorType, OrtMemType, OrtMemoryInfo**, OrtStatusHandle> CreateCpuMemoryInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtMemoryInfo *, const OrtMemoryInfo *, int *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, OrtMemoryInfo*, int*, OrtStatus*> CompareMemoryInfo;
+        public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, OrtMemoryInfo*, int*, OrtStatusHandle> CompareMemoryInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtMemoryInfo *, const char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, sbyte**, OrtStatus*> MemoryInfoGetName;
+        public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, sbyte**, OrtStatusHandle> MemoryInfoGetName;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtMemoryInfo *, int *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, int*, OrtStatus*> MemoryInfoGetId;
+        public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, int*, OrtStatusHandle> MemoryInfoGetId;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtMemoryInfo *, OrtMemType *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, OrtMemType*, OrtStatus*> MemoryInfoGetMemType;
+        public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, OrtMemType*, OrtStatusHandle> MemoryInfoGetMemType;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtMemoryInfo *, OrtAllocatorType *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, OrtAllocatorType*, OrtStatus*> MemoryInfoGetType;
+        public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, OrtAllocatorType*, OrtStatusHandle> MemoryInfoGetType;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtAllocator *, size_t, void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtAllocator*, nuint, void**, OrtStatus*> AllocatorAlloc;
+        public delegate* unmanaged[Stdcall]<OrtAllocator*, nuint, void**, OrtStatusHandle> AllocatorAlloc;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtAllocator *, void *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtAllocator*, void*, OrtStatus*> AllocatorFree;
+        public delegate* unmanaged[Stdcall]<OrtAllocator*, void*, OrtStatusHandle> AllocatorFree;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtAllocator *, const struct OrtMemoryInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtAllocator*, OrtMemoryInfo**, OrtStatus*> AllocatorGetInfo;
+        public delegate* unmanaged[Stdcall]<OrtAllocator*, OrtMemoryInfo**, OrtStatusHandle> AllocatorGetInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtAllocator **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtAllocator**, OrtStatus*> GetAllocatorWithDefaultOptions;
+        public delegate* unmanaged[Stdcall]<OrtAllocator**, OrtStatusHandle> GetAllocatorWithDefaultOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const char *, int64_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, long, OrtStatus*> AddFreeDimensionOverride;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, long, OrtStatusHandle> AddFreeDimensionOverride;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, int, OrtAllocator *, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, int, OrtAllocator*, OrtValue**, OrtStatus*> GetValue;
+        public delegate* unmanaged[Stdcall]<OrtValue*, int, OrtAllocator*, OrtValue**, OrtStatusHandle> GetValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, nuint*, OrtStatus*> GetValueCount;
+        public delegate* unmanaged[Stdcall]<OrtValue*, nuint*, OrtStatusHandle> GetValueCount;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *const *, size_t, enum ONNXType, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue**, nuint, ONNXType, OrtValue**, OrtStatus*> CreateValue;
+        public delegate* unmanaged[Stdcall]<OrtValue**, nuint, ONNXType, OrtValue**, OrtStatusHandle> CreateValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const char *, const char *, const void *, size_t, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<sbyte*, sbyte*, void*, nuint, OrtValue**, OrtStatus*> CreateOpaqueValue;
+        public delegate* unmanaged[Stdcall]<sbyte*, sbyte*, void*, nuint, OrtValue**, OrtStatusHandle> CreateOpaqueValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const char *, const char *, const OrtValue *, void *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<sbyte*, sbyte*, OrtValue*, void*, nuint, OrtStatus*> GetOpaqueValue;
+        public delegate* unmanaged[Stdcall]<sbyte*, sbyte*, OrtValue*, void*, nuint, OrtStatusHandle> GetOpaqueValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, const char *, float *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, float*, OrtStatus*> KernelInfoGetAttribute_float;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, float*, OrtStatusHandle> KernelInfoGetAttribute_float;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, const char *, int64_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, long*, OrtStatus*> KernelInfoGetAttribute_int64;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, long*, OrtStatusHandle> KernelInfoGetAttribute_int64;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, const char *, char *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, sbyte*, nuint*, OrtStatus*> KernelInfoGetAttribute_string;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, sbyte*, nuint*, OrtStatusHandle> KernelInfoGetAttribute_string;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelContext *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelContext*, nuint*, OrtStatus*> KernelContext_GetInputCount;
+        public delegate* unmanaged[Stdcall]<OrtKernelContext*, nuint*, OrtStatusHandle> KernelContext_GetInputCount;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelContext *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelContext*, nuint*, OrtStatus*> KernelContext_GetOutputCount;
+        public delegate* unmanaged[Stdcall]<OrtKernelContext*, nuint*, OrtStatusHandle> KernelContext_GetOutputCount;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelContext *, size_t, const OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelContext*, nuint, OrtValue**, OrtStatus*> KernelContext_GetInput;
+        public delegate* unmanaged[Stdcall]<OrtKernelContext*, nuint, OrtValue**, OrtStatusHandle> KernelContext_GetInput;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtKernelContext *, size_t, const int64_t *, size_t, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelContext*, nuint, long*, nuint, OrtValue**, OrtStatus*> KernelContext_GetOutput;
+        public delegate* unmanaged[Stdcall]<OrtKernelContext*, nuint, long*, nuint, OrtValue**, OrtStatusHandle> KernelContext_GetOutput;
 
         [NativeTypeName("void (*)(OrtEnv *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtEnv*, void> ReleaseEnv;
 
         [NativeTypeName("void (*)(OrtStatus *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtStatus*, void> ReleaseStatus;
+        public delegate* unmanaged[Stdcall]<OrtStatusHandle, void> ReleaseStatus;
 
         [NativeTypeName("void (*)(OrtMemoryInfo *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, void> ReleaseMemoryInfo;
@@ -898,22 +903,22 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtCustomOpDomain*, void> ReleaseCustomOpDomain;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTypeInfo *, const char **const, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTypeInfo*, sbyte**, nuint*, OrtStatus*> GetDenotationFromTypeInfo;
+        public delegate* unmanaged[Stdcall]<OrtTypeInfo*, sbyte**, nuint*, OrtStatusHandle> GetDenotationFromTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTypeInfo *, const OrtMapTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTypeInfo*, OrtMapTypeInfo**, OrtStatus*> CastTypeInfoToMapTypeInfo;
+        public delegate* unmanaged[Stdcall]<OrtTypeInfo*, OrtMapTypeInfo**, OrtStatusHandle> CastTypeInfoToMapTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTypeInfo *, const OrtSequenceTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTypeInfo*, OrtSequenceTypeInfo**, OrtStatus*> CastTypeInfoToSequenceTypeInfo;
+        public delegate* unmanaged[Stdcall]<OrtTypeInfo*, OrtSequenceTypeInfo**, OrtStatusHandle> CastTypeInfoToSequenceTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtMapTypeInfo *, enum ONNXTensorElementDataType *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtMapTypeInfo*, ONNXTensorElementDataType*, OrtStatus*> GetMapKeyType;
+        public delegate* unmanaged[Stdcall]<OrtMapTypeInfo*, ONNXTensorElementDataType*, OrtStatusHandle> GetMapKeyType;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtMapTypeInfo *, OrtTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtMapTypeInfo*, OrtTypeInfo**, OrtStatus*> GetMapValueType;
+        public delegate* unmanaged[Stdcall]<OrtMapTypeInfo*, OrtTypeInfo**, OrtStatusHandle> GetMapValueType;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSequenceTypeInfo *, OrtTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSequenceTypeInfo*, OrtTypeInfo**, OrtStatus*> GetSequenceElementType;
+        public delegate* unmanaged[Stdcall]<OrtSequenceTypeInfo*, OrtTypeInfo**, OrtStatusHandle> GetSequenceElementType;
 
         [NativeTypeName("void (*)(OrtMapTypeInfo *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtMapTypeInfo*, void> ReleaseMapTypeInfo;
@@ -922,97 +927,97 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtSequenceTypeInfo*, void> ReleaseSequenceTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSession *, OrtAllocator *, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, OrtAllocator*, sbyte**, OrtStatus*> SessionEndProfiling;
+        public delegate* unmanaged[Stdcall]<OrtSession*, OrtAllocator*, sbyte**, OrtStatusHandle> SessionEndProfiling;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSession *, OrtModelMetadata **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, OrtModelMetadata**, OrtStatus*> SessionGetModelMetadata;
+        public delegate* unmanaged[Stdcall]<OrtSession*, OrtModelMetadata**, OrtStatusHandle> SessionGetModelMetadata;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtModelMetadata *, OrtAllocator *, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelMetadata*, OrtAllocator*, sbyte**, OrtStatus*> ModelMetadataGetProducerName;
+        public delegate* unmanaged[Stdcall]<OrtModelMetadata*, OrtAllocator*, sbyte**, OrtStatusHandle> ModelMetadataGetProducerName;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtModelMetadata *, OrtAllocator *, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelMetadata*, OrtAllocator*, sbyte**, OrtStatus*> ModelMetadataGetGraphName;
+        public delegate* unmanaged[Stdcall]<OrtModelMetadata*, OrtAllocator*, sbyte**, OrtStatusHandle> ModelMetadataGetGraphName;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtModelMetadata *, OrtAllocator *, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelMetadata*, OrtAllocator*, sbyte**, OrtStatus*> ModelMetadataGetDomain;
+        public delegate* unmanaged[Stdcall]<OrtModelMetadata*, OrtAllocator*, sbyte**, OrtStatusHandle> ModelMetadataGetDomain;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtModelMetadata *, OrtAllocator *, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelMetadata*, OrtAllocator*, sbyte**, OrtStatus*> ModelMetadataGetDescription;
+        public delegate* unmanaged[Stdcall]<OrtModelMetadata*, OrtAllocator*, sbyte**, OrtStatusHandle> ModelMetadataGetDescription;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtModelMetadata *, OrtAllocator *, const char *, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelMetadata*, OrtAllocator*, sbyte*, sbyte**, OrtStatus*> ModelMetadataLookupCustomMetadataMap;
+        public delegate* unmanaged[Stdcall]<OrtModelMetadata*, OrtAllocator*, sbyte*, sbyte**, OrtStatusHandle> ModelMetadataLookupCustomMetadataMap;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtModelMetadata *, int64_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelMetadata*, long*, OrtStatus*> ModelMetadataGetVersion;
+        public delegate* unmanaged[Stdcall]<OrtModelMetadata*, long*, OrtStatusHandle> ModelMetadataGetVersion;
 
         [NativeTypeName("void (*)(OrtModelMetadata *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtModelMetadata*, void> ReleaseModelMetadata;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtLoggingLevel, const char *, const OrtThreadingOptions *, OrtEnv **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtLoggingLevel, sbyte*, OrtThreadingOptions*, OrtEnv**, OrtStatus*> CreateEnvWithGlobalThreadPools;
+        public delegate* unmanaged[Stdcall]<OrtLoggingLevel, sbyte*, OrtThreadingOptions*, OrtEnv**, OrtStatusHandle> CreateEnvWithGlobalThreadPools;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtStatus*> DisablePerSessionThreads;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtStatusHandle> DisablePerSessionThreads;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtThreadingOptions **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtThreadingOptions**, OrtStatus*> CreateThreadingOptions;
+        public delegate* unmanaged[Stdcall]<OrtThreadingOptions**, OrtStatusHandle> CreateThreadingOptions;
 
         [NativeTypeName("void (*)(OrtThreadingOptions *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtThreadingOptions*, void> ReleaseThreadingOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtModelMetadata *, OrtAllocator *, char ***, int64_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelMetadata*, OrtAllocator*, sbyte***, long*, OrtStatus*> ModelMetadataGetCustomMetadataMapKeys;
+        public delegate* unmanaged[Stdcall]<OrtModelMetadata*, OrtAllocator*, sbyte***, long*, OrtStatusHandle> ModelMetadataGetCustomMetadataMapKeys;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const char *, int64_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, long, OrtStatus*> AddFreeDimensionOverrideByName;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, long, OrtStatusHandle> AddFreeDimensionOverrideByName;
 
         [NativeTypeName("OrtStatusPtr (*)(char ***, int *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<sbyte***, int*, OrtStatus*> GetAvailableProviders;
+        public delegate* unmanaged[Stdcall]<sbyte***, int*, OrtStatusHandle> GetAvailableProviders;
 
         [NativeTypeName("OrtStatusPtr (*)(char **, int) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<sbyte**, int, OrtStatus*> ReleaseAvailableProviders;
+        public delegate* unmanaged[Stdcall]<sbyte**, int, OrtStatusHandle> ReleaseAvailableProviders;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, size_t, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, nuint, nuint*, OrtStatus*> GetStringTensorElementLength;
+        public delegate* unmanaged[Stdcall]<OrtValue*, nuint, nuint*, OrtStatusHandle> GetStringTensorElementLength;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, size_t, size_t, void *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, nuint, nuint, void*, OrtStatus*> GetStringTensorElement;
+        public delegate* unmanaged[Stdcall]<OrtValue*, nuint, nuint, void*, OrtStatusHandle> GetStringTensorElement;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, const char *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, sbyte*, nuint, OrtStatus*> FillStringTensorElement;
+        public delegate* unmanaged[Stdcall]<OrtValue*, sbyte*, nuint, OrtStatusHandle> FillStringTensorElement;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const char *, const char *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, sbyte*, OrtStatus*> AddSessionConfigEntry;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, sbyte*, OrtStatusHandle> AddSessionConfigEntry;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSession *, const OrtMemoryInfo *, OrtAllocator **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, OrtMemoryInfo*, OrtAllocator**, OrtStatus*> CreateAllocator;
+        public delegate* unmanaged[Stdcall]<OrtSession*, OrtMemoryInfo*, OrtAllocator**, OrtStatusHandle> CreateAllocator;
 
         [NativeTypeName("void (*)(OrtAllocator *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtAllocator*, void> ReleaseAllocator;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSession *, const OrtRunOptions *, const OrtIoBinding *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, OrtRunOptions*, OrtIoBinding*, OrtStatus*> RunWithBinding;
+        public delegate* unmanaged[Stdcall]<OrtSession*, OrtRunOptions*, OrtIoBinding*, OrtStatusHandle> RunWithBinding;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSession *, OrtIoBinding **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, OrtIoBinding**, OrtStatus*> CreateIoBinding;
+        public delegate* unmanaged[Stdcall]<OrtSession*, OrtIoBinding**, OrtStatusHandle> CreateIoBinding;
 
         [NativeTypeName("void (*)(OrtIoBinding *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtIoBinding*, void> ReleaseIoBinding;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtIoBinding *, const char *, const OrtValue *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtIoBinding*, sbyte*, OrtValue*, OrtStatus*> BindInput;
+        public delegate* unmanaged[Stdcall]<OrtIoBinding*, sbyte*, OrtValue*, OrtStatusHandle> BindInput;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtIoBinding *, const char *, const OrtValue *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtIoBinding*, sbyte*, OrtValue*, OrtStatus*> BindOutput;
+        public delegate* unmanaged[Stdcall]<OrtIoBinding*, sbyte*, OrtValue*, OrtStatusHandle> BindOutput;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtIoBinding *, const char *, const OrtMemoryInfo *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtIoBinding*, sbyte*, OrtMemoryInfo*, OrtStatus*> BindOutputToDevice;
+        public delegate* unmanaged[Stdcall]<OrtIoBinding*, sbyte*, OrtMemoryInfo*, OrtStatusHandle> BindOutputToDevice;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtIoBinding *, OrtAllocator *, char **, size_t **, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtIoBinding*, OrtAllocator*, sbyte**, nuint**, nuint*, OrtStatus*> GetBoundOutputNames;
+        public delegate* unmanaged[Stdcall]<OrtIoBinding*, OrtAllocator*, sbyte**, nuint**, nuint*, OrtStatusHandle> GetBoundOutputNames;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtIoBinding *, OrtAllocator *, OrtValue ***, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtIoBinding*, OrtAllocator*, OrtValue***, nuint*, OrtStatus*> GetBoundOutputValues;
+        public delegate* unmanaged[Stdcall]<OrtIoBinding*, OrtAllocator*, OrtValue***, nuint*, OrtStatusHandle> GetBoundOutputValues;
 
         [NativeTypeName("void (*)(OrtIoBinding *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtIoBinding*, void> ClearBoundInputs;
@@ -1021,229 +1026,229 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtIoBinding*, void> ClearBoundOutputs;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, const int64_t *, size_t, void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, long*, nuint, void**, OrtStatus*> TensorAt;
+        public delegate* unmanaged[Stdcall]<OrtValue*, long*, nuint, void**, OrtStatusHandle> TensorAt;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtEnv *, const OrtMemoryInfo *, const OrtArenaCfg *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtMemoryInfo*, OrtArenaCfg*, OrtStatus*> CreateAndRegisterAllocator;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtMemoryInfo*, OrtArenaCfg*, OrtStatusHandle> CreateAndRegisterAllocator;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *, OrtLanguageProjection) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtLanguageProjection, OrtStatus*> SetLanguageProjection;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtLanguageProjection, OrtStatusHandle> SetLanguageProjection;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSession *, uint64_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, ulong*, OrtStatus*> SessionGetProfilingStartTimeNs;
+        public delegate* unmanaged[Stdcall]<OrtSession*, ulong*, OrtStatusHandle> SessionGetProfilingStartTimeNs;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtThreadingOptions *, int) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtThreadingOptions*, int, OrtStatus*> SetGlobalIntraOpNumThreads;
+        public delegate* unmanaged[Stdcall]<OrtThreadingOptions*, int, OrtStatusHandle> SetGlobalIntraOpNumThreads;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtThreadingOptions *, int) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtThreadingOptions*, int, OrtStatus*> SetGlobalInterOpNumThreads;
+        public delegate* unmanaged[Stdcall]<OrtThreadingOptions*, int, OrtStatusHandle> SetGlobalInterOpNumThreads;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtThreadingOptions *, int) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtThreadingOptions*, int, OrtStatus*> SetGlobalSpinControl;
+        public delegate* unmanaged[Stdcall]<OrtThreadingOptions*, int, OrtStatusHandle> SetGlobalSpinControl;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const char *, const OrtValue *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, OrtValue*, OrtStatus*> AddInitializer;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, OrtValue*, OrtStatusHandle> AddInitializer;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtLoggingFunction, void *, OrtLoggingLevel, const char *, const struct OrtThreadingOptions *, OrtEnv **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<delegate* unmanaged[Stdcall]<void*, OrtLoggingLevel, sbyte*, sbyte*, sbyte*, sbyte*, void>, void*, OrtLoggingLevel, sbyte*, OrtThreadingOptions*, OrtEnv**, OrtStatus*> CreateEnvWithCustomLoggerAndGlobalThreadPools;
+        public delegate* unmanaged[Stdcall]<delegate* unmanaged[Stdcall]<void*, OrtLoggingLevel, sbyte*, sbyte*, sbyte*, sbyte*, void>, void*, OrtLoggingLevel, sbyte*, OrtThreadingOptions*, OrtEnv**, OrtStatusHandle> CreateEnvWithCustomLoggerAndGlobalThreadPools;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const OrtCUDAProviderOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtCUDAProviderOptions*, OrtStatus*> SessionOptionsAppendExecutionProvider_CUDA;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtCUDAProviderOptions*, OrtStatusHandle> SessionOptionsAppendExecutionProvider_CUDA;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const OrtROCMProviderOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtROCMProviderOptions*, OrtStatus*> SessionOptionsAppendExecutionProvider_ROCM;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtROCMProviderOptions*, OrtStatusHandle> SessionOptionsAppendExecutionProvider_ROCM;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const OrtOpenVINOProviderOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtOpenVINOProviderOptions*, OrtStatus*> SessionOptionsAppendExecutionProvider_OpenVINO;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtOpenVINOProviderOptions*, OrtStatusHandle> SessionOptionsAppendExecutionProvider_OpenVINO;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtThreadingOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtThreadingOptions*, OrtStatus*> SetGlobalDenormalAsZero;
+        public delegate* unmanaged[Stdcall]<OrtThreadingOptions*, OrtStatusHandle> SetGlobalDenormalAsZero;
 
         [NativeTypeName("OrtStatusPtr (*)(size_t, int, int, int, OrtArenaCfg **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<nuint, int, int, int, OrtArenaCfg**, OrtStatus*> CreateArenaCfg;
+        public delegate* unmanaged[Stdcall]<nuint, int, int, int, OrtArenaCfg**, OrtStatusHandle> CreateArenaCfg;
 
         [NativeTypeName("void (*)(OrtArenaCfg *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtArenaCfg*, void> ReleaseArenaCfg;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtModelMetadata *, OrtAllocator *, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelMetadata*, OrtAllocator*, sbyte**, OrtStatus*> ModelMetadataGetGraphDescription;
+        public delegate* unmanaged[Stdcall]<OrtModelMetadata*, OrtAllocator*, sbyte**, OrtStatusHandle> ModelMetadataGetGraphDescription;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const OrtTensorRTProviderOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtTensorRTProviderOptions*, OrtStatus*> SessionOptionsAppendExecutionProvider_TensorRT;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtTensorRTProviderOptions*, OrtStatusHandle> SessionOptionsAppendExecutionProvider_TensorRT;
 
         [NativeTypeName("OrtStatusPtr (*)(int) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<int, OrtStatus*> SetCurrentGpuDeviceId;
+        public delegate* unmanaged[Stdcall]<int, OrtStatusHandle> SetCurrentGpuDeviceId;
 
         [NativeTypeName("OrtStatusPtr (*)(int *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<int*, OrtStatus*> GetCurrentGpuDeviceId;
+        public delegate* unmanaged[Stdcall]<int*, OrtStatusHandle> GetCurrentGpuDeviceId;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, const char *, float *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, float*, nuint*, OrtStatus*> KernelInfoGetAttributeArray_float;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, float*, nuint*, OrtStatusHandle> KernelInfoGetAttributeArray_float;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, const char *, int64_t *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, long*, nuint*, OrtStatus*> KernelInfoGetAttributeArray_int64;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, long*, nuint*, OrtStatusHandle> KernelInfoGetAttributeArray_int64;
 
         [NativeTypeName("OrtStatusPtr (*)(const char *const *, const size_t *, size_t, OrtArenaCfg **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<sbyte**, nuint*, nuint, OrtArenaCfg**, OrtStatus*> CreateArenaCfgV2;
+        public delegate* unmanaged[Stdcall]<sbyte**, nuint*, nuint, OrtArenaCfg**, OrtStatusHandle> CreateArenaCfgV2;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtRunOptions *, const char *, const char *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtRunOptions*, sbyte*, sbyte*, OrtStatus*> AddRunConfigEntry;
+        public delegate* unmanaged[Stdcall]<OrtRunOptions*, sbyte*, sbyte*, OrtStatusHandle> AddRunConfigEntry;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtPrepackedWeightsContainer **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtPrepackedWeightsContainer**, OrtStatus*> CreatePrepackedWeightsContainer;
+        public delegate* unmanaged[Stdcall]<OrtPrepackedWeightsContainer**, OrtStatusHandle> CreatePrepackedWeightsContainer;
 
         [NativeTypeName("void (*)(OrtPrepackedWeightsContainer *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtPrepackedWeightsContainer*, void> ReleasePrepackedWeightsContainer;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *, const wchar_t *, const OrtSessionOptions *, OrtPrepackedWeightsContainer *, OrtSession **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, ushort*, OrtSessionOptions*, OrtPrepackedWeightsContainer*, OrtSession**, OrtStatus*> CreateSessionWithPrepackedWeightsContainer;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, ushort*, OrtSessionOptions*, OrtPrepackedWeightsContainer*, OrtSession**, OrtStatusHandle> CreateSessionWithPrepackedWeightsContainer;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *, const void *, size_t, const OrtSessionOptions *, OrtPrepackedWeightsContainer *, OrtSession **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, void*, nuint, OrtSessionOptions*, OrtPrepackedWeightsContainer*, OrtSession**, OrtStatus*> CreateSessionFromArrayWithPrepackedWeightsContainer;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, void*, nuint, OrtSessionOptions*, OrtPrepackedWeightsContainer*, OrtSession**, OrtStatusHandle> CreateSessionFromArrayWithPrepackedWeightsContainer;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const OrtTensorRTProviderOptionsV2 *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtTensorRTProviderOptionsV2*, OrtStatus*> SessionOptionsAppendExecutionProvider_TensorRT_V2;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtTensorRTProviderOptionsV2*, OrtStatusHandle> SessionOptionsAppendExecutionProvider_TensorRT_V2;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtTensorRTProviderOptionsV2 **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTensorRTProviderOptionsV2**, OrtStatus*> CreateTensorRTProviderOptions;
+        public delegate* unmanaged[Stdcall]<OrtTensorRTProviderOptionsV2**, OrtStatusHandle> CreateTensorRTProviderOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtTensorRTProviderOptionsV2 *, const char *const *, const char *const *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTensorRTProviderOptionsV2*, sbyte**, sbyte**, nuint, OrtStatus*> UpdateTensorRTProviderOptions;
+        public delegate* unmanaged[Stdcall]<OrtTensorRTProviderOptionsV2*, sbyte**, sbyte**, nuint, OrtStatusHandle> UpdateTensorRTProviderOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTensorRTProviderOptionsV2 *, OrtAllocator *, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTensorRTProviderOptionsV2*, OrtAllocator*, sbyte**, OrtStatus*> GetTensorRTProviderOptionsAsString;
+        public delegate* unmanaged[Stdcall]<OrtTensorRTProviderOptionsV2*, OrtAllocator*, sbyte**, OrtStatusHandle> GetTensorRTProviderOptionsAsString;
 
         [NativeTypeName("void (*)(OrtTensorRTProviderOptionsV2 *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtTensorRTProviderOptionsV2*, void> ReleaseTensorRTProviderOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtStatus*> EnableOrtCustomOps;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtStatusHandle> EnableOrtCustomOps;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtEnv *, OrtAllocator *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtAllocator*, OrtStatus*> RegisterAllocator;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtAllocator*, OrtStatusHandle> RegisterAllocator;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtEnv *, const OrtMemoryInfo *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtMemoryInfo*, OrtStatus*> UnregisterAllocator;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtMemoryInfo*, OrtStatusHandle> UnregisterAllocator;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, int *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, int*, OrtStatus*> IsSparseTensor;
+        public delegate* unmanaged[Stdcall]<OrtValue*, int*, OrtStatusHandle> IsSparseTensor;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtAllocator *, const int64_t *, size_t, ONNXTensorElementDataType, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtAllocator*, long*, nuint, ONNXTensorElementDataType, OrtValue**, OrtStatus*> CreateSparseTensorAsOrtValue;
+        public delegate* unmanaged[Stdcall]<OrtAllocator*, long*, nuint, ONNXTensorElementDataType, OrtValue**, OrtStatusHandle> CreateSparseTensorAsOrtValue;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, const OrtMemoryInfo *, const int64_t *, size_t, const void *, const int64_t *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtMemoryInfo*, long*, nuint, void*, long*, nuint, OrtStatus*> FillSparseTensorCoo;
+        public delegate* unmanaged[Stdcall]<OrtValue*, OrtMemoryInfo*, long*, nuint, void*, long*, nuint, OrtStatusHandle> FillSparseTensorCoo;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, const OrtMemoryInfo *, const int64_t *, size_t, const void *, const int64_t *, size_t, const int64_t *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtMemoryInfo*, long*, nuint, void*, long*, nuint, long*, nuint, OrtStatus*> FillSparseTensorCsr;
+        public delegate* unmanaged[Stdcall]<OrtValue*, OrtMemoryInfo*, long*, nuint, void*, long*, nuint, long*, nuint, OrtStatusHandle> FillSparseTensorCsr;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, const OrtMemoryInfo *, const int64_t *, size_t, const void *, const int64_t *, size_t, const int32_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtMemoryInfo*, long*, nuint, void*, long*, nuint, int*, OrtStatus*> FillSparseTensorBlockSparse;
+        public delegate* unmanaged[Stdcall]<OrtValue*, OrtMemoryInfo*, long*, nuint, void*, long*, nuint, int*, OrtStatusHandle> FillSparseTensorBlockSparse;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtMemoryInfo *, void *, const int64_t *, size_t, const int64_t *, size_t, ONNXTensorElementDataType, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, void*, long*, nuint, long*, nuint, ONNXTensorElementDataType, OrtValue**, OrtStatus*> CreateSparseTensorWithValuesAsOrtValue;
+        public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, void*, long*, nuint, long*, nuint, ONNXTensorElementDataType, OrtValue**, OrtStatusHandle> CreateSparseTensorWithValuesAsOrtValue;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, int64_t *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, long*, nuint, OrtStatus*> UseCooIndices;
+        public delegate* unmanaged[Stdcall]<OrtValue*, long*, nuint, OrtStatusHandle> UseCooIndices;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, int64_t *, size_t, int64_t *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, long*, nuint, long*, nuint, OrtStatus*> UseCsrIndices;
+        public delegate* unmanaged[Stdcall]<OrtValue*, long*, nuint, long*, nuint, OrtStatusHandle> UseCsrIndices;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, const int64_t *, size_t, int32_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, long*, nuint, int*, OrtStatus*> UseBlockSparseIndices;
+        public delegate* unmanaged[Stdcall]<OrtValue*, long*, nuint, int*, OrtStatusHandle> UseBlockSparseIndices;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, enum OrtSparseFormat *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtSparseFormat*, OrtStatus*> GetSparseTensorFormat;
+        public delegate* unmanaged[Stdcall]<OrtValue*, OrtSparseFormat*, OrtStatusHandle> GetSparseTensorFormat;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, OrtTensorTypeAndShapeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtTensorTypeAndShapeInfo**, OrtStatus*> GetSparseTensorValuesTypeAndShape;
+        public delegate* unmanaged[Stdcall]<OrtValue*, OrtTensorTypeAndShapeInfo**, OrtStatusHandle> GetSparseTensorValuesTypeAndShape;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, const void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, void**, OrtStatus*> GetSparseTensorValues;
+        public delegate* unmanaged[Stdcall]<OrtValue*, void**, OrtStatusHandle> GetSparseTensorValues;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, enum OrtSparseIndicesFormat, OrtTensorTypeAndShapeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtSparseIndicesFormat, OrtTensorTypeAndShapeInfo**, OrtStatus*> GetSparseTensorIndicesTypeShape;
+        public delegate* unmanaged[Stdcall]<OrtValue*, OrtSparseIndicesFormat, OrtTensorTypeAndShapeInfo**, OrtStatusHandle> GetSparseTensorIndicesTypeShape;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, enum OrtSparseIndicesFormat, size_t *, const void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtSparseIndicesFormat, nuint*, void**, OrtStatus*> GetSparseTensorIndices;
+        public delegate* unmanaged[Stdcall]<OrtValue*, OrtSparseIndicesFormat, nuint*, void**, OrtStatusHandle> GetSparseTensorIndices;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, int *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, int*, OrtStatus*> HasValue;
+        public delegate* unmanaged[Stdcall]<OrtValue*, int*, OrtStatusHandle> HasValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelContext *, void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelContext*, void**, OrtStatus*> KernelContext_GetGPUComputeStream;
+        public delegate* unmanaged[Stdcall]<OrtKernelContext*, void**, OrtStatusHandle> KernelContext_GetGPUComputeStream;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, const OrtMemoryInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtMemoryInfo**, OrtStatus*> GetTensorMemoryInfo;
+        public delegate* unmanaged[Stdcall]<OrtValue*, OrtMemoryInfo**, OrtStatusHandle> GetTensorMemoryInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const char *, uint32_t, const void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<sbyte*, uint, void**, OrtStatus*> GetExecutionProviderApi;
+        public delegate* unmanaged[Stdcall]<sbyte*, uint, void**, OrtStatusHandle> GetExecutionProviderApi;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, OrtCustomCreateThreadFn) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, delegate* unmanaged[Cdecl]<void*, delegate* unmanaged[Cdecl]<void*, void>, void*, OrtCustomHandleType*>, OrtStatus*> SessionOptionsSetCustomCreateThreadFn;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, delegate* unmanaged[Cdecl]<void*, delegate* unmanaged[Cdecl]<void*, void>, void*, OrtCustomHandleType*>, OrtStatusHandle> SessionOptionsSetCustomCreateThreadFn;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, void *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, void*, OrtStatus*> SessionOptionsSetCustomThreadCreationOptions;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, void*, OrtStatusHandle> SessionOptionsSetCustomThreadCreationOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, OrtCustomJoinThreadFn) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, delegate* unmanaged[Cdecl]<OrtCustomHandleType*, void>, OrtStatus*> SessionOptionsSetCustomJoinThreadFn;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, delegate* unmanaged[Cdecl]<OrtCustomHandleType*, void>, OrtStatusHandle> SessionOptionsSetCustomJoinThreadFn;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtThreadingOptions *, OrtCustomCreateThreadFn) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtThreadingOptions*, delegate* unmanaged[Cdecl]<void*, delegate* unmanaged[Cdecl]<void*, void>, void*, OrtCustomHandleType*>, OrtStatus*> SetGlobalCustomCreateThreadFn;
+        public delegate* unmanaged[Stdcall]<OrtThreadingOptions*, delegate* unmanaged[Cdecl]<void*, delegate* unmanaged[Cdecl]<void*, void>, void*, OrtCustomHandleType*>, OrtStatusHandle> SetGlobalCustomCreateThreadFn;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtThreadingOptions *, void *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtThreadingOptions*, void*, OrtStatus*> SetGlobalCustomThreadCreationOptions;
+        public delegate* unmanaged[Stdcall]<OrtThreadingOptions*, void*, OrtStatusHandle> SetGlobalCustomThreadCreationOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtThreadingOptions *, OrtCustomJoinThreadFn) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtThreadingOptions*, delegate* unmanaged[Cdecl]<OrtCustomHandleType*, void>, OrtStatus*> SetGlobalCustomJoinThreadFn;
+        public delegate* unmanaged[Stdcall]<OrtThreadingOptions*, delegate* unmanaged[Cdecl]<OrtCustomHandleType*, void>, OrtStatusHandle> SetGlobalCustomJoinThreadFn;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtIoBinding *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtIoBinding*, OrtStatus*> SynchronizeBoundInputs;
+        public delegate* unmanaged[Stdcall]<OrtIoBinding*, OrtStatusHandle> SynchronizeBoundInputs;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtIoBinding *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtIoBinding*, OrtStatus*> SynchronizeBoundOutputs;
+        public delegate* unmanaged[Stdcall]<OrtIoBinding*, OrtStatusHandle> SynchronizeBoundOutputs;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const OrtCUDAProviderOptionsV2 *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtCUDAProviderOptionsV2*, OrtStatus*> SessionOptionsAppendExecutionProvider_CUDA_V2;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtCUDAProviderOptionsV2*, OrtStatusHandle> SessionOptionsAppendExecutionProvider_CUDA_V2;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtCUDAProviderOptionsV2 **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtCUDAProviderOptionsV2**, OrtStatus*> CreateCUDAProviderOptions;
+        public delegate* unmanaged[Stdcall]<OrtCUDAProviderOptionsV2**, OrtStatusHandle> CreateCUDAProviderOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtCUDAProviderOptionsV2 *, const char *const *, const char *const *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtCUDAProviderOptionsV2*, sbyte**, sbyte**, nuint, OrtStatus*> UpdateCUDAProviderOptions;
+        public delegate* unmanaged[Stdcall]<OrtCUDAProviderOptionsV2*, sbyte**, sbyte**, nuint, OrtStatusHandle> UpdateCUDAProviderOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtCUDAProviderOptionsV2 *, OrtAllocator *, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtCUDAProviderOptionsV2*, OrtAllocator*, sbyte**, OrtStatus*> GetCUDAProviderOptionsAsString;
+        public delegate* unmanaged[Stdcall]<OrtCUDAProviderOptionsV2*, OrtAllocator*, sbyte**, OrtStatusHandle> GetCUDAProviderOptionsAsString;
 
         [NativeTypeName("void (*)(OrtCUDAProviderOptionsV2 *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtCUDAProviderOptionsV2*, void> ReleaseCUDAProviderOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const OrtMIGraphXProviderOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtMIGraphXProviderOptions*, OrtStatus*> SessionOptionsAppendExecutionProvider_MIGraphX;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtMIGraphXProviderOptions*, OrtStatusHandle> SessionOptionsAppendExecutionProvider_MIGraphX;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const char *const *, const OrtValue *const *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte**, OrtValue**, nuint, OrtStatus*> AddExternalInitializers;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte**, OrtValue**, nuint, OrtStatusHandle> AddExternalInitializers;
 
         [NativeTypeName("OrtStatusPtr (*)(const char *, const void *, int, OrtOpAttrType, OrtOpAttr **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<sbyte*, void*, int, OrtOpAttrType, OrtOpAttr**, OrtStatus*> CreateOpAttr;
+        public delegate* unmanaged[Stdcall]<sbyte*, void*, int, OrtOpAttrType, OrtOpAttr**, OrtStatusHandle> CreateOpAttr;
 
         [NativeTypeName("void (*)(OrtOpAttr *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtOpAttr*, void> ReleaseOpAttr;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, const char *, const char *, int, const char **, const ONNXTensorElementDataType *, int, const OrtOpAttr *const *, int, int, int, OrtOp **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, sbyte*, int, sbyte**, ONNXTensorElementDataType*, int, OrtOpAttr**, int, int, int, OrtOp**, OrtStatus*> CreateOp;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, sbyte*, int, sbyte**, ONNXTensorElementDataType*, int, OrtOpAttr**, int, int, int, OrtOp**, OrtStatusHandle> CreateOp;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelContext *, const OrtOp *, const OrtValue *const *, int, OrtValue *const *, int) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelContext*, OrtOp*, OrtValue**, int, OrtValue**, int, OrtStatus*> InvokeOp;
+        public delegate* unmanaged[Stdcall]<OrtKernelContext*, OrtOp*, OrtValue**, int, OrtValue**, int, OrtStatusHandle> InvokeOp;
 
         [NativeTypeName("void (*)(OrtOp *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtOp*, void> ReleaseOp;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const char *, const char *const *, const char *const *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, sbyte**, sbyte**, nuint, OrtStatus*> SessionOptionsAppendExecutionProvider;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, sbyte**, sbyte**, nuint, OrtStatusHandle> SessionOptionsAppendExecutionProvider;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, OrtKernelInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, OrtKernelInfo**, OrtStatus*> CopyKernelInfo;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, OrtKernelInfo**, OrtStatusHandle> CopyKernelInfo;
 
         [NativeTypeName("void (*)(OrtKernelInfo *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtKernelInfo*, void> ReleaseKernelInfo;
@@ -1252,16 +1257,16 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<uint, OrtTrainingApi*> GetTrainingApi;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const OrtCANNProviderOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtCANNProviderOptions*, OrtStatus*> SessionOptionsAppendExecutionProvider_CANN;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtCANNProviderOptions*, OrtStatusHandle> SessionOptionsAppendExecutionProvider_CANN;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtCANNProviderOptions **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtCANNProviderOptions**, OrtStatus*> CreateCANNProviderOptions;
+        public delegate* unmanaged[Stdcall]<OrtCANNProviderOptions**, OrtStatusHandle> CreateCANNProviderOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtCANNProviderOptions *, const char *const *, const char *const *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtCANNProviderOptions*, sbyte**, sbyte**, nuint, OrtStatus*> UpdateCANNProviderOptions;
+        public delegate* unmanaged[Stdcall]<OrtCANNProviderOptions*, sbyte**, sbyte**, nuint, OrtStatusHandle> UpdateCANNProviderOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtCANNProviderOptions *, OrtAllocator *, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtCANNProviderOptions*, OrtAllocator*, sbyte**, OrtStatus*> GetCANNProviderOptionsAsString;
+        public delegate* unmanaged[Stdcall]<OrtCANNProviderOptions*, OrtAllocator*, sbyte**, OrtStatusHandle> GetCANNProviderOptionsAsString;
 
         [NativeTypeName("void (*)(OrtCANNProviderOptions *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtCANNProviderOptions*, void> ReleaseCANNProviderOptions;
@@ -1270,181 +1275,181 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, OrtMemoryInfoDeviceType*, void> MemoryInfoGetDeviceType;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtEnv *, OrtLoggingLevel) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtLoggingLevel, OrtStatus*> UpdateEnvWithCustomLogLevel;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtLoggingLevel, OrtStatusHandle> UpdateEnvWithCustomLogLevel;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtThreadingOptions *, const char *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtThreadingOptions*, sbyte*, OrtStatus*> SetGlobalIntraOpThreadAffinity;
+        public delegate* unmanaged[Stdcall]<OrtThreadingOptions*, sbyte*, OrtStatusHandle> SetGlobalIntraOpThreadAffinity;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const wchar_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, ushort*, OrtStatus*> RegisterCustomOpsLibrary_V2;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, ushort*, OrtStatusHandle> RegisterCustomOpsLibrary_V2;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const char *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, OrtStatus*> RegisterCustomOpsUsingFunction;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, OrtStatusHandle> RegisterCustomOpsUsingFunction;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, nuint*, OrtStatus*> KernelInfo_GetInputCount;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, nuint*, OrtStatusHandle> KernelInfo_GetInputCount;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, nuint*, OrtStatus*> KernelInfo_GetOutputCount;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, nuint*, OrtStatusHandle> KernelInfo_GetOutputCount;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, size_t, char *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, nuint, sbyte*, nuint*, OrtStatus*> KernelInfo_GetInputName;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, nuint, sbyte*, nuint*, OrtStatusHandle> KernelInfo_GetInputName;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, size_t, char *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, nuint, sbyte*, nuint*, OrtStatus*> KernelInfo_GetOutputName;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, nuint, sbyte*, nuint*, OrtStatusHandle> KernelInfo_GetOutputName;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, size_t, OrtTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, nuint, OrtTypeInfo**, OrtStatus*> KernelInfo_GetInputTypeInfo;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, nuint, OrtTypeInfo**, OrtStatusHandle> KernelInfo_GetInputTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, size_t, OrtTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, nuint, OrtTypeInfo**, OrtStatus*> KernelInfo_GetOutputTypeInfo;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, nuint, OrtTypeInfo**, OrtStatusHandle> KernelInfo_GetOutputTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, const char *, OrtAllocator *, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, OrtAllocator*, OrtValue**, OrtStatus*> KernelInfoGetAttribute_tensor;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, OrtAllocator*, OrtValue**, OrtStatusHandle> KernelInfoGetAttribute_tensor;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSessionOptions *, const char *, int *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, int*, OrtStatus*> HasSessionConfigEntry;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, int*, OrtStatusHandle> HasSessionConfigEntry;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSessionOptions *, const char *, char *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, sbyte*, nuint*, OrtStatus*> GetSessionConfigEntry;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, sbyte*, nuint*, OrtStatusHandle> GetSessionConfigEntry;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const OrtDnnlProviderOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtDnnlProviderOptions*, OrtStatus*> SessionOptionsAppendExecutionProvider_Dnnl;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtDnnlProviderOptions*, OrtStatusHandle> SessionOptionsAppendExecutionProvider_Dnnl;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtDnnlProviderOptions **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtDnnlProviderOptions**, OrtStatus*> CreateDnnlProviderOptions;
+        public delegate* unmanaged[Stdcall]<OrtDnnlProviderOptions**, OrtStatusHandle> CreateDnnlProviderOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtDnnlProviderOptions *, const char *const *, const char *const *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtDnnlProviderOptions*, sbyte**, sbyte**, nuint, OrtStatus*> UpdateDnnlProviderOptions;
+        public delegate* unmanaged[Stdcall]<OrtDnnlProviderOptions*, sbyte**, sbyte**, nuint, OrtStatusHandle> UpdateDnnlProviderOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtDnnlProviderOptions *, OrtAllocator *, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtDnnlProviderOptions*, OrtAllocator*, sbyte**, OrtStatus*> GetDnnlProviderOptionsAsString;
+        public delegate* unmanaged[Stdcall]<OrtDnnlProviderOptions*, OrtAllocator*, sbyte**, OrtStatusHandle> GetDnnlProviderOptionsAsString;
 
         [NativeTypeName("void (*)(OrtDnnlProviderOptions *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtDnnlProviderOptions*, void> ReleaseDnnlProviderOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, char *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, nuint*, OrtStatus*> KernelInfo_GetNodeName;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, nuint*, OrtStatusHandle> KernelInfo_GetNodeName;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, const OrtLogger **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, OrtLogger**, OrtStatus*> KernelInfo_GetLogger;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, OrtLogger**, OrtStatusHandle> KernelInfo_GetLogger;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelContext *, const OrtLogger **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelContext*, OrtLogger**, OrtStatus*> KernelContext_GetLogger;
+        public delegate* unmanaged[Stdcall]<OrtKernelContext*, OrtLogger**, OrtStatusHandle> KernelContext_GetLogger;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtLogger *, OrtLoggingLevel, const char *, const wchar_t *, int, const char *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtLogger*, OrtLoggingLevel, sbyte*, ushort*, int, sbyte*, OrtStatus*> Logger_LogMessage;
+        public delegate* unmanaged[Stdcall]<OrtLogger*, OrtLoggingLevel, sbyte*, ushort*, int, sbyte*, OrtStatusHandle> Logger_LogMessage;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtLogger *, OrtLoggingLevel *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtLogger*, OrtLoggingLevel*, OrtStatus*> Logger_GetLoggingSeverityLevel;
+        public delegate* unmanaged[Stdcall]<OrtLogger*, OrtLoggingLevel*, OrtStatusHandle> Logger_GetLoggingSeverityLevel;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, size_t, int *, const OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, nuint, int*, OrtValue**, OrtStatus*> KernelInfoGetConstantInput_tensor;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, nuint, int*, OrtValue**, OrtStatusHandle> KernelInfoGetConstantInput_tensor;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTypeInfo *, const OrtOptionalTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTypeInfo*, OrtOptionalTypeInfo**, OrtStatus*> CastTypeInfoToOptionalTypeInfo;
+        public delegate* unmanaged[Stdcall]<OrtTypeInfo*, OrtOptionalTypeInfo**, OrtStatusHandle> CastTypeInfoToOptionalTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtOptionalTypeInfo *, OrtTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtOptionalTypeInfo*, OrtTypeInfo**, OrtStatus*> GetOptionalContainedTypeInfo;
+        public delegate* unmanaged[Stdcall]<OrtOptionalTypeInfo*, OrtTypeInfo**, OrtStatusHandle> GetOptionalContainedTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, size_t, size_t, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, nuint, nuint, sbyte**, OrtStatus*> GetResizedStringTensorElementBuffer;
+        public delegate* unmanaged[Stdcall]<OrtValue*, nuint, nuint, sbyte**, OrtStatusHandle> GetResizedStringTensorElementBuffer;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelContext *, const OrtMemoryInfo *, OrtAllocator **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelContext*, OrtMemoryInfo*, OrtAllocator**, OrtStatus*> KernelContext_GetAllocator;
+        public delegate* unmanaged[Stdcall]<OrtKernelContext*, OrtMemoryInfo*, OrtAllocator**, OrtStatusHandle> KernelContext_GetAllocator;
 
         [NativeTypeName("const char *(*)(void) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<sbyte*> GetBuildInfoString;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtROCMProviderOptions **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtROCMProviderOptions**, OrtStatus*> CreateROCMProviderOptions;
+        public delegate* unmanaged[Stdcall]<OrtROCMProviderOptions**, OrtStatusHandle> CreateROCMProviderOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtROCMProviderOptions *, const char *const *, const char *const *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtROCMProviderOptions*, sbyte**, sbyte**, nuint, OrtStatus*> UpdateROCMProviderOptions;
+        public delegate* unmanaged[Stdcall]<OrtROCMProviderOptions*, sbyte**, sbyte**, nuint, OrtStatusHandle> UpdateROCMProviderOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtROCMProviderOptions *, OrtAllocator *, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtROCMProviderOptions*, OrtAllocator*, sbyte**, OrtStatus*> GetROCMProviderOptionsAsString;
+        public delegate* unmanaged[Stdcall]<OrtROCMProviderOptions*, OrtAllocator*, sbyte**, OrtStatusHandle> GetROCMProviderOptionsAsString;
 
         [NativeTypeName("void (*)(OrtROCMProviderOptions *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtROCMProviderOptions*, void> ReleaseROCMProviderOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtEnv *, const char *, const OrtMemoryInfo *, const OrtArenaCfg *, const char *const *, const char *const *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, sbyte*, OrtMemoryInfo*, OrtArenaCfg*, sbyte**, sbyte**, nuint, OrtStatus*> CreateAndRegisterAllocatorV2;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, sbyte*, OrtMemoryInfo*, OrtArenaCfg*, sbyte**, sbyte**, nuint, OrtStatusHandle> CreateAndRegisterAllocatorV2;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSession *, const OrtRunOptions *, const char *const *, const OrtValue *const *, size_t, const char *const *, size_t, OrtValue **, RunAsyncCallbackFn, void *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, OrtRunOptions*, sbyte**, OrtValue**, nuint, sbyte**, nuint, OrtValue**, delegate* unmanaged[Cdecl]<void*, OrtValue**, nuint, OrtStatus*, void>, void*, OrtStatus*> RunAsync;
+        public delegate* unmanaged[Stdcall]<OrtSession*, OrtRunOptions*, sbyte**, OrtValue**, nuint, sbyte**, nuint, OrtValue**, delegate* unmanaged[Cdecl]<void*, OrtValue**, nuint, void*, void>, void*, OrtStatusHandle> RunAsync;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtTensorRTProviderOptionsV2 *, const char *, void *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTensorRTProviderOptionsV2*, sbyte*, void*, OrtStatus*> UpdateTensorRTProviderOptionsWithValue;
+        public delegate* unmanaged[Stdcall]<OrtTensorRTProviderOptionsV2*, sbyte*, void*, OrtStatusHandle> UpdateTensorRTProviderOptionsWithValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTensorRTProviderOptionsV2 *, const char *, void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTensorRTProviderOptionsV2*, sbyte*, void**, OrtStatus*> GetTensorRTProviderOptionsByName;
+        public delegate* unmanaged[Stdcall]<OrtTensorRTProviderOptionsV2*, sbyte*, void**, OrtStatusHandle> GetTensorRTProviderOptionsByName;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtCUDAProviderOptionsV2 *, const char *, void *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtCUDAProviderOptionsV2*, sbyte*, void*, OrtStatus*> UpdateCUDAProviderOptionsWithValue;
+        public delegate* unmanaged[Stdcall]<OrtCUDAProviderOptionsV2*, sbyte*, void*, OrtStatusHandle> UpdateCUDAProviderOptionsWithValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtCUDAProviderOptionsV2 *, const char *, void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtCUDAProviderOptionsV2*, sbyte*, void**, OrtStatus*> GetCUDAProviderOptionsByName;
+        public delegate* unmanaged[Stdcall]<OrtCUDAProviderOptionsV2*, sbyte*, void**, OrtStatusHandle> GetCUDAProviderOptionsByName;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelContext *, int, int, void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelContext*, int, int, void**, OrtStatus*> KernelContext_GetResource;
+        public delegate* unmanaged[Stdcall]<OrtKernelContext*, int, int, void**, OrtStatusHandle> KernelContext_GetResource;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, OrtLoggingFunction, void *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, delegate* unmanaged[Stdcall]<void*, OrtLoggingLevel, sbyte*, sbyte*, sbyte*, sbyte*, void>, void*, OrtStatus*> SetUserLoggingFunction;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, delegate* unmanaged[Stdcall]<void*, OrtLoggingLevel, sbyte*, sbyte*, sbyte*, sbyte*, void>, void*, OrtStatusHandle> SetUserLoggingFunction;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtShapeInferContext *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtShapeInferContext*, nuint*, OrtStatus*> ShapeInferContext_GetInputCount;
+        public delegate* unmanaged[Stdcall]<OrtShapeInferContext*, nuint*, OrtStatusHandle> ShapeInferContext_GetInputCount;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtShapeInferContext *, size_t, OrtTensorTypeAndShapeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtShapeInferContext*, nuint, OrtTensorTypeAndShapeInfo**, OrtStatus*> ShapeInferContext_GetInputTypeShape;
+        public delegate* unmanaged[Stdcall]<OrtShapeInferContext*, nuint, OrtTensorTypeAndShapeInfo**, OrtStatusHandle> ShapeInferContext_GetInputTypeShape;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtShapeInferContext *, const char *, const OrtOpAttr **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtShapeInferContext*, sbyte*, OrtOpAttr**, OrtStatus*> ShapeInferContext_GetAttribute;
+        public delegate* unmanaged[Stdcall]<OrtShapeInferContext*, sbyte*, OrtOpAttr**, OrtStatusHandle> ShapeInferContext_GetAttribute;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtShapeInferContext *, size_t, const OrtTensorTypeAndShapeInfo *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtShapeInferContext*, nuint, OrtTensorTypeAndShapeInfo*, OrtStatus*> ShapeInferContext_SetOutputTypeShape;
+        public delegate* unmanaged[Stdcall]<OrtShapeInferContext*, nuint, OrtTensorTypeAndShapeInfo*, OrtStatusHandle> ShapeInferContext_SetOutputTypeShape;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtTensorTypeAndShapeInfo *, const char **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, sbyte*, nuint, OrtStatus*> SetSymbolicDimensions;
+        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, sbyte*, nuint, OrtStatusHandle> SetSymbolicDimensions;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtOpAttr *, OrtOpAttrType, void *, size_t, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtOpAttr*, OrtOpAttrType, void*, nuint, nuint*, OrtStatus*> ReadOpAttr;
+        public delegate* unmanaged[Stdcall]<OrtOpAttr*, OrtOpAttrType, void*, nuint, nuint*, OrtStatusHandle> ReadOpAttr;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, _Bool) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, byte, OrtStatus*> SetDeterministicCompute;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, byte, OrtStatusHandle> SetDeterministicCompute;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelContext *, void (*)(void *, size_t), size_t, size_t, void *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelContext*, delegate* unmanaged[Cdecl]<void*, nuint, void>, nuint, nuint, void*, OrtStatus*> KernelContext_ParallelFor;
+        public delegate* unmanaged[Stdcall]<OrtKernelContext*, delegate* unmanaged[Cdecl]<void*, nuint, void>, nuint, nuint, void*, OrtStatusHandle> KernelContext_ParallelFor;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const char *const *, const char *const *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte**, sbyte**, nuint, OrtStatus*> SessionOptionsAppendExecutionProvider_OpenVINO_V2;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte**, sbyte**, nuint, OrtStatusHandle> SessionOptionsAppendExecutionProvider_OpenVINO_V2;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const char *const *, const char *const *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte**, sbyte**, nuint, OrtStatus*> SessionOptionsAppendExecutionProvider_VitisAI;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte**, sbyte**, nuint, OrtStatusHandle> SessionOptionsAppendExecutionProvider_VitisAI;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelContext *, const OrtMemoryInfo *, size_t, void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelContext*, OrtMemoryInfo*, nuint, void**, OrtStatus*> KernelContext_GetScratchBuffer;
+        public delegate* unmanaged[Stdcall]<OrtKernelContext*, OrtMemoryInfo*, nuint, void**, OrtStatusHandle> KernelContext_GetScratchBuffer;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, OrtMemType, OrtAllocator **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, OrtMemType, OrtAllocator**, OrtStatus*> KernelInfoGetAllocator;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, OrtMemType, OrtAllocator**, OrtStatusHandle> KernelInfoGetAllocator;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const wchar_t *const *, char *const *, const size_t *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, ushort**, sbyte**, nuint*, nuint, OrtStatus*> AddExternalInitializersFromFilesInMemory;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, ushort**, sbyte**, nuint*, nuint, OrtStatusHandle> AddExternalInitializersFromFilesInMemory;
 
         [NativeTypeName("OrtStatusPtr (*)(const wchar_t *, OrtAllocator *, OrtLoraAdapter **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<ushort*, OrtAllocator*, OrtLoraAdapter**, OrtStatus*> CreateLoraAdapter;
+        public delegate* unmanaged[Stdcall]<ushort*, OrtAllocator*, OrtLoraAdapter**, OrtStatusHandle> CreateLoraAdapter;
 
         [NativeTypeName("OrtStatusPtr (*)(const void *, size_t, OrtAllocator *, OrtLoraAdapter **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<void*, nuint, OrtAllocator*, OrtLoraAdapter**, OrtStatus*> CreateLoraAdapterFromArray;
+        public delegate* unmanaged[Stdcall]<void*, nuint, OrtAllocator*, OrtLoraAdapter**, OrtStatusHandle> CreateLoraAdapterFromArray;
 
         [NativeTypeName("void (*)(OrtLoraAdapter *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtLoraAdapter*, void> ReleaseLoraAdapter;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtRunOptions *, const OrtLoraAdapter *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtRunOptions*, OrtLoraAdapter*, OrtStatus*> RunOptionsAddActiveLoraAdapter;
+        public delegate* unmanaged[Stdcall]<OrtRunOptions*, OrtLoraAdapter*, OrtStatusHandle> RunOptionsAddActiveLoraAdapter;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSession *, const char *const *, const char *const *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, sbyte**, sbyte**, nuint, OrtStatus*> SetEpDynamicOptions;
+        public delegate* unmanaged[Stdcall]<OrtSession*, sbyte**, sbyte**, nuint, OrtStatusHandle> SetEpDynamicOptions;
 
         [NativeTypeName("void (*)(OrtValueInfo *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtValueInfo*, void> ReleaseValueInfo;
@@ -1459,19 +1464,19 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtModel*, void> ReleaseModel;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValueInfo *, const char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValueInfo*, sbyte**, OrtStatus*> GetValueInfoName;
+        public delegate* unmanaged[Stdcall]<OrtValueInfo*, sbyte**, OrtStatusHandle> GetValueInfoName;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValueInfo *, const OrtTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValueInfo*, OrtTypeInfo**, OrtStatus*> GetValueInfoTypeInfo;
+        public delegate* unmanaged[Stdcall]<OrtValueInfo*, OrtTypeInfo**, OrtStatusHandle> GetValueInfoTypeInfo;
 
         [NativeTypeName("const OrtModelEditorApi *(*)(void) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtModelEditorApi*> GetModelEditorApi;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtAllocator *, void *, size_t, const int64_t *, size_t, ONNXTensorElementDataType, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtAllocator*, void*, nuint, long*, nuint, ONNXTensorElementDataType, OrtValue**, OrtStatus*> CreateTensorWithDataAndDeleterAsOrtValue;
+        public delegate* unmanaged[Stdcall]<OrtAllocator*, void*, nuint, long*, nuint, ONNXTensorElementDataType, OrtValue**, OrtStatusHandle> CreateTensorWithDataAndDeleterAsOrtValue;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, _Bool) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, byte, OrtStatus*> SessionOptionsSetLoadCancellationFlag;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, byte, OrtStatusHandle> SessionOptionsSetLoadCancellationFlag;
 
         [NativeTypeName("const OrtCompileApi *(*)(void) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtCompileApi*> GetCompileApi;
@@ -1495,22 +1500,22 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtKeyValuePairs*, void> ReleaseKeyValuePairs;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtEnv *, const char *, const wchar_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, sbyte*, ushort*, OrtStatus*> RegisterExecutionProviderLibrary;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, sbyte*, ushort*, OrtStatusHandle> RegisterExecutionProviderLibrary;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtEnv *, const char *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, sbyte*, OrtStatus*> UnregisterExecutionProviderLibrary;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, sbyte*, OrtStatusHandle> UnregisterExecutionProviderLibrary;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *, const OrtEpDevice *const **, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtEpDevice***, nuint*, OrtStatus*> GetEpDevices;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtEpDevice***, nuint*, OrtStatusHandle> GetEpDevices;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, OrtEnv *, const OrtEpDevice *const *, size_t, const char *const *, const char *const *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtEnv*, OrtEpDevice**, nuint, sbyte**, sbyte**, nuint, OrtStatus*> SessionOptionsAppendExecutionProvider_V2;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtEnv*, OrtEpDevice**, nuint, sbyte**, sbyte**, nuint, OrtStatusHandle> SessionOptionsAppendExecutionProvider_V2;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, OrtExecutionProviderDevicePolicy) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtExecutionProviderDevicePolicy, OrtStatus*> SessionOptionsSetEpSelectionPolicy;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtExecutionProviderDevicePolicy, OrtStatusHandle> SessionOptionsSetEpSelectionPolicy;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, EpSelectionDelegate, void *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, delegate* unmanaged[Stdcall]<OrtEpDevice**, nuint, OrtKeyValuePairs*, OrtKeyValuePairs*, OrtEpDevice**, nuint, nuint*, void*, OrtStatus*>, void*, OrtStatus*> SessionOptionsSetEpSelectionPolicyDelegate;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, delegate* unmanaged[Stdcall]<OrtEpDevice**, nuint, OrtKeyValuePairs*, OrtKeyValuePairs*, OrtEpDevice**, nuint, nuint*, void*, void*>, void*, OrtStatusHandle> SessionOptionsSetEpSelectionPolicyDelegate;
 
         [NativeTypeName("OrtHardwareDeviceType (*)(const OrtHardwareDevice *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtHardwareDevice*, OrtHardwareDeviceType> HardwareDevice_Type;
@@ -1546,13 +1551,13 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtEpApi*> GetEpApi;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, nuint*, OrtStatus*> GetTensorSizeInBytes;
+        public delegate* unmanaged[Stdcall]<OrtValue*, nuint*, OrtStatusHandle> GetTensorSizeInBytes;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtAllocator *, OrtKeyValuePairs **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtAllocator*, OrtKeyValuePairs**, OrtStatus*> AllocatorGetStats;
+        public delegate* unmanaged[Stdcall]<OrtAllocator*, OrtKeyValuePairs**, OrtStatusHandle> AllocatorGetStats;
 
         [NativeTypeName("OrtStatusPtr (*)(const char *, enum OrtMemoryInfoDeviceType, uint32_t, int32_t, enum OrtDeviceMemoryType, size_t, enum OrtAllocatorType, OrtMemoryInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<sbyte*, OrtMemoryInfoDeviceType, uint, int, OrtDeviceMemoryType, nuint, OrtAllocatorType, OrtMemoryInfo**, OrtStatus*> CreateMemoryInfo_V2;
+        public delegate* unmanaged[Stdcall]<sbyte*, OrtMemoryInfoDeviceType, uint, int, OrtDeviceMemoryType, nuint, OrtAllocatorType, OrtMemoryInfo**, OrtStatusHandle> CreateMemoryInfo_V2;
 
         [NativeTypeName("OrtDeviceMemoryType (*)(const OrtMemoryInfo *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, OrtDeviceMemoryType> MemoryInfoGetDeviceMemType;
@@ -1561,142 +1566,142 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, uint> MemoryInfoGetVendorId;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValueInfo *, const OrtNode **, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValueInfo*, OrtNode**, nuint*, OrtStatus*> ValueInfo_GetValueProducer;
+        public delegate* unmanaged[Stdcall]<OrtValueInfo*, OrtNode**, nuint*, OrtStatusHandle> ValueInfo_GetValueProducer;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValueInfo *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValueInfo*, nuint*, OrtStatus*> ValueInfo_GetValueNumConsumers;
+        public delegate* unmanaged[Stdcall]<OrtValueInfo*, nuint*, OrtStatusHandle> ValueInfo_GetValueNumConsumers;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValueInfo *, const OrtNode **, int64_t *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValueInfo*, OrtNode**, long*, nuint, OrtStatus*> ValueInfo_GetValueConsumers;
+        public delegate* unmanaged[Stdcall]<OrtValueInfo*, OrtNode**, long*, nuint, OrtStatusHandle> ValueInfo_GetValueConsumers;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValueInfo *, const OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValueInfo*, OrtValue**, OrtStatus*> ValueInfo_GetInitializerValue;
+        public delegate* unmanaged[Stdcall]<OrtValueInfo*, OrtValue**, OrtStatusHandle> ValueInfo_GetInitializerValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValueInfo *, OrtExternalInitializerInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValueInfo*, OrtExternalInitializerInfo**, OrtStatus*> ValueInfo_GetExternalInitializerInfo;
+        public delegate* unmanaged[Stdcall]<OrtValueInfo*, OrtExternalInitializerInfo**, OrtStatusHandle> ValueInfo_GetExternalInitializerInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValueInfo *, _Bool *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValueInfo*, bool*, OrtStatus*> ValueInfo_IsRequiredGraphInput;
+        public delegate* unmanaged[Stdcall]<OrtValueInfo*, bool*, OrtStatusHandle> ValueInfo_IsRequiredGraphInput;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValueInfo *, _Bool *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValueInfo*, bool*, OrtStatus*> ValueInfo_IsOptionalGraphInput;
+        public delegate* unmanaged[Stdcall]<OrtValueInfo*, bool*, OrtStatusHandle> ValueInfo_IsOptionalGraphInput;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValueInfo *, _Bool *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValueInfo*, bool*, OrtStatus*> ValueInfo_IsGraphOutput;
+        public delegate* unmanaged[Stdcall]<OrtValueInfo*, bool*, OrtStatusHandle> ValueInfo_IsGraphOutput;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValueInfo *, _Bool *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValueInfo*, bool*, OrtStatus*> ValueInfo_IsConstantInitializer;
+        public delegate* unmanaged[Stdcall]<OrtValueInfo*, bool*, OrtStatusHandle> ValueInfo_IsConstantInitializer;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValueInfo *, _Bool *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValueInfo*, bool*, OrtStatus*> ValueInfo_IsFromOuterScope;
+        public delegate* unmanaged[Stdcall]<OrtValueInfo*, bool*, OrtStatusHandle> ValueInfo_IsFromOuterScope;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtGraph *, const char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, sbyte**, OrtStatus*> Graph_GetName;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, sbyte**, OrtStatusHandle> Graph_GetName;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtGraph *, const wchar_t **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, ushort**, OrtStatus*> Graph_GetModelPath;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, ushort**, OrtStatusHandle> Graph_GetModelPath;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtGraph *, int64_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, long*, OrtStatus*> Graph_GetOnnxIRVersion;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, long*, OrtStatusHandle> Graph_GetOnnxIRVersion;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtGraph *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, nuint*, OrtStatus*> Graph_GetNumOperatorSets;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, nuint*, OrtStatusHandle> Graph_GetNumOperatorSets;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtGraph *, const char **, int64_t *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, sbyte**, long*, nuint, OrtStatus*> Graph_GetOperatorSets;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, sbyte**, long*, nuint, OrtStatusHandle> Graph_GetOperatorSets;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtGraph *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, nuint*, OrtStatus*> Graph_GetNumInputs;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, nuint*, OrtStatusHandle> Graph_GetNumInputs;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtGraph *, const OrtValueInfo **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtValueInfo**, nuint, OrtStatus*> Graph_GetInputs;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtValueInfo**, nuint, OrtStatusHandle> Graph_GetInputs;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtGraph *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, nuint*, OrtStatus*> Graph_GetNumOutputs;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, nuint*, OrtStatusHandle> Graph_GetNumOutputs;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtGraph *, const OrtValueInfo **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtValueInfo**, nuint, OrtStatus*> Graph_GetOutputs;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtValueInfo**, nuint, OrtStatusHandle> Graph_GetOutputs;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtGraph *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, nuint*, OrtStatus*> Graph_GetNumInitializers;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, nuint*, OrtStatusHandle> Graph_GetNumInitializers;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtGraph *, const OrtValueInfo **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtValueInfo**, nuint, OrtStatus*> Graph_GetInitializers;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtValueInfo**, nuint, OrtStatusHandle> Graph_GetInitializers;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtGraph *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, nuint*, OrtStatus*> Graph_GetNumNodes;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, nuint*, OrtStatusHandle> Graph_GetNumNodes;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtGraph *, const OrtNode **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtNode**, nuint, OrtStatus*> Graph_GetNodes;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtNode**, nuint, OrtStatusHandle> Graph_GetNodes;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtGraph *, const OrtNode **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtNode**, OrtStatus*> Graph_GetParentNode;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtNode**, OrtStatusHandle> Graph_GetParentNode;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtGraph *, const OrtNode **, size_t, OrtGraph **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtNode**, nuint, OrtGraph**, OrtStatus*> Graph_GetGraphView;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtNode**, nuint, OrtGraph**, OrtStatusHandle> Graph_GetGraphView;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtNode *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtNode*, nuint*, OrtStatus*> Node_GetId;
+        public delegate* unmanaged[Stdcall]<OrtNode*, nuint*, OrtStatusHandle> Node_GetId;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtNode *, const char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtNode*, sbyte**, OrtStatus*> Node_GetName;
+        public delegate* unmanaged[Stdcall]<OrtNode*, sbyte**, OrtStatusHandle> Node_GetName;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtNode *, const char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtNode*, sbyte**, OrtStatus*> Node_GetOperatorType;
+        public delegate* unmanaged[Stdcall]<OrtNode*, sbyte**, OrtStatusHandle> Node_GetOperatorType;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtNode *, const char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtNode*, sbyte**, OrtStatus*> Node_GetDomain;
+        public delegate* unmanaged[Stdcall]<OrtNode*, sbyte**, OrtStatusHandle> Node_GetDomain;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtNode *, int *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtNode*, int*, OrtStatus*> Node_GetSinceVersion;
+        public delegate* unmanaged[Stdcall]<OrtNode*, int*, OrtStatusHandle> Node_GetSinceVersion;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtNode *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtNode*, nuint*, OrtStatus*> Node_GetNumInputs;
+        public delegate* unmanaged[Stdcall]<OrtNode*, nuint*, OrtStatusHandle> Node_GetNumInputs;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtNode *, const OrtValueInfo **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtNode*, OrtValueInfo**, nuint, OrtStatus*> Node_GetInputs;
+        public delegate* unmanaged[Stdcall]<OrtNode*, OrtValueInfo**, nuint, OrtStatusHandle> Node_GetInputs;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtNode *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtNode*, nuint*, OrtStatus*> Node_GetNumOutputs;
+        public delegate* unmanaged[Stdcall]<OrtNode*, nuint*, OrtStatusHandle> Node_GetNumOutputs;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtNode *, const OrtValueInfo **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtNode*, OrtValueInfo**, nuint, OrtStatus*> Node_GetOutputs;
+        public delegate* unmanaged[Stdcall]<OrtNode*, OrtValueInfo**, nuint, OrtStatusHandle> Node_GetOutputs;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtNode *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtNode*, nuint*, OrtStatus*> Node_GetNumImplicitInputs;
+        public delegate* unmanaged[Stdcall]<OrtNode*, nuint*, OrtStatusHandle> Node_GetNumImplicitInputs;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtNode *, const OrtValueInfo **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtNode*, OrtValueInfo**, nuint, OrtStatus*> Node_GetImplicitInputs;
+        public delegate* unmanaged[Stdcall]<OrtNode*, OrtValueInfo**, nuint, OrtStatusHandle> Node_GetImplicitInputs;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtNode *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtNode*, nuint*, OrtStatus*> Node_GetNumAttributes;
+        public delegate* unmanaged[Stdcall]<OrtNode*, nuint*, OrtStatusHandle> Node_GetNumAttributes;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtNode *, const OrtOpAttr **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtNode*, OrtOpAttr**, nuint, OrtStatus*> Node_GetAttributes;
+        public delegate* unmanaged[Stdcall]<OrtNode*, OrtOpAttr**, nuint, OrtStatusHandle> Node_GetAttributes;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtNode *, const char *, const OrtOpAttr **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtNode*, sbyte*, OrtOpAttr**, OrtStatus*> Node_GetAttributeByName;
+        public delegate* unmanaged[Stdcall]<OrtNode*, sbyte*, OrtOpAttr**, OrtStatusHandle> Node_GetAttributeByName;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtOpAttr *, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtOpAttr*, OrtValue**, OrtStatus*> OpAttr_GetTensorAttributeAsOrtValue;
+        public delegate* unmanaged[Stdcall]<OrtOpAttr*, OrtValue**, OrtStatusHandle> OpAttr_GetTensorAttributeAsOrtValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtOpAttr *, OrtOpAttrType *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtOpAttr*, OrtOpAttrType*, OrtStatus*> OpAttr_GetType;
+        public delegate* unmanaged[Stdcall]<OrtOpAttr*, OrtOpAttrType*, OrtStatusHandle> OpAttr_GetType;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtOpAttr *, const char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtOpAttr*, sbyte**, OrtStatus*> OpAttr_GetName;
+        public delegate* unmanaged[Stdcall]<OrtOpAttr*, sbyte**, OrtStatusHandle> OpAttr_GetName;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtNode *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtNode*, nuint*, OrtStatus*> Node_GetNumSubgraphs;
+        public delegate* unmanaged[Stdcall]<OrtNode*, nuint*, OrtStatusHandle> Node_GetNumSubgraphs;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtNode *, const OrtGraph **, size_t, const char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtNode*, OrtGraph**, nuint, sbyte**, OrtStatus*> Node_GetSubgraphs;
+        public delegate* unmanaged[Stdcall]<OrtNode*, OrtGraph**, nuint, sbyte**, OrtStatusHandle> Node_GetSubgraphs;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtNode *, const OrtGraph **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtNode*, OrtGraph**, OrtStatus*> Node_GetGraph;
+        public delegate* unmanaged[Stdcall]<OrtNode*, OrtGraph**, OrtStatusHandle> Node_GetGraph;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtNode *, const char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtNode*, sbyte**, OrtStatus*> Node_GetEpName;
+        public delegate* unmanaged[Stdcall]<OrtNode*, sbyte**, OrtStatusHandle> Node_GetEpName;
 
         [NativeTypeName("void (*)(OrtExternalInitializerInfo *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtExternalInitializerInfo*, void> ReleaseExternalInitializerInfo;
@@ -1717,31 +1722,31 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtEpDevice*, OrtDeviceMemoryType, OrtMemoryInfo*> EpDevice_MemoryInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtEnv *, const OrtEpDevice *, OrtDeviceMemoryType, OrtAllocatorType, const OrtKeyValuePairs *, OrtAllocator **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtEpDevice*, OrtDeviceMemoryType, OrtAllocatorType, OrtKeyValuePairs*, OrtAllocator**, OrtStatus*> CreateSharedAllocator;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtEpDevice*, OrtDeviceMemoryType, OrtAllocatorType, OrtKeyValuePairs*, OrtAllocator**, OrtStatusHandle> CreateSharedAllocator;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtEnv *, const OrtMemoryInfo *, OrtAllocator **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtMemoryInfo*, OrtAllocator**, OrtStatus*> GetSharedAllocator;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtMemoryInfo*, OrtAllocator**, OrtStatusHandle> GetSharedAllocator;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtEnv *, const OrtEpDevice *, OrtDeviceMemoryType) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtEpDevice*, OrtDeviceMemoryType, OrtStatus*> ReleaseSharedAllocator;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtEpDevice*, OrtDeviceMemoryType, OrtStatusHandle> ReleaseSharedAllocator;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, const void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, void**, OrtStatus*> GetTensorData;
+        public delegate* unmanaged[Stdcall]<OrtValue*, void**, OrtStatusHandle> GetTensorData;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSessionOptions *, OrtKeyValuePairs **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtKeyValuePairs**, OrtStatus*> GetSessionOptionsConfigEntries;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtKeyValuePairs**, OrtStatusHandle> GetSessionOptionsConfigEntries;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSession *, const OrtMemoryInfo **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, OrtMemoryInfo**, nuint, OrtStatus*> SessionGetMemoryInfoForInputs;
+        public delegate* unmanaged[Stdcall]<OrtSession*, OrtMemoryInfo**, nuint, OrtStatusHandle> SessionGetMemoryInfoForInputs;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSession *, const OrtMemoryInfo **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, OrtMemoryInfo**, nuint, OrtStatus*> SessionGetMemoryInfoForOutputs;
+        public delegate* unmanaged[Stdcall]<OrtSession*, OrtMemoryInfo**, nuint, OrtStatusHandle> SessionGetMemoryInfoForOutputs;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSession *, const OrtEpDevice **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, OrtEpDevice**, nuint, OrtStatus*> SessionGetEpDeviceForInputs;
+        public delegate* unmanaged[Stdcall]<OrtSession*, OrtEpDevice**, nuint, OrtStatusHandle> SessionGetEpDeviceForInputs;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEpDevice *, const OrtKeyValuePairs *, OrtSyncStream **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEpDevice*, OrtKeyValuePairs*, OrtSyncStream**, OrtStatus*> CreateSyncStreamForEpDevice;
+        public delegate* unmanaged[Stdcall]<OrtEpDevice*, OrtKeyValuePairs*, OrtSyncStream**, OrtStatusHandle> CreateSyncStreamForEpDevice;
 
         [NativeTypeName("void *(*)(OrtSyncStream *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtSyncStream*, void*> SyncStream_GetHandle;
@@ -1750,118 +1755,118 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtSyncStream*, void> ReleaseSyncStream;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *, const OrtValue *const *, OrtValue *const *, OrtSyncStream *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtValue**, OrtValue**, OrtSyncStream*, nuint, OrtStatus*> CopyTensors;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtValue**, OrtValue**, OrtSyncStream*, nuint, OrtStatusHandle> CopyTensors;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtGraph *, OrtModelMetadata **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtModelMetadata**, OrtStatus*> Graph_GetModelMetadata;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtModelMetadata**, OrtStatusHandle> Graph_GetModelMetadata;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEpDevice *const *, size_t, const char *, OrtCompiledModelCompatibility *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEpDevice**, nuint, sbyte*, OrtCompiledModelCompatibility*, OrtStatus*> GetModelCompatibilityForEpDevices;
+        public delegate* unmanaged[Stdcall]<OrtEpDevice**, nuint, sbyte*, OrtCompiledModelCompatibility*, OrtStatusHandle> GetModelCompatibilityForEpDevices;
 
         [NativeTypeName("OrtStatusPtr (*)(const wchar_t *, int64_t, size_t, OrtExternalInitializerInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<ushort*, long, nuint, OrtExternalInitializerInfo**, OrtStatus*> CreateExternalInitializerInfo;
+        public delegate* unmanaged[Stdcall]<ushort*, long, nuint, OrtExternalInitializerInfo**, OrtStatusHandle> CreateExternalInitializerInfo;
 
         [NativeTypeName("_Bool (*)(const OrtTensorTypeAndShapeInfo *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, byte> TensorTypeAndShape_HasShape;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, OrtKeyValuePairs **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, OrtKeyValuePairs**, OrtStatus*> KernelInfo_GetConfigEntries;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, OrtKeyValuePairs**, OrtStatusHandle> KernelInfo_GetConfigEntries;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, char *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, nuint*, OrtStatus*> KernelInfo_GetOperatorDomain;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, nuint*, OrtStatusHandle> KernelInfo_GetOperatorDomain;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, char *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, nuint*, OrtStatus*> KernelInfo_GetOperatorType;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, nuint*, OrtStatusHandle> KernelInfo_GetOperatorType;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, int *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, int*, OrtStatus*> KernelInfo_GetOperatorSinceVersion;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, int*, OrtStatusHandle> KernelInfo_GetOperatorSinceVersion;
 
         [NativeTypeName("const OrtInteropApi *(*)(void) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtInteropApi*> GetInteropApi;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSession *, const OrtEpDevice **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, OrtEpDevice**, nuint, OrtStatus*> SessionGetEpDeviceForOutputs;
+        public delegate* unmanaged[Stdcall]<OrtSession*, OrtEpDevice**, nuint, OrtStatusHandle> SessionGetEpDeviceForOutputs;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, nuint*, OrtStatus*> GetNumHardwareDevices;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, nuint*, OrtStatusHandle> GetNumHardwareDevices;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *, const OrtHardwareDevice **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtHardwareDevice**, nuint, OrtStatus*> GetHardwareDevices;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtHardwareDevice**, nuint, OrtStatusHandle> GetHardwareDevices;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *, const char *, const OrtHardwareDevice *, OrtDeviceEpIncompatibilityDetails **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, sbyte*, OrtHardwareDevice*, OrtDeviceEpIncompatibilityDetails**, OrtStatus*> GetHardwareDeviceEpIncompatibilityDetails;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, sbyte*, OrtHardwareDevice*, OrtDeviceEpIncompatibilityDetails**, OrtStatusHandle> GetHardwareDeviceEpIncompatibilityDetails;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtDeviceEpIncompatibilityDetails *, uint32_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtDeviceEpIncompatibilityDetails*, uint*, OrtStatus*> DeviceEpIncompatibilityDetails_GetReasonsBitmask;
+        public delegate* unmanaged[Stdcall]<OrtDeviceEpIncompatibilityDetails*, uint*, OrtStatusHandle> DeviceEpIncompatibilityDetails_GetReasonsBitmask;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtDeviceEpIncompatibilityDetails *, const char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtDeviceEpIncompatibilityDetails*, sbyte**, OrtStatus*> DeviceEpIncompatibilityDetails_GetNotes;
+        public delegate* unmanaged[Stdcall]<OrtDeviceEpIncompatibilityDetails*, sbyte**, OrtStatusHandle> DeviceEpIncompatibilityDetails_GetNotes;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtDeviceEpIncompatibilityDetails *, int32_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtDeviceEpIncompatibilityDetails*, int*, OrtStatus*> DeviceEpIncompatibilityDetails_GetErrorCode;
+        public delegate* unmanaged[Stdcall]<OrtDeviceEpIncompatibilityDetails*, int*, OrtStatusHandle> DeviceEpIncompatibilityDetails_GetErrorCode;
 
         [NativeTypeName("void (*)(OrtDeviceEpIncompatibilityDetails *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtDeviceEpIncompatibilityDetails*, void> ReleaseDeviceEpIncompatibilityDetails;
 
         [NativeTypeName("OrtStatusPtr (*)(const wchar_t *, const char *, OrtAllocator *, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<ushort*, sbyte*, OrtAllocator*, sbyte**, OrtStatus*> GetCompatibilityInfoFromModel;
+        public delegate* unmanaged[Stdcall]<ushort*, sbyte*, OrtAllocator*, sbyte**, OrtStatusHandle> GetCompatibilityInfoFromModel;
 
         [NativeTypeName("OrtStatusPtr (*)(const void *, size_t, const char *, OrtAllocator *, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<void*, nuint, sbyte*, OrtAllocator*, sbyte**, OrtStatus*> GetCompatibilityInfoFromModelBytes;
+        public delegate* unmanaged[Stdcall]<void*, nuint, sbyte*, OrtAllocator*, sbyte**, OrtStatusHandle> GetCompatibilityInfoFromModelBytes;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnvCreationOptions *, OrtEnv **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnvCreationOptions*, OrtEnv**, OrtStatus*> CreateEnvWithOptions;
+        public delegate* unmanaged[Stdcall]<OrtEnvCreationOptions*, OrtEnv**, OrtStatusHandle> CreateEnvWithOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSession *, const OrtEpAssignedSubgraph *const **, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, OrtEpAssignedSubgraph***, nuint*, OrtStatus*> Session_GetEpGraphAssignmentInfo;
+        public delegate* unmanaged[Stdcall]<OrtSession*, OrtEpAssignedSubgraph***, nuint*, OrtStatusHandle> Session_GetEpGraphAssignmentInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEpAssignedSubgraph *, const char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEpAssignedSubgraph*, sbyte**, OrtStatus*> EpAssignedSubgraph_GetEpName;
+        public delegate* unmanaged[Stdcall]<OrtEpAssignedSubgraph*, sbyte**, OrtStatusHandle> EpAssignedSubgraph_GetEpName;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEpAssignedSubgraph *, const OrtEpAssignedNode *const **, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEpAssignedSubgraph*, OrtEpAssignedNode***, nuint*, OrtStatus*> EpAssignedSubgraph_GetNodes;
+        public delegate* unmanaged[Stdcall]<OrtEpAssignedSubgraph*, OrtEpAssignedNode***, nuint*, OrtStatusHandle> EpAssignedSubgraph_GetNodes;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEpAssignedNode *, const char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEpAssignedNode*, sbyte**, OrtStatus*> EpAssignedNode_GetName;
+        public delegate* unmanaged[Stdcall]<OrtEpAssignedNode*, sbyte**, OrtStatusHandle> EpAssignedNode_GetName;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEpAssignedNode *, const char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEpAssignedNode*, sbyte**, OrtStatus*> EpAssignedNode_GetDomain;
+        public delegate* unmanaged[Stdcall]<OrtEpAssignedNode*, sbyte**, OrtStatusHandle> EpAssignedNode_GetDomain;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEpAssignedNode *, const char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEpAssignedNode*, sbyte**, OrtStatus*> EpAssignedNode_GetOperatorType;
+        public delegate* unmanaged[Stdcall]<OrtEpAssignedNode*, sbyte**, OrtStatusHandle> EpAssignedNode_GetOperatorType;
 
         [NativeTypeName("void (*)(OrtRunOptions *, OrtSyncStream *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtRunOptions*, OrtSyncStream*, void> RunOptionsSetSyncStream;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, ONNXTensorElementDataType *, const int64_t **, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, ONNXTensorElementDataType*, long**, nuint*, OrtStatus*> GetTensorElementTypeAndShapeDataReference;
+        public delegate* unmanaged[Stdcall]<OrtValue*, ONNXTensorElementDataType*, long**, nuint*, OrtStatusHandle> GetTensorElementTypeAndShapeDataReference;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtRunOptions *, const wchar_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtRunOptions*, ushort*, OrtStatus*> RunOptionsEnableProfiling;
+        public delegate* unmanaged[Stdcall]<OrtRunOptions*, ushort*, OrtStatusHandle> RunOptionsEnableProfiling;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtRunOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtRunOptions*, OrtStatus*> RunOptionsDisableProfiling;
+        public delegate* unmanaged[Stdcall]<OrtRunOptions*, OrtStatusHandle> RunOptionsDisableProfiling;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, const char *, OrtAllocator *, char ***, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, OrtAllocator*, sbyte***, nuint*, OrtStatus*> KernelInfoGetAttributeArray_string;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, OrtAllocator*, sbyte***, nuint*, OrtStatusHandle> KernelInfoGetAttributeArray_string;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtEnv *, const OrtThreadPoolCallbacksConfig *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtThreadPoolCallbacksConfig*, OrtStatus*> SetPerSessionThreadPoolCallbacks;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtThreadPoolCallbacksConfig*, OrtStatusHandle> SetPerSessionThreadPoolCallbacks;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSessionOptions *, int *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, int*, OrtStatus*> GetMemPatternEnabled;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, int*, OrtStatusHandle> GetMemPatternEnabled;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSessionOptions *, ExecutionMode *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, ExecutionMode*, OrtStatus*> GetSessionExecutionMode;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, ExecutionMode*, OrtStatusHandle> GetSessionExecutionMode;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSession *, int) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, int, OrtStatus*> SessionReleaseCapturedGraph;
+        public delegate* unmanaged[Stdcall]<OrtSession*, int, OrtStatusHandle> SessionReleaseCapturedGraph;
 
         [NativeTypeName("OrtExperimentalFnPtr (*)(const char *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<sbyte*, delegate* unmanaged[Stdcall]<void>> GetExperimentalFunction;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelContext *, OrtSyncStream **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelContext*, OrtSyncStream**, OrtStatus*> KernelContext_GetSyncStream;
+        public delegate* unmanaged[Stdcall]<OrtKernelContext*, OrtSyncStream**, OrtStatusHandle> KernelContext_GetSyncStream;
     }
 
     public enum OrtCustomOpInputOutputCharacteristic
@@ -1925,13 +1930,13 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtCustomOp*, int> GetVariadicOutputHomogeneity;
 
         [NativeTypeName("OrtStatusPtr (*)(const struct OrtCustomOp *, const OrtApi *, const OrtKernelInfo *, void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtCustomOp*, OrtApi*, OrtKernelInfo*, void**, OrtStatus*> CreateKernelV2;
+        public delegate* unmanaged[Stdcall]<OrtCustomOp*, OrtApi*, OrtKernelInfo*, void**, OrtStatusHandle> CreateKernelV2;
 
         [NativeTypeName("OrtStatusPtr (*)(void *, OrtKernelContext *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<void*, OrtKernelContext*, OrtStatus*> KernelComputeV2;
+        public delegate* unmanaged[Stdcall]<void*, OrtKernelContext*, OrtStatusHandle> KernelComputeV2;
 
         [NativeTypeName("OrtStatusPtr (*)(const struct OrtCustomOp *, OrtShapeInferContext *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtCustomOp*, OrtShapeInferContext*, OrtStatus*> InferOutputShapeFn;
+        public delegate* unmanaged[Stdcall]<OrtCustomOp*, OrtShapeInferContext*, OrtStatusHandle> InferOutputShapeFn;
 
         [NativeTypeName("int (*)(const struct OrtCustomOp *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtCustomOp*, int> GetStartVersion;
@@ -1955,64 +1960,64 @@ public static unsafe partial class Ort
     public unsafe partial struct OrtModelEditorApi
     {
         [NativeTypeName("OrtStatusPtr (*)(const OrtTensorTypeAndShapeInfo *, OrtTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, OrtTypeInfo**, OrtStatus*> CreateTensorTypeInfo;
+        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, OrtTypeInfo**, OrtStatusHandle> CreateTensorTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTensorTypeAndShapeInfo *, OrtTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, OrtTypeInfo**, OrtStatus*> CreateSparseTensorTypeInfo;
+        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, OrtTypeInfo**, OrtStatusHandle> CreateSparseTensorTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(ONNXTensorElementDataType, const OrtTypeInfo *, OrtTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<ONNXTensorElementDataType, OrtTypeInfo*, OrtTypeInfo**, OrtStatus*> CreateMapTypeInfo;
+        public delegate* unmanaged[Stdcall]<ONNXTensorElementDataType, OrtTypeInfo*, OrtTypeInfo**, OrtStatusHandle> CreateMapTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTypeInfo *, OrtTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTypeInfo*, OrtTypeInfo**, OrtStatus*> CreateSequenceTypeInfo;
+        public delegate* unmanaged[Stdcall]<OrtTypeInfo*, OrtTypeInfo**, OrtStatusHandle> CreateSequenceTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTypeInfo *, OrtTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTypeInfo*, OrtTypeInfo**, OrtStatus*> CreateOptionalTypeInfo;
+        public delegate* unmanaged[Stdcall]<OrtTypeInfo*, OrtTypeInfo**, OrtStatusHandle> CreateOptionalTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const char *, const OrtTypeInfo *, OrtValueInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<sbyte*, OrtTypeInfo*, OrtValueInfo**, OrtStatus*> CreateValueInfo;
+        public delegate* unmanaged[Stdcall]<sbyte*, OrtTypeInfo*, OrtValueInfo**, OrtStatusHandle> CreateValueInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const char *, const char *, const char *, const char *const *, size_t, const char *const *, size_t, OrtOpAttr **, size_t, OrtNode **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<sbyte*, sbyte*, sbyte*, sbyte**, nuint, sbyte**, nuint, OrtOpAttr**, nuint, OrtNode**, OrtStatus*> CreateNode;
+        public delegate* unmanaged[Stdcall]<sbyte*, sbyte*, sbyte*, sbyte**, nuint, sbyte**, nuint, OrtOpAttr**, nuint, OrtNode**, OrtStatusHandle> CreateNode;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtGraph **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph**, OrtStatus*> CreateGraph;
+        public delegate* unmanaged[Stdcall]<OrtGraph**, OrtStatusHandle> CreateGraph;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtGraph *, OrtValueInfo **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtValueInfo**, nuint, OrtStatus*> SetGraphInputs;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtValueInfo**, nuint, OrtStatusHandle> SetGraphInputs;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtGraph *, OrtValueInfo **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtValueInfo**, nuint, OrtStatus*> SetGraphOutputs;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtValueInfo**, nuint, OrtStatusHandle> SetGraphOutputs;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtGraph *, const char *, OrtValue *, _Bool) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, sbyte*, OrtValue*, byte, OrtStatus*> AddInitializerToGraph;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, sbyte*, OrtValue*, byte, OrtStatusHandle> AddInitializerToGraph;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtGraph *, OrtNode *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtNode*, OrtStatus*> AddNodeToGraph;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, OrtNode*, OrtStatusHandle> AddNodeToGraph;
 
         [NativeTypeName("OrtStatusPtr (*)(const char *const *, const int *, size_t, OrtModel **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<sbyte**, int*, nuint, OrtModel**, OrtStatus*> CreateModel;
+        public delegate* unmanaged[Stdcall]<sbyte**, int*, nuint, OrtModel**, OrtStatusHandle> CreateModel;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtModel *, OrtGraph *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModel*, OrtGraph*, OrtStatus*> AddGraphToModel;
+        public delegate* unmanaged[Stdcall]<OrtModel*, OrtGraph*, OrtStatusHandle> AddGraphToModel;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *, const OrtModel *, const OrtSessionOptions *, OrtSession **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtModel*, OrtSessionOptions*, OrtSession**, OrtStatus*> CreateSessionFromModel;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtModel*, OrtSessionOptions*, OrtSession**, OrtStatusHandle> CreateSessionFromModel;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *, const wchar_t *, const OrtSessionOptions *, OrtSession **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, ushort*, OrtSessionOptions*, OrtSession**, OrtStatus*> CreateModelEditorSession;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, ushort*, OrtSessionOptions*, OrtSession**, OrtStatusHandle> CreateModelEditorSession;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *, const void *, size_t, const OrtSessionOptions *, OrtSession **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, void*, nuint, OrtSessionOptions*, OrtSession**, OrtStatus*> CreateModelEditorSessionFromArray;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, void*, nuint, OrtSessionOptions*, OrtSession**, OrtStatusHandle> CreateModelEditorSessionFromArray;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSession *, const char *, int *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, sbyte*, int*, OrtStatus*> SessionGetOpsetForDomain;
+        public delegate* unmanaged[Stdcall]<OrtSession*, sbyte*, int*, OrtStatusHandle> SessionGetOpsetForDomain;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSession *, OrtModel *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, OrtModel*, OrtStatus*> ApplyModelToModelEditorSession;
+        public delegate* unmanaged[Stdcall]<OrtSession*, OrtModel*, OrtStatusHandle> ApplyModelToModelEditorSession;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSession *, const OrtSessionOptions *, OrtPrepackedWeightsContainer *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, OrtSessionOptions*, OrtPrepackedWeightsContainer*, OrtStatus*> FinalizeModelEditorSession;
+        public delegate* unmanaged[Stdcall]<OrtSession*, OrtSessionOptions*, OrtPrepackedWeightsContainer*, OrtStatusHandle> FinalizeModelEditorSession;
     }
 
     public enum OrtCompileApiFlags
@@ -2028,88 +2033,88 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, void> ReleaseModelCompilationOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *, const OrtSessionOptions *, OrtModelCompilationOptions **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtSessionOptions*, OrtModelCompilationOptions**, OrtStatus*> CreateModelCompilationOptionsFromSessionOptions;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtSessionOptions*, OrtModelCompilationOptions**, OrtStatusHandle> CreateModelCompilationOptionsFromSessionOptions;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtModelCompilationOptions *, const wchar_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, ushort*, OrtStatus*> ModelCompilationOptions_SetInputModelPath;
+        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, ushort*, OrtStatusHandle> ModelCompilationOptions_SetInputModelPath;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtModelCompilationOptions *, const void *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, void*, nuint, OrtStatus*> ModelCompilationOptions_SetInputModelFromBuffer;
+        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, void*, nuint, OrtStatusHandle> ModelCompilationOptions_SetInputModelFromBuffer;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtModelCompilationOptions *, const wchar_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, ushort*, OrtStatus*> ModelCompilationOptions_SetOutputModelPath;
+        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, ushort*, OrtStatusHandle> ModelCompilationOptions_SetOutputModelPath;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtModelCompilationOptions *, const wchar_t *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, ushort*, nuint, OrtStatus*> ModelCompilationOptions_SetOutputModelExternalInitializersFile;
+        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, ushort*, nuint, OrtStatusHandle> ModelCompilationOptions_SetOutputModelExternalInitializersFile;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtModelCompilationOptions *, OrtAllocator *, void **, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, OrtAllocator*, void**, nuint*, OrtStatus*> ModelCompilationOptions_SetOutputModelBuffer;
+        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, OrtAllocator*, void**, nuint*, OrtStatusHandle> ModelCompilationOptions_SetOutputModelBuffer;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtModelCompilationOptions *, _Bool) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, byte, OrtStatus*> ModelCompilationOptions_SetEpContextEmbedMode;
+        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, byte, OrtStatusHandle> ModelCompilationOptions_SetEpContextEmbedMode;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *, const OrtModelCompilationOptions *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtModelCompilationOptions*, OrtStatus*> CompileModel;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtModelCompilationOptions*, OrtStatusHandle> CompileModel;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtModelCompilationOptions *, uint32_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, uint, OrtStatus*> ModelCompilationOptions_SetFlags;
+        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, uint, OrtStatusHandle> ModelCompilationOptions_SetFlags;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtModelCompilationOptions *, const wchar_t *, const wchar_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, ushort*, ushort*, OrtStatus*> ModelCompilationOptions_SetEpContextBinaryInformation;
+        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, ushort*, ushort*, OrtStatusHandle> ModelCompilationOptions_SetEpContextBinaryInformation;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtModelCompilationOptions *, GraphOptimizationLevel) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, GraphOptimizationLevel, OrtStatus*> ModelCompilationOptions_SetGraphOptimizationLevel;
+        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, GraphOptimizationLevel, OrtStatusHandle> ModelCompilationOptions_SetGraphOptimizationLevel;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtModelCompilationOptions *, OrtWriteBufferFunc, void *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, delegate* unmanaged[Stdcall]<void*, void*, nuint, OrtStatus*>, void*, OrtStatus*> ModelCompilationOptions_SetOutputModelWriteFunc;
+        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, delegate* unmanaged[Stdcall]<void*, void*, nuint, void*>, void*, OrtStatusHandle> ModelCompilationOptions_SetOutputModelWriteFunc;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtModelCompilationOptions *, OrtGetInitializerLocationFunc, void *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, delegate* unmanaged[Stdcall]<void*, sbyte*, OrtValue*, OrtExternalInitializerInfo*, OrtExternalInitializerInfo**, OrtStatus*>, void*, OrtStatus*> ModelCompilationOptions_SetOutputModelGetInitializerLocationFunc;
+        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, delegate* unmanaged[Stdcall]<void*, sbyte*, OrtValue*, OrtExternalInitializerInfo*, OrtExternalInitializerInfo**, void*>, void*, OrtStatusHandle> ModelCompilationOptions_SetOutputModelGetInitializerLocationFunc;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtModelCompilationOptions *, const OrtModel *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, OrtModel*, OrtStatus*> ModelCompilationOptions_SetInputModel;
+        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, OrtModel*, OrtStatusHandle> ModelCompilationOptions_SetInputModel;
     }
 
     public unsafe partial struct OrtInteropApi
     {
         [NativeTypeName("OrtStatusPtr (*)(const OrtEpDevice *, OrtExternalResourceImporter **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEpDevice*, OrtExternalResourceImporter**, OrtStatus*> CreateExternalResourceImporterForDevice;
+        public delegate* unmanaged[Stdcall]<OrtEpDevice*, OrtExternalResourceImporter**, OrtStatusHandle> CreateExternalResourceImporterForDevice;
 
         [NativeTypeName("void (*)(OrtExternalResourceImporter *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtExternalResourceImporter*, void> ReleaseExternalResourceImporter;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtExternalResourceImporter *, OrtExternalMemoryHandleType, _Bool *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtExternalResourceImporter*, OrtExternalMemoryHandleType, bool*, OrtStatus*> CanImportMemory;
+        public delegate* unmanaged[Stdcall]<OrtExternalResourceImporter*, OrtExternalMemoryHandleType, bool*, OrtStatusHandle> CanImportMemory;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtExternalResourceImporter *, const OrtExternalMemoryDescriptor *, OrtExternalMemoryHandle **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtExternalResourceImporter*, OrtExternalMemoryDescriptor*, OrtExternalMemoryHandle**, OrtStatus*> ImportMemory;
+        public delegate* unmanaged[Stdcall]<OrtExternalResourceImporter*, OrtExternalMemoryDescriptor*, OrtExternalMemoryHandle**, OrtStatusHandle> ImportMemory;
 
         [NativeTypeName("void (*)(OrtExternalMemoryHandle *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtExternalMemoryHandle*, void> ReleaseExternalMemoryHandle;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtExternalResourceImporter *, const OrtExternalMemoryHandle *, const OrtExternalTensorDescriptor *, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtExternalResourceImporter*, OrtExternalMemoryHandle*, OrtExternalTensorDescriptor*, OrtValue**, OrtStatus*> CreateTensorFromMemory;
+        public delegate* unmanaged[Stdcall]<OrtExternalResourceImporter*, OrtExternalMemoryHandle*, OrtExternalTensorDescriptor*, OrtValue**, OrtStatusHandle> CreateTensorFromMemory;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtExternalResourceImporter *, OrtExternalSemaphoreType, _Bool *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtExternalResourceImporter*, OrtExternalSemaphoreType, bool*, OrtStatus*> CanImportSemaphore;
+        public delegate* unmanaged[Stdcall]<OrtExternalResourceImporter*, OrtExternalSemaphoreType, bool*, OrtStatusHandle> CanImportSemaphore;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtExternalResourceImporter *, const OrtExternalSemaphoreDescriptor *, OrtExternalSemaphoreHandle **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtExternalResourceImporter*, OrtExternalSemaphoreDescriptor*, OrtExternalSemaphoreHandle**, OrtStatus*> ImportSemaphore;
+        public delegate* unmanaged[Stdcall]<OrtExternalResourceImporter*, OrtExternalSemaphoreDescriptor*, OrtExternalSemaphoreHandle**, OrtStatusHandle> ImportSemaphore;
 
         [NativeTypeName("void (*)(OrtExternalSemaphoreHandle *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtExternalSemaphoreHandle*, void> ReleaseExternalSemaphoreHandle;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtExternalResourceImporter *, OrtExternalSemaphoreHandle *, OrtSyncStream *, uint64_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtExternalResourceImporter*, OrtExternalSemaphoreHandle*, OrtSyncStream*, ulong, OrtStatus*> WaitSemaphore;
+        public delegate* unmanaged[Stdcall]<OrtExternalResourceImporter*, OrtExternalSemaphoreHandle*, OrtSyncStream*, ulong, OrtStatusHandle> WaitSemaphore;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtExternalResourceImporter *, OrtExternalSemaphoreHandle *, OrtSyncStream *, uint64_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtExternalResourceImporter*, OrtExternalSemaphoreHandle*, OrtSyncStream*, ulong, OrtStatus*> SignalSemaphore;
+        public delegate* unmanaged[Stdcall]<OrtExternalResourceImporter*, OrtExternalSemaphoreHandle*, OrtSyncStream*, ulong, OrtStatusHandle> SignalSemaphore;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEpDevice *, const OrtGraphicsInteropConfig *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEpDevice*, OrtGraphicsInteropConfig*, OrtStatus*> InitGraphicsInteropForEpDevice;
+        public delegate* unmanaged[Stdcall]<OrtEpDevice*, OrtGraphicsInteropConfig*, OrtStatusHandle> InitGraphicsInteropForEpDevice;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEpDevice *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEpDevice*, OrtStatus*> DeinitGraphicsInteropForEpDevice;
+        public delegate* unmanaged[Stdcall]<OrtEpDevice*, OrtStatusHandle> DeinitGraphicsInteropForEpDevice;
     }
 
     internal static unsafe partial class NativeExports
@@ -2120,22 +2125,22 @@ public static unsafe partial class Ort
 
         [DllImport("onnxruntime", CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
         [return: NativeTypeName("OrtStatusPtr")]
-        public static extern OrtStatus* OrtSessionOptionsAppendExecutionProvider_CUDA(OrtSessionOptions* options, int device_id);
+        public static extern void* OrtSessionOptionsAppendExecutionProvider_CUDA(OrtSessionOptions* options, int device_id);
 
         [DllImport("onnxruntime", CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
         [return: NativeTypeName("OrtStatusPtr")]
-        public static extern OrtStatus* OrtSessionOptionsAppendExecutionProvider_ROCM(OrtSessionOptions* options, int device_id);
+        public static extern void* OrtSessionOptionsAppendExecutionProvider_ROCM(OrtSessionOptions* options, int device_id);
 
         [DllImport("onnxruntime", CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
         [return: NativeTypeName("OrtStatusPtr")]
-        public static extern OrtStatus* OrtSessionOptionsAppendExecutionProvider_MIGraphX(OrtSessionOptions* options, int device_id);
+        public static extern void* OrtSessionOptionsAppendExecutionProvider_MIGraphX(OrtSessionOptions* options, int device_id);
 
         [DllImport("onnxruntime", CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
         [return: NativeTypeName("OrtStatusPtr")]
-        public static extern OrtStatus* OrtSessionOptionsAppendExecutionProvider_Dnnl(OrtSessionOptions* options, int use_arena);
+        public static extern void* OrtSessionOptionsAppendExecutionProvider_Dnnl(OrtSessionOptions* options, int use_arena);
 
         [DllImport("onnxruntime", CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
         [return: NativeTypeName("OrtStatusPtr")]
-        public static extern OrtStatus* OrtSessionOptionsAppendExecutionProvider_Tensorrt(OrtSessionOptions* options, int device_id);
+        public static extern void* OrtSessionOptionsAppendExecutionProvider_Tensorrt(OrtSessionOptions* options, int device_id);
     }
 }

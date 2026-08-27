@@ -24,7 +24,7 @@ public sealed unsafe class OrtEnvironment : SafeHandle
             DangerousAddRef(ref referenceAdded);
             Ort.OrtEpDevice** devices;
             nuint deviceCount;
-            Ort.ThrowIfError(Ort.GetEpDevices(Pointer, &devices, &deviceCount));
+            Ort.GetEpDevices(Pointer, &devices, &deviceCount).Ok();
             var result = new OrtEpDevice[checked((int)deviceCount)];
             for (var index = 0; index < result.Length; ++index)
             {
@@ -55,7 +55,7 @@ public sealed unsafe class OrtEnvironment : SafeHandle
             {
                 fixed (char* pathPointer = libraryPath)
                 {
-                    Ort.ThrowIfError(Ort.RegisterExecutionProviderLibrary(
+                    Ort.Ok(Ort.RegisterExecutionProviderLibrary(
                         Pointer,
                         (sbyte*)utf8Name,
                         (ushort*)pathPointer));
@@ -66,7 +66,7 @@ public sealed unsafe class OrtEnvironment : SafeHandle
                 var utf8Path = Utf8StringMarshaller.ConvertToUnmanaged(libraryPath);
                 try
                 {
-                    Ort.ThrowIfError(Ort.RegisterExecutionProviderLibrary(
+                    Ort.Ok(Ort.RegisterExecutionProviderLibrary(
                         Pointer,
                         (sbyte*)utf8Name,
                         (ushort*)utf8Path));
@@ -96,7 +96,7 @@ public sealed unsafe class OrtEnvironment : SafeHandle
         try
         {
             DangerousAddRef(ref referenceAdded);
-            Ort.ThrowIfError(Ort.UnregisterExecutionProviderLibrary(Pointer, (sbyte*)utf8Name));
+            Ort.Ok(Ort.UnregisterExecutionProviderLibrary(Pointer, (sbyte*)utf8Name));
         }
         finally
         {
@@ -111,7 +111,7 @@ public sealed unsafe class OrtEnvironment : SafeHandle
     public void SetLogLevel(Ort.OrtLoggingLevel loggingLevel)
     {
         ThrowIfDisposed();
-        Ort.ThrowIfError(Ort.UpdateEnvWithCustomLogLevel(Pointer, loggingLevel));
+        Ort.Ok(Ort.UpdateEnvWithCustomLogLevel(Pointer, loggingLevel));
     }
 
     public override bool IsInvalid => handle == IntPtr.Zero;

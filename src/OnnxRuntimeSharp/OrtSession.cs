@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
@@ -34,7 +34,7 @@ public sealed unsafe class OrtSession : SafeHandle
             fixed (byte* modelPointer = model)
             {
                 Ort.OrtSession* session;
-                Ort.ThrowIfError(Ort.CreateSessionFromArray(
+                Ort.Ok(Ort.CreateSessionFromArray(
                     (Ort.OrtEnv*)environment.DangerousGetHandle(),
                     modelPointer,
                     (nuint)model.Length,
@@ -86,7 +86,7 @@ public sealed unsafe class OrtSession : SafeHandle
             {
                 fixed (char* pathPointer = modelPath)
                 {
-                    Ort.ThrowIfError(Ort.CreateSession(
+                    Ort.Ok(Ort.CreateSession(
                         environment.Pointer,
                         (ushort*)pathPointer,
                         options.Pointer,
@@ -98,7 +98,7 @@ public sealed unsafe class OrtSession : SafeHandle
                 var utf8Path = Utf8StringMarshaller.ConvertToUnmanaged(modelPath);
                 try
                 {
-                    Ort.ThrowIfError(Ort.CreateSession(
+                    Ort.Ok(Ort.CreateSession(
                         environment.Pointer,
                         (ushort*)utf8Path,
                         options.Pointer,
@@ -168,7 +168,7 @@ public sealed unsafe class OrtSession : SafeHandle
             DangerousAddRef(ref sessionReferenceAdded);
             binding.DangerousAddRef(ref bindingReferenceAdded);
             runOptions?.DangerousAddRef(ref runOptionsReferenceAdded);
-            Ort.ThrowIfError(Ort.RunWithBinding(Pointer, runOptions?.Pointer, binding.Pointer));
+            Ort.Ok(Ort.RunWithBinding(Pointer, runOptions?.Pointer, binding.Pointer));
         }
         finally
         {
@@ -239,7 +239,7 @@ public sealed unsafe class OrtSession : SafeHandle
             var outputName = _outputs[0].NamePointer;
             var inputValue = (Ort.OrtValue*)input.DangerousGetHandle();
             var outputValue = (Ort.OrtValue*)output.DangerousGetHandle();
-            Ort.ThrowIfError(Ort.Run(
+            Ort.Ok(Ort.Run(
                 (Ort.OrtSession*)handle,
                 runOptions?.Pointer,
                 &inputName,
@@ -326,7 +326,7 @@ public sealed unsafe class OrtSession : SafeHandle
                 outputValues[index] = outputs[index].ValuePointer;
             }
 
-            Ort.ThrowIfError(Ort.Run(
+            Ort.Ok(Ort.Run(
                 (Ort.OrtSession*)handle,
                 runOptions?.Pointer,
                 inputNames,
@@ -394,7 +394,7 @@ public sealed unsafe class OrtSession : SafeHandle
                 inputValues[index] = inputs[index].ValuePointer;
             }
 
-            Ort.ThrowIfError(Ort.Run(
+            Ort.Ok(Ort.Run(
                 (Ort.OrtSession*)handle,
                 runOptions?.Pointer,
                 inputNames,
@@ -453,16 +453,16 @@ public sealed unsafe class OrtSession : SafeHandle
         {
             DangerousAddRef(ref sessionReferenceAdded);
             Ort.OrtAllocator* allocator;
-            Ort.ThrowIfError(Ort.GetAllocatorWithDefaultOptions(&allocator));
+            Ort.Ok(Ort.GetAllocatorWithDefaultOptions(&allocator));
             sbyte* profilePath;
-            Ort.ThrowIfError(Ort.SessionEndProfiling((Ort.OrtSession*)handle, allocator, &profilePath));
+            Ort.Ok(Ort.SessionEndProfiling((Ort.OrtSession*)handle, allocator, &profilePath));
             try
             {
                 return Marshal.PtrToStringUTF8((IntPtr)profilePath) ?? string.Empty;
             }
             finally
             {
-                Ort.ThrowIfError(Ort.AllocatorFree(allocator, profilePath));
+                Ort.Ok(Ort.AllocatorFree(allocator, profilePath));
             }
         }
         finally
@@ -563,7 +563,7 @@ public sealed unsafe class OrtSession : SafeHandle
     OrtTensorInfo[] GetTensorInfos(TensorInfoKind kind)
     {
         nuint count;
-        Ort.ThrowIfError(kind switch
+        Ort.Ok(kind switch
         {
             TensorInfoKind.Input => Ort.SessionGetInputCount((Ort.OrtSession*)handle, &count),
             TensorInfoKind.Output => Ort.SessionGetOutputCount((Ort.OrtSession*)handle, &count),
@@ -593,9 +593,9 @@ public sealed unsafe class OrtSession : SafeHandle
     OrtTensorInfo GetTensorInfo(nuint index, TensorInfoKind kind)
     {
         Ort.OrtAllocator* allocator;
-        Ort.ThrowIfError(Ort.GetAllocatorWithDefaultOptions(&allocator));
+        Ort.Ok(Ort.GetAllocatorWithDefaultOptions(&allocator));
         sbyte* nativeName;
-        Ort.ThrowIfError(kind switch
+        Ort.Ok(kind switch
         {
             TensorInfoKind.Input => Ort.SessionGetInputName((Ort.OrtSession*)handle, index, allocator, &nativeName),
             TensorInfoKind.Output => Ort.SessionGetOutputName((Ort.OrtSession*)handle, index, allocator, &nativeName),
@@ -610,7 +610,7 @@ public sealed unsafe class OrtSession : SafeHandle
             var name = Marshal.PtrToStringUTF8((IntPtr)nativeName) ??
                 throw new InvalidOperationException("ONNX Runtime returned a null node name.");
             Ort.OrtTypeInfo* typeInfo;
-            Ort.ThrowIfError(kind switch
+            Ort.Ok(kind switch
             {
                 TensorInfoKind.Input => Ort.SessionGetInputTypeInfo((Ort.OrtSession*)handle, index, &typeInfo),
                 TensorInfoKind.Output => Ort.SessionGetOutputTypeInfo((Ort.OrtSession*)handle, index, &typeInfo),
@@ -622,18 +622,18 @@ public sealed unsafe class OrtSession : SafeHandle
             try
             {
                 Ort.OrtTensorTypeAndShapeInfo* tensorInfo;
-                Ort.ThrowIfError(Ort.CastTypeInfoToTensorInfo(typeInfo, &tensorInfo));
+                Ort.Ok(Ort.CastTypeInfoToTensorInfo(typeInfo, &tensorInfo));
                 nuint dimensionCount;
-                Ort.ThrowIfError(Ort.GetDimensionsCount(tensorInfo, &dimensionCount));
+                Ort.Ok(Ort.GetDimensionsCount(tensorInfo, &dimensionCount));
                 var dimensions = new long[checked((int)dimensionCount)];
                 fixed (long* dimensionsPointer = dimensions)
                 {
-                    Ort.ThrowIfError(Ort.GetDimensions(tensorInfo, dimensionsPointer, dimensionCount));
+                    Ort.Ok(Ort.GetDimensions(tensorInfo, dimensionsPointer, dimensionCount));
                 }
                 Ort.ONNXTensorElementDataType elementType;
-                Ort.ThrowIfError(Ort.GetTensorElementType(tensorInfo, &elementType));
+                Ort.Ok(Ort.GetTensorElementType(tensorInfo, &elementType));
                 var symbolicDimensionPointers = stackalloc sbyte*[checked((int)dimensionCount)];
-                Ort.ThrowIfError(Ort.GetSymbolicDimensions(
+                Ort.Ok(Ort.GetSymbolicDimensions(
                     tensorInfo,
                     (sbyte*)symbolicDimensionPointers,
                     dimensionCount));
@@ -667,13 +667,13 @@ public sealed unsafe class OrtSession : SafeHandle
     OrtModelMetadata GetModelMetadata()
     {
         Ort.OrtAllocator* allocator;
-        Ort.ThrowIfError(Ort.GetAllocatorWithDefaultOptions(&allocator));
+        Ort.Ok(Ort.GetAllocatorWithDefaultOptions(&allocator));
         Ort.OrtModelMetadata* metadata;
-        Ort.ThrowIfError(Ort.SessionGetModelMetadata((Ort.OrtSession*)handle, &metadata));
+        Ort.Ok(Ort.SessionGetModelMetadata((Ort.OrtSession*)handle, &metadata));
         try
         {
             long version;
-            Ort.ThrowIfError(Ort.ModelMetadataGetVersion(metadata, &version));
+            Ort.Ok(Ort.ModelMetadataGetVersion(metadata, &version));
             var customMetadata = GetCustomMetadata(metadata, allocator);
             return new OrtModelMetadata(
                 GetMetadataString(metadata, allocator, MetadataStringKind.ProducerName),
@@ -696,7 +696,7 @@ public sealed unsafe class OrtSession : SafeHandle
     {
         sbyte** keys;
         long keyCount;
-        Ort.ThrowIfError(Ort.ModelMetadataGetCustomMetadataMapKeys(metadata, allocator, &keys, &keyCount));
+        Ort.Ok(Ort.ModelMetadataGetCustomMetadataMapKeys(metadata, allocator, &keys, &keyCount));
         var result = new Dictionary<string, string>(checked((int)keyCount), StringComparer.Ordinal);
         try
         {
@@ -706,7 +706,7 @@ public sealed unsafe class OrtSession : SafeHandle
                 var key = Marshal.PtrToStringUTF8((IntPtr)keyPointer) ??
                     throw new InvalidOperationException("ONNX Runtime returned a null metadata key.");
                 sbyte* valuePointer;
-                Ort.ThrowIfError(Ort.ModelMetadataLookupCustomMetadataMap(
+                Ort.Ok(Ort.ModelMetadataLookupCustomMetadataMap(
                     metadata,
                     allocator,
                     keyPointer,
@@ -738,7 +738,7 @@ public sealed unsafe class OrtSession : SafeHandle
         MetadataStringKind kind)
     {
         sbyte* value;
-        Ort.ThrowIfError(kind switch
+        Ort.Ok(kind switch
         {
             MetadataStringKind.ProducerName => Ort.ModelMetadataGetProducerName(metadata, allocator, &value),
             MetadataStringKind.GraphName => Ort.ModelMetadataGetGraphName(metadata, allocator, &value),

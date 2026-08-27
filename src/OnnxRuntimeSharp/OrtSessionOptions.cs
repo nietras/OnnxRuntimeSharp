@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
@@ -13,9 +13,9 @@ public sealed class OrtSessionOptions : SafeHandle
         unsafe
         {
             Ort.OrtSessionOptions* options;
-            Ort.ThrowIfError(Ort.CreateSessionOptions(&options));
+            Ort.Ok(Ort.CreateSessionOptions(&options));
             SetHandle((IntPtr)options);
-            Ort.ThrowIfError(Ort.SetSessionGraphOptimizationLevel(
+            Ort.Ok(Ort.SetSessionGraphOptimizationLevel(
                 options,
                 Ort.GraphOptimizationLevel.ORT_ENABLE_ALL));
         }
@@ -29,7 +29,7 @@ public sealed class OrtSessionOptions : SafeHandle
         {
             fixed (char* utf16Prefix = profileFilePrefix)
             {
-                Ort.ThrowIfError(Ort.EnableProfiling((Ort.OrtSessionOptions*)handle, (ushort*)utf16Prefix));
+                Ort.Ok(Ort.EnableProfiling((Ort.OrtSessionOptions*)handle, (ushort*)utf16Prefix));
             }
 
             return;
@@ -38,7 +38,7 @@ public sealed class OrtSessionOptions : SafeHandle
         var utf8Prefix = Utf8StringMarshaller.ConvertToUnmanaged(profileFilePrefix);
         try
         {
-            Ort.ThrowIfError(Ort.EnableProfiling((Ort.OrtSessionOptions*)handle, (ushort*)utf8Prefix));
+            Ort.Ok(Ort.EnableProfiling((Ort.OrtSessionOptions*)handle, (ushort*)utf8Prefix));
         }
         finally
         {
@@ -49,70 +49,70 @@ public sealed class OrtSessionOptions : SafeHandle
     public unsafe void DisableProfiling()
     {
         ThrowIfDisposed();
-        Ort.ThrowIfError(Ort.DisableProfiling(Pointer));
+        Ort.Ok(Ort.DisableProfiling(Pointer));
     }
 
     public unsafe void SetIntraOpThreadCount(int threadCount)
     {
         ThrowIfDisposed();
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(threadCount);
-        Ort.ThrowIfError(Ort.SetIntraOpNumThreads(Pointer, threadCount));
+        Ort.Ok(Ort.SetIntraOpNumThreads(Pointer, threadCount));
     }
 
     public unsafe void SetInterOpThreadCount(int threadCount)
     {
         ThrowIfDisposed();
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(threadCount);
-        Ort.ThrowIfError(Ort.SetInterOpNumThreads(Pointer, threadCount));
+        Ort.Ok(Ort.SetInterOpNumThreads(Pointer, threadCount));
     }
 
     public unsafe void SetGraphOptimizationLevel(Ort.GraphOptimizationLevel graphOptimizationLevel)
     {
         ThrowIfDisposed();
-        Ort.ThrowIfError(Ort.SetSessionGraphOptimizationLevel(Pointer, graphOptimizationLevel));
+        Ort.Ok(Ort.SetSessionGraphOptimizationLevel(Pointer, graphOptimizationLevel));
     }
 
     public unsafe void SetExecutionMode(Ort.ExecutionMode executionMode)
     {
         ThrowIfDisposed();
-        Ort.ThrowIfError(Ort.SetSessionExecutionMode(Pointer, executionMode));
+        Ort.Ok(Ort.SetSessionExecutionMode(Pointer, executionMode));
     }
 
     public unsafe void SetMemoryPatternEnabled(bool enabled)
     {
         ThrowIfDisposed();
-        Ort.ThrowIfError(enabled ? Ort.EnableMemPattern(Pointer) : Ort.DisableMemPattern(Pointer));
+        Ort.Ok(enabled ? Ort.EnableMemPattern(Pointer) : Ort.DisableMemPattern(Pointer));
     }
 
     public unsafe void SetCpuMemoryArenaEnabled(bool enabled)
     {
         ThrowIfDisposed();
-        Ort.ThrowIfError(enabled ? Ort.EnableCpuMemArena(Pointer) : Ort.DisableCpuMemArena(Pointer));
+        Ort.Ok(enabled ? Ort.EnableCpuMemArena(Pointer) : Ort.DisableCpuMemArena(Pointer));
     }
 
     public unsafe void SetDeterministicCompute(bool enabled)
     {
         ThrowIfDisposed();
-        Ort.ThrowIfError(Ort.SetDeterministicCompute(Pointer, enabled ? (byte)1 : (byte)0));
+        Ort.Ok(Ort.SetDeterministicCompute(Pointer, enabled ? (byte)1 : (byte)0));
     }
 
     public unsafe void DisablePerSessionThreads()
     {
         ThrowIfDisposed();
-        Ort.ThrowIfError(Ort.DisablePerSessionThreads(Pointer));
+        Ort.Ok(Ort.DisablePerSessionThreads(Pointer));
     }
 
     public unsafe void SetLogVerbosityLevel(int level)
     {
         ThrowIfDisposed();
         ArgumentOutOfRangeException.ThrowIfNegative(level);
-        Ort.ThrowIfError(Ort.SetSessionLogVerbosityLevel(Pointer, level));
+        Ort.Ok(Ort.SetSessionLogVerbosityLevel(Pointer, level));
     }
 
     public unsafe void SetLogSeverityLevel(Ort.OrtLoggingLevel level)
     {
         ThrowIfDisposed();
-        Ort.ThrowIfError(Ort.SetSessionLogSeverityLevel(Pointer, (int)level));
+        Ort.Ok(Ort.SetSessionLogSeverityLevel(Pointer, (int)level));
     }
 
     public unsafe void SetLogId(string logId)
@@ -144,7 +144,7 @@ public sealed class OrtSessionOptions : SafeHandle
         var utf8Value = Utf8StringMarshaller.ConvertToUnmanaged(value);
         try
         {
-            Ort.ThrowIfError(Ort.AddSessionConfigEntry(Pointer, (sbyte*)utf8Key, (sbyte*)utf8Value));
+            Ort.Ok(Ort.AddSessionConfigEntry(Pointer, (sbyte*)utf8Key, (sbyte*)utf8Value));
         }
         finally
         {
@@ -161,7 +161,7 @@ public sealed class OrtSessionOptions : SafeHandle
         {
             fixed (char* pathPointer = path)
             {
-                Ort.ThrowIfError(Ort.SetOptimizedModelFilePath(Pointer, (ushort*)pathPointer));
+                Ort.Ok(Ort.SetOptimizedModelFilePath(Pointer, (ushort*)pathPointer));
             }
             return;
         }
@@ -169,7 +169,7 @@ public sealed class OrtSessionOptions : SafeHandle
         var utf8Path = Utf8StringMarshaller.ConvertToUnmanaged(path);
         try
         {
-            Ort.ThrowIfError(Ort.SetOptimizedModelFilePath(Pointer, (ushort*)utf8Path));
+            Ort.Ok(Ort.SetOptimizedModelFilePath(Pointer, (ushort*)utf8Path));
         }
         finally
         {
@@ -214,7 +214,7 @@ public sealed class OrtSessionOptions : SafeHandle
                 }
             }
 
-            Ort.ThrowIfError(Ort.SessionOptionsAppendExecutionProvider(
+            Ort.Ok(Ort.SessionOptionsAppendExecutionProvider(
                 Pointer,
                 (sbyte*)utf8ProviderName,
                 keys,
@@ -280,7 +280,7 @@ public sealed class OrtSessionOptions : SafeHandle
                     ++initializedCount;
                 }
             }
-            Ort.ThrowIfError(Ort.SessionOptionsAppendExecutionProvider_V2(
+            Ort.Ok(Ort.SessionOptionsAppendExecutionProvider_V2(
                 Pointer,
                 environment.Pointer,
                 nativeDevices,
@@ -306,18 +306,18 @@ public sealed class OrtSessionOptions : SafeHandle
     public unsafe void SetExecutionProviderSelectionPolicy(Ort.OrtExecutionProviderDevicePolicy policy)
     {
         ThrowIfDisposed();
-        Ort.ThrowIfError(Ort.SessionOptionsSetEpSelectionPolicy(Pointer, policy));
+        Ort.Ok(Ort.SessionOptionsSetEpSelectionPolicy(Pointer, policy));
     }
 
     public unsafe void AppendCudaExecutionProvider(IReadOnlyDictionary<string, string>? providerOptions = null)
     {
         ThrowIfDisposed();
         Ort.OrtCUDAProviderOptionsV2* nativeProviderOptions;
-        Ort.ThrowIfError(Ort.CreateCUDAProviderOptions(&nativeProviderOptions));
+        Ort.Ok(Ort.CreateCUDAProviderOptions(&nativeProviderOptions));
         try
         {
             UpdateCudaProviderOptions(nativeProviderOptions, providerOptions);
-            Ort.ThrowIfError(Ort.SessionOptionsAppendExecutionProvider_CUDA_V2(
+            Ort.Ok(Ort.SessionOptionsAppendExecutionProvider_CUDA_V2(
                 Pointer,
                 nativeProviderOptions));
         }
@@ -331,11 +331,11 @@ public sealed class OrtSessionOptions : SafeHandle
     {
         ThrowIfDisposed();
         Ort.OrtTensorRTProviderOptionsV2* nativeProviderOptions;
-        Ort.ThrowIfError(Ort.CreateTensorRTProviderOptions(&nativeProviderOptions));
+        Ort.Ok(Ort.CreateTensorRTProviderOptions(&nativeProviderOptions));
         try
         {
             UpdateTensorRtProviderOptions(nativeProviderOptions, providerOptions);
-            Ort.ThrowIfError(Ort.SessionOptionsAppendExecutionProvider_TensorRT_V2(
+            Ort.Ok(Ort.SessionOptionsAppendExecutionProvider_TensorRT_V2(
                 Pointer,
                 nativeProviderOptions));
         }
@@ -363,7 +363,7 @@ public sealed class OrtSessionOptions : SafeHandle
         var utf8Value = Utf8StringMarshaller.ConvertToUnmanaged(value);
         try
         {
-            Ort.ThrowIfError(action(Pointer, (sbyte*)utf8Value));
+            Ort.Ok(action(Pointer, (sbyte*)utf8Value));
         }
         finally
         {
@@ -391,7 +391,7 @@ public sealed class OrtSessionOptions : SafeHandle
                 values[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Value);
                 ++initializedCount;
             }
-            Ort.ThrowIfError(Ort.UpdateCUDAProviderOptions(nativeOptions, keys, values, (nuint)options.Count));
+            Ort.Ok(Ort.UpdateCUDAProviderOptions(nativeOptions, keys, values, (nuint)options.Count));
         }
         finally
         {
@@ -423,7 +423,7 @@ public sealed class OrtSessionOptions : SafeHandle
                 values[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Value);
                 ++initializedCount;
             }
-            Ort.ThrowIfError(Ort.UpdateTensorRTProviderOptions(nativeOptions, keys, values, (nuint)options.Count));
+            Ort.Ok(Ort.UpdateTensorRTProviderOptions(nativeOptions, keys, values, (nuint)options.Count));
         }
         finally
         {
@@ -437,5 +437,5 @@ public sealed class OrtSessionOptions : SafeHandle
 
     void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(IsClosed || IsInvalid, this);
 
-    unsafe delegate Ort.OrtStatus* Utf8Action(Ort.OrtSessionOptions* options, sbyte* value);
+    unsafe delegate Ort.OrtStatusHandle Utf8Action(Ort.OrtSessionOptions* options, sbyte* value);
 }

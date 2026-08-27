@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Runtime.InteropServices;
 
 namespace OnnxRuntimeSharp;
@@ -19,7 +19,7 @@ public sealed unsafe class OrtValue : SafeHandle
         Ort.OrtTensorTypeAndShapeInfo* tensorInfo;
         try
         {
-            Ort.ThrowIfError(Ort.GetTensorTypeAndShape(value, &tensorInfo));
+            Ort.Ok(Ort.GetTensorTypeAndShape(value, &tensorInfo));
         }
         catch
         {
@@ -30,14 +30,14 @@ public sealed unsafe class OrtValue : SafeHandle
         try
         {
             Ort.ONNXTensorElementDataType elementType;
-            Ort.ThrowIfError(Ort.GetTensorElementType(tensorInfo, &elementType));
+            Ort.Ok(Ort.GetTensorElementType(tensorInfo, &elementType));
             ElementType = elementType;
             nuint dimensionCount;
-            Ort.ThrowIfError(Ort.GetDimensionsCount(tensorInfo, &dimensionCount));
+            Ort.Ok(Ort.GetDimensionsCount(tensorInfo, &dimensionCount));
             _dimensions = new long[checked((int)dimensionCount)];
             fixed (long* dimensionsPointer = _dimensions)
             {
-                Ort.ThrowIfError(Ort.GetDimensions(tensorInfo, dimensionsPointer, dimensionCount));
+                Ort.Ok(Ort.GetDimensions(tensorInfo, dimensionsPointer, dimensionCount));
             }
         }
         catch
@@ -70,7 +70,7 @@ public sealed unsafe class OrtValue : SafeHandle
             elementCount = checked(elementCount * (nuint)dimension);
         }
         void* data;
-        Ort.ThrowIfError(Ort.GetTensorMutableData((Ort.OrtValue*)handle, &data));
+        Ort.Ok(Ort.GetTensorMutableData((Ort.OrtValue*)handle, &data));
         return new Span<T>(data, checked((int)elementCount));
     }
 
