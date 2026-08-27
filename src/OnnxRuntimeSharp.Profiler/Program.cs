@@ -310,6 +310,7 @@ static IReadOnlyList<NodeProfile> ReadNodeProfiles(string profilePath)
 {
     using var document = JsonDocument.Parse(File.ReadAllBytes(profilePath));
     var profiles = new Dictionary<string, NodeProfile>(StringComparer.Ordinal);
+    var orderedProfiles = new List<NodeProfile>();
     foreach (var traceEvent in document.RootElement.EnumerateArray())
     {
         if (!traceEvent.TryGetProperty("cat", out var category) ||
@@ -330,10 +331,11 @@ static IReadOnlyList<NodeProfile> ReadNodeProfiles(string profilePath)
         {
             profile = new NodeProfile(nodeName);
             profiles.Add(nodeName, profile);
+            orderedProfiles.Add(profile);
         }
         profile.Add(duration.GetDouble());
     }
-    return profiles.Values.OrderBy(profile => profile.NodeName, StringComparer.Ordinal).ToArray();
+    return orderedProfiles;
 }
 
 static void WriteNodeProfileSummary(
@@ -346,13 +348,20 @@ static void WriteNodeProfileSummary(
     const string CallsHeader = "Calls";
     const string TotalMillisecondsHeader = "Total [ms]";
     const string MeanMillisecondsHeader = "Mean [ms/call]";
+    const string RatioHeader = "Ratio";
     const int CallsWidth = 5;
     const int TotalMillisecondsWidth = 10;
     const int MeanMillisecondsWidth = 13;
+    const int RatioWidth = 5;
 
-    var nodeWidth = Math.Max(NodeHeader.Length, profileReport.Profiles.Max(item => item.NodeName.Length));
-    var headerFormat = $"{{0,-{nodeWidth}}};{{1,{CallsWidth}}};{{2,{TotalMillisecondsWidth}}};{{3,{MeanMillisecondsWidth}}}";
-    var rowFormat = $"{{0,-{nodeWidth}}};{{1,{CallsWidth}}};{{2,{TotalMillisecondsWidth}:F3}};{{3,{MeanMillisecondsWidth}:F3}}";
+    var nodeWidth = Math.Max("Total".Length,
+        Math.Max(NodeHeader.Length, profileReport.Profiles.Max(item => item.NodeName.Length)));
+    var headerFormat = $"{{0,-{nodeWidth}}};{{1,{CallsWidth}}};{{2,{TotalMillisecondsWidth}}};{{3,{MeanMillisecondsWidth}}};{{4,{RatioWidth}}}";
+    var rowFormat = $"{{0,-{nodeWidth}}};{{1,{CallsWidth}}};{{2,{TotalMillisecondsWidth}:F3}};{{3,{MeanMillisecondsWidth}:F3}};{{4,{RatioWidth}:F3}}";
+    var totalMicroseconds = profileReport.Profiles.Sum(item => item.TotalMicroseconds);
+    var totalCalls = profileReport.Profiles.Sum(item => item.CallCount);
+    var totalMilliseconds = totalMicroseconds / 1_000.0;
+    var totalMeanMilliseconds = totalCalls == 0 ? 0.0 : totalMilliseconds / totalCalls;
 
     log(string.Empty);
     log($"## CPU node profile: `{configurationName}`");
@@ -360,12 +369,14 @@ static void WriteNodeProfileSummary(
     log($"Source trace: `{Path.GetFileName(profileReport.TracePath)}`");
     log("```");
     log(string.Format(null, headerFormat,
-        NodeHeader, CallsHeader, TotalMillisecondsHeader, MeanMillisecondsHeader));
+        NodeHeader, CallsHeader, TotalMillisecondsHeader, MeanMillisecondsHeader, RatioHeader));
     foreach (var item in profileReport.Profiles)
     {
+        var computeRatio = totalMicroseconds == 0.0 ? 0.0 : item.TotalMicroseconds / totalMicroseconds;
         log(string.Format(null, rowFormat,
-            item.NodeName, item.CallCount, item.TotalMicroseconds / 1_000.0, item.MeanMilliseconds));
+            item.NodeName, item.CallCount, item.TotalMicroseconds / 1_000.0, item.MeanMilliseconds, computeRatio));
     }
+    log(string.Format(null, rowFormat, "Total", totalCalls, totalMilliseconds, totalMeanMilliseconds, 1.0));
     log("```");
 }
 
