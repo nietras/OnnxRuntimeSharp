@@ -13,12 +13,12 @@ public class OrtOpenVinoPluginTest
         const string RegistrationName = "openvino_ep_registration";
         var executionProviderName = OpenVINOEp.GetEpName();
         using var environment = new OrtEnvironment();
-        environment.RegisterExecutionProviderLibrary(
-            RegistrationName,
-            OpenVINOEp.GetLibraryPath());
+        var libraryPath = OpenVINOEp.GetLibraryPath();
+        environment.RegisterExecutionProviderLibrary(RegistrationName, libraryPath);
         try
         {
-            var devices = environment.GetExecutionProviderDevices()
+            var allDevices = environment.GetExecutionProviderDevices();
+            var devices = allDevices
                 .Where(device => string.Equals(
                     device.ExecutionProviderName,
                     executionProviderName,
@@ -26,7 +26,10 @@ public class OrtOpenVinoPluginTest
                 .ToArray();
             if (devices.Length == 0)
             {
-                return;
+                Assert.Inconclusive(
+                    $"OpenVINO is unavailable on this machine. Registered '{executionProviderName}', " +
+                    $"but available providers were: {string.Join(", ", allDevices.Select(device => device.ExecutionProviderName))}. " +
+                    "OpenVINO requires a supported Intel device; x64 alone is not sufficient.");
             }
 
             var device = devices.FirstOrDefault(item =>
