@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../OnnxRuntimeSharp/OnnxRuntimeSharp.csproj" />
+    
+    <PackageReference Include="Intel.ML.OnnxRuntime.EP.OpenVINO" Version="1.6.1" />
+    <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.linux-x64" Version="1.28.0" />
+    <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.linux-arm64" Version="1.28.0" />
+    <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.osx-arm64" Version="1.28.0" />
+    <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.win-x64" Version="1.28.0" />
+    <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.win-arm64" Version="1.28.0" />
+    <PackageReference Include="MSTest" Version="4.3.3" />
+    <PackageReference Include="coverlet.collector" Version="10.0.1" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\models\mnist-8.onnx" Link="mnist-8.onnx" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
