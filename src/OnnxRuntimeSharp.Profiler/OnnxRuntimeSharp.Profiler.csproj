@@ -6,7 +6,7 @@
   <ItemGroup>
     <ProjectReference Include="../OnnxRuntimeSharp/OnnxRuntimeSharp.csproj" />
     <PackageReference Include="NtvLibs.OnnxRuntime.CPU.cuda13.Tensorrt.runtime.win-x64" Version="1.28.0" />
-    <PackageReference Include="NtvLibs.TensorRT.cuda13.runtime.win-x64" Version="10.14.1.48" />
+    <PackageReference Include="NtvLibs.TensorRT.cuda13.runtime.win-x64" Version="11.0.0.114" />
     <PackageReference Include="NtvLibs.cuDNN.cuda13.runtime.win-x64" Version="9.23.0.39" />
     <PackageReference Include="NtvLibs.zlib.zlibwapi.runtime.win-x64" Version="1.3.1" />
     <PackageReference Include="NtvLibs.cuda13.cublas.runtime.win-x64" Version="13.3.0" />
