@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
@@ -30,9 +31,22 @@ public static unsafe partial class Ort
 
     public static void Ok(this OrtStatusHandle status)
     {
-        if (!status.IsNull)
+        if (!status.IsNull) { ThrowOrtStatusError(status); }
+    }
+
+    [DoesNotReturn]
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    static void ThrowOrtStatusError(OrtStatusHandle status)
+    {
+        try
         {
-            Throws.ThrowOrtStatusError(status);
+            var errorCode = Api->GetErrorCode(status);
+            var errorMessage = Marshal.PtrToStringUTF8((nint)Api->GetErrorMessage(status)) ?? "Unknown ONNX Runtime error.";
+            throw new OrtException(errorCode, errorMessage);
+        }
+        finally
+        {
+            Api->ReleaseStatus(status);
         }
     }
 

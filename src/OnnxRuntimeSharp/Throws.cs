@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 
 namespace OnnxRuntimeSharp;
 
@@ -208,21 +207,5 @@ static class Throws
     public static void ThrowExecutionProviderDeviceNameMismatch()
     {
         throw new ArgumentException("All devices must belong to the same execution provider.", "devices");
-    }
-
-    [DoesNotReturn]
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    public static unsafe void ThrowOrtStatusError(Ort.OrtStatusHandle status)
-    {
-        try
-        {
-            var errorCode = Ort.Api->GetErrorCode(status);
-            var errorMessage = Marshal.PtrToStringUTF8((nint)Ort.Api->GetErrorMessage(status)) ?? "Unknown ONNX Runtime error.";
-            throw new OrtException(errorCode, errorMessage);
-        }
-        finally
-        {
-            Ort.Api->ReleaseStatus(status);
-        }
     }
 }
