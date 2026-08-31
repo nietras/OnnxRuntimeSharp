@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
@@ -34,7 +33,6 @@ public static unsafe partial class Ort
         if (!status.IsNull) { ThrowOrtStatusError(status); }
     }
 
-    [DoesNotReturn]
     [MethodImpl(MethodImplOptions.NoInlining)]
     static void ThrowOrtStatusError(OrtStatusHandle status)
     {
