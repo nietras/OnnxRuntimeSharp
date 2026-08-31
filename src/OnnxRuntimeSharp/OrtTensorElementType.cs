@@ -17,5 +17,5 @@ static class OrtTensorElementType
         : typeof(T) == typeof(double) ? Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_DOUBLE
         : typeof(T) == typeof(uint) ? Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT32
         : typeof(T) == typeof(ulong) ? Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT64
-        : throw new NotSupportedException($"ONNX Runtime does not support {typeof(T)} tensor interop.");
+        : Throws.ThrowTensorInteropNotSupported<Ort.ONNXTensorElementDataType>(typeof(T));
 }

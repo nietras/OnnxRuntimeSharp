@@ -18,12 +18,12 @@ public static unsafe partial class Ort
         var apiBase = NativeExports.OrtGetApiBase();
         if (apiBase is null)
         {
-            throw new InvalidOperationException("ONNX Runtime did not return an API base.");
+            Throws.ThrowApiBaseUnavailable();
         }
         var api = apiBase->GetApi(ApiVersion);
         if (api is null)
         {
-            throw new NotSupportedException($"ONNX Runtime C API version {ApiVersion} is unavailable.");
+            Throws.ThrowApiVersionUnavailable(ApiVersion);
         }
         return api;
     }
@@ -31,21 +31,8 @@ public static unsafe partial class Ort
     public static void Ok(this OrtStatusHandle status)
     {
         if (!status.IsNull)
-        { ThrowStatusError(status); }
-    }
-
-    [MethodImpl(MethodImplOptions.NoInlining)]
-    static void ThrowStatusError(OrtStatusHandle status)
-    {
-        try
         {
-            throw new OrtException(
-                Api->GetErrorCode(status),
-                Marshal.PtrToStringUTF8((IntPtr)Api->GetErrorMessage(status)) ?? "Unknown ONNX Runtime error.");
-        }
-        finally
-        {
-            Api->ReleaseStatus(status);
+            Throws.ThrowOrtStatusError(status);
         }
     }
 
@@ -90,7 +77,7 @@ public static unsafe partial class Ort
             for (var index = 0; index < result.Length; ++index)
             {
                 result[index] = Marshal.PtrToStringUTF8((IntPtr)providers[index]) ??
-                    throw new InvalidOperationException("ONNX Runtime returned a null execution provider name.");
+                    Throws.ThrowExecutionProviderNameMissing<string>();
             }
             return result;
         }
@@ -291,7 +278,7 @@ public static unsafe partial class Ort
     public static OrtStatusHandle GetDimensions(OrtTensorTypeAndShapeInfo* info, long* dim_values, nuint dim_values_length) => Api->GetDimensions(info, dim_values, dim_values_length);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetSymbolicDimensions(OrtTensorTypeAndShapeInfo* info, sbyte* dim_params, nuint dim_params_length) => Api->GetSymbolicDimensions(info, dim_params, dim_params_length);
+    public static OrtStatusHandle GetSymbolicDimensions(OrtTensorTypeAndShapeInfo* info, sbyte** dim_params, nuint dim_params_length) => Api->GetSymbolicDimensions(info, dim_params, dim_params_length);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle GetTensorShapeElementCount(OrtTensorTypeAndShapeInfo* info, nuint* @out) => Api->GetTensorShapeElementCount(info, @out);
@@ -915,7 +902,7 @@ public static unsafe partial class Ort
     public static OrtStatusHandle ShapeInferContext_SetOutputTypeShape(OrtShapeInferContext* context, nuint index, OrtTensorTypeAndShapeInfo* info) => Api->ShapeInferContext_SetOutputTypeShape(context, index, info);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle SetSymbolicDimensions(OrtTensorTypeAndShapeInfo* info, sbyte* dim_params, nuint dim_params_length) => Api->SetSymbolicDimensions(info, dim_params, dim_params_length);
+    public static OrtStatusHandle SetSymbolicDimensions(OrtTensorTypeAndShapeInfo* info, sbyte** dim_params, nuint dim_params_length) => Api->SetSymbolicDimensions(info, dim_params, dim_params_length);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle ReadOpAttr(OrtOpAttr* op_attr, OrtOpAttrType type, void* data, nuint len, nuint* @out) => Api->ReadOpAttr(op_attr, type, data, len, @out);

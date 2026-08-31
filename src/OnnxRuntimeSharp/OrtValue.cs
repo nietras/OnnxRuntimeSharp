@@ -12,7 +12,7 @@ public sealed unsafe class OrtValue : SafeHandle
     {
         if (value is null)
         {
-            throw new ArgumentNullException(nameof(value));
+            Throws.ThrowNativeValueNull();
         }
 
         SetHandle((IntPtr)value);
@@ -61,7 +61,7 @@ public sealed unsafe class OrtValue : SafeHandle
         var expectedType = OrtTensorElementType.Get<T>();
         if (ElementType != expectedType)
         {
-            throw new InvalidOperationException($"Tensor contains {ElementType}, not {expectedType}.");
+            Throws.ThrowTensorElementTypeMismatch(ElementType, expectedType);
         }
 
         nuint elementCount = 1;

@@ -20,7 +20,7 @@ public sealed unsafe class OrtSession : SafeHandle
         ArgumentNullException.ThrowIfNull(environment);
         if (model.IsEmpty)
         {
-            throw new ArgumentException("Model data cannot be empty.", nameof(model));
+            Throws.ThrowModelDataEmpty();
         }
 
         _environment = environment;
@@ -157,7 +157,7 @@ public sealed unsafe class OrtSession : SafeHandle
         ArgumentNullException.ThrowIfNull(binding);
         if (!ReferenceEquals(binding.Session, this))
         {
-            throw new ArgumentException("The I/O binding belongs to a different session.", nameof(binding));
+            Throws.ThrowIoBindingSessionMismatch();
         }
 
         var sessionReferenceAdded = false;
@@ -199,14 +199,14 @@ public sealed unsafe class OrtSession : SafeHandle
         where T : unmanaged
     {
         ThrowIfDisposed();
-        return CreateBinding(_inputs, index, value, nameof(index));
+        return CreateBinding(_inputs, index, value);
     }
 
     public OrtValueBinding CreateOutputBinding<T>(int index, OrtTensor<T> value)
         where T : unmanaged
     {
         ThrowIfDisposed();
-        return CreateBinding(_outputs, index, value, nameof(index));
+        return CreateBinding(_outputs, index, value);
     }
 
     public void Run<TInput, TOutput>(
@@ -221,8 +221,7 @@ public sealed unsafe class OrtSession : SafeHandle
         ArgumentNullException.ThrowIfNull(output);
         if (_inputs.Length != 1 || _outputs.Length != 1)
         {
-            throw new InvalidOperationException(
-                "This overload requires a model with exactly one input and one output. Use value bindings instead.");
+            Throws.ThrowSingleInputOutputModelRequired();
         }
 
         var sessionReferenceAdded = false;
@@ -278,13 +277,11 @@ public sealed unsafe class OrtSession : SafeHandle
         ThrowIfDisposed();
         if (inputs.Length != _inputs.Length)
         {
-            throw new ArgumentException($"Expected {_inputs.Length} input bindings, got {inputs.Length}.", nameof(inputs));
+            Throws.ThrowInputBindingCountMismatch(_inputs.Length, inputs.Length);
         }
         if ((uint)(outputs.Length - 1) >= (uint)_outputs.Length)
         {
-            throw new ArgumentException(
-                $"Expected between 1 and {_outputs.Length} output bindings, got {outputs.Length}.",
-                nameof(outputs));
+            Throws.ThrowOutputBindingCountMismatch(_outputs.Length, outputs.Length);
         }
 
         var inputNames = stackalloc sbyte*[inputs.Length];
@@ -301,12 +298,12 @@ public sealed unsafe class OrtSession : SafeHandle
             runOptions?.DangerousAddRef(ref runOptionsReferenceAdded);
             for (var index = 0; index < inputs.Length; ++index)
             {
-                ValidateBinding(inputs[index], _inputs, index, nameof(inputs));
+                ValidateInputBinding(inputs[index], _inputs, index);
                 var referenceAdded = false;
                 inputs[index].Value.DangerousAddRef(ref referenceAdded);
                 if (!referenceAdded)
                 {
-                    throw new ObjectDisposedException(inputs[index].Value.GetType().Name);
+                    Throws.ThrowBindingValueDisposed(inputs[index].Value.GetType().Name);
                 }
                 ++referencedInputCount;
                 inputNames[index] = inputs[index].NamePointer;
@@ -314,12 +311,12 @@ public sealed unsafe class OrtSession : SafeHandle
             }
             for (var index = 0; index < outputs.Length; ++index)
             {
-                ValidateOutputBinding(outputs[index], index, outputs, nameof(outputs));
+                ValidateOutputBinding(outputs[index], index, outputs);
                 var referenceAdded = false;
                 outputs[index].Value.DangerousAddRef(ref referenceAdded);
                 if (!referenceAdded)
                 {
-                    throw new ObjectDisposedException(outputs[index].Value.GetType().Name);
+                    Throws.ThrowBindingValueDisposed(outputs[index].Value.GetType().Name);
                 }
                 ++referencedOutputCount;
                 outputNames[index] = outputs[index].NamePointer;
@@ -362,7 +359,7 @@ public sealed unsafe class OrtSession : SafeHandle
         ThrowIfDisposed();
         if (inputs.Length != _inputs.Length)
         {
-            throw new ArgumentException($"Expected {_inputs.Length} input bindings, got {inputs.Length}.", nameof(inputs));
+            Throws.ThrowInputBindingCountMismatch(_inputs.Length, inputs.Length);
         }
 
         var inputNames = stackalloc sbyte*[inputs.Length];
@@ -386,7 +383,7 @@ public sealed unsafe class OrtSession : SafeHandle
             runOptions?.DangerousAddRef(ref runOptionsReferenceAdded);
             for (var index = 0; index < inputs.Length; ++index)
             {
-                ValidateBinding(inputs[index], _inputs, index, nameof(inputs));
+                ValidateInputBinding(inputs[index], _inputs, index);
                 var referenceAdded = false;
                 inputs[index].Value.DangerousAddRef(ref referenceAdded);
                 ++referencedInputCount;
@@ -495,7 +492,7 @@ public sealed unsafe class OrtSession : SafeHandle
         return true;
     }
 
-    OrtValueBinding CreateBinding<T>(OrtTensorInfo[] infos, int index, OrtTensor<T> value, string parameterName)
+    OrtValueBinding CreateBinding<T>(OrtTensorInfo[] infos, int index, OrtTensor<T> value)
         where T : unmanaged
     {
         ArgumentOutOfRangeException.ThrowIfNegative(index);
@@ -503,43 +500,37 @@ public sealed unsafe class OrtSession : SafeHandle
         ArgumentNullException.ThrowIfNull(value);
         if (infos[index].ElementType != value.ElementType)
         {
-            throw new ArgumentException(
-                $"Tensor '{infos[index].Name}' expects {infos[index].ElementType}, but received {value.ElementType}.",
-                parameterName);
+            Throws.ThrowTensorBindingTypeMismatch(infos[index].Name, infos[index].ElementType, value.ElementType);
         }
 
         return new OrtValueBinding(this, infos[index], value);
     }
 
-    void ValidateBinding(
+    void ValidateInputBinding(
         OrtValueBinding binding,
         OrtTensorInfo[] expectedInfos,
-        int index,
-        string parameterName)
+        int index)
     {
         if (!ReferenceEquals(binding.Session, this) || !ReferenceEquals(binding.Info, expectedInfos[index]))
         {
-            throw new ArgumentException(
-                $"Binding at index {index} does not match this session's '{expectedInfos[index].Name}' value.",
-                parameterName);
+            Throws.ThrowInputBindingMismatch(index, expectedInfos[index].Name);
         }
     }
 
     void ValidateOutputBinding(
         OrtValueBinding binding,
         int index,
-        ReadOnlySpan<OrtValueBinding> precedingBindings,
-        string parameterName)
+        ReadOnlySpan<OrtValueBinding> precedingBindings)
     {
         if (!ReferenceEquals(binding.Session, this) || Array.IndexOf(_outputs, binding.Info) < 0)
         {
-            throw new ArgumentException($"Output binding at index {index} does not belong to this session.", parameterName);
+            Throws.ThrowOutputBindingSessionMismatch(index);
         }
         for (var precedingIndex = 0; precedingIndex < index; ++precedingIndex)
         {
             if (ReferenceEquals(precedingBindings[precedingIndex].Info, binding.Info))
             {
-                throw new ArgumentException($"Output '{binding.Info.Name}' is bound more than once.", parameterName);
+                Throws.ThrowOutputBoundMoreThanOnce(binding.Info.Name);
             }
         }
     }
@@ -608,7 +599,7 @@ public sealed unsafe class OrtSession : SafeHandle
         try
         {
             var name = Marshal.PtrToStringUTF8((IntPtr)nativeName) ??
-                throw new InvalidOperationException("ONNX Runtime returned a null node name.");
+                Throws.ThrowNodeNameMissing<string>();
             Ort.OrtTypeInfo* typeInfo;
             Ort.Ok(kind switch
             {
@@ -635,7 +626,7 @@ public sealed unsafe class OrtSession : SafeHandle
                 var symbolicDimensionPointers = stackalloc sbyte*[checked((int)dimensionCount)];
                 Ort.Ok(Ort.GetSymbolicDimensions(
                     tensorInfo,
-                    (sbyte*)symbolicDimensionPointers,
+                    symbolicDimensionPointers,
                     dimensionCount));
                 var symbolicDimensions = new string?[checked((int)dimensionCount)];
                 for (var dimensionIndex = 0; dimensionIndex < symbolicDimensions.Length; ++dimensionIndex)
@@ -704,7 +695,7 @@ public sealed unsafe class OrtSession : SafeHandle
             {
                 var keyPointer = keys[index];
                 var key = Marshal.PtrToStringUTF8((IntPtr)keyPointer) ??
-                    throw new InvalidOperationException("ONNX Runtime returned a null metadata key.");
+                    Throws.ThrowMetadataKeyMissing<string>();
                 sbyte* valuePointer;
                 Ort.Ok(Ort.ModelMetadataLookupCustomMetadataMap(
                     metadata,

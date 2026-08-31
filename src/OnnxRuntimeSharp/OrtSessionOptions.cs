@@ -241,7 +241,7 @@ public sealed class OrtSessionOptions : SafeHandle
         ArgumentNullException.ThrowIfNull(environment);
         if (devices.IsEmpty)
         {
-            throw new ArgumentException("At least one execution-provider device is required.", nameof(devices));
+            Throws.ThrowExecutionProviderDevicesEmpty();
         }
 
         var nativeDevices = stackalloc Ort.OrtEpDevice*[devices.Length];
@@ -250,7 +250,7 @@ public sealed class OrtSessionOptions : SafeHandle
             ArgumentNullException.ThrowIfNull(devices[index], nameof(devices));
             if (!ReferenceEquals(devices[index].Environment, environment))
             {
-                throw new ArgumentException("All devices must originate from the supplied environment.", nameof(devices));
+                Throws.ThrowExecutionProviderDeviceEnvironmentMismatch();
             }
             if (index > 0 &&
                 !string.Equals(
@@ -258,7 +258,7 @@ public sealed class OrtSessionOptions : SafeHandle
                     devices[index].ExecutionProviderName,
                     StringComparison.Ordinal))
             {
-                throw new ArgumentException("All devices must belong to the same execution provider.", nameof(devices));
+                Throws.ThrowExecutionProviderDeviceNameMismatch();
             }
             nativeDevices[index] = devices[index].Pointer;
         }
