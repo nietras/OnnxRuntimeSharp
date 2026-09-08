@@ -178,7 +178,7 @@ public sealed class OrtSessionOptions : SafeHandle
     public unsafe void AppendExecutionProvider(string providerName)
         => AppendExecutionProvider(providerName, null);
 
-    public unsafe void AppendOpenVinoExecutionProvider(IReadOnlyDictionary<string, string>? providerOptions = null)
+    public unsafe void AppendExecutionProvider_OpenVINO(IReadOnlyDictionary<string, string>? providerOptions = null)
     {
         ThrowIfDisposed();
         var optionCount = providerOptions?.Count ?? 0;
@@ -219,17 +219,6 @@ public sealed class OrtSessionOptions : SafeHandle
     {
         ThrowIfDisposed();
         ArgumentException.ThrowIfNullOrWhiteSpace(providerName);
-        if (string.Equals(providerName, "CUDAExecutionProvider", StringComparison.Ordinal))
-        {
-            AppendCudaExecutionProvider(providerOptions);
-            return;
-        }
-        if (string.Equals(providerName, "TensorrtExecutionProvider", StringComparison.Ordinal))
-        {
-            AppendTensorRtExecutionProvider(providerOptions);
-            return;
-        }
-
         var utf8ProviderName = Utf8StringMarshaller.ConvertToUnmanaged(providerName);
         var optionCount = providerOptions?.Count ?? 0;
         var keys = stackalloc sbyte*[optionCount];
@@ -342,7 +331,7 @@ public sealed class OrtSessionOptions : SafeHandle
         Ort.Ok(Ort.SessionOptionsSetEpSelectionPolicy(Pointer, policy));
     }
 
-    public unsafe void AppendCudaExecutionProvider(IReadOnlyDictionary<string, string>? providerOptions = null)
+    public unsafe void AppendExecutionProvider_CUDA(IReadOnlyDictionary<string, string>? providerOptions = null)
     {
         ThrowIfDisposed();
         Ort.OrtCUDAProviderOptionsV2* nativeProviderOptions;
@@ -360,7 +349,7 @@ public sealed class OrtSessionOptions : SafeHandle
         }
     }
 
-    public unsafe void AppendTensorRtExecutionProvider(IReadOnlyDictionary<string, string>? providerOptions = null)
+    public unsafe void AppendExecutionProvider_TensorRT(IReadOnlyDictionary<string, string>? providerOptions = null)
     {
         ThrowIfDisposed();
         Ort.OrtTensorRTProviderOptionsV2* nativeProviderOptions;

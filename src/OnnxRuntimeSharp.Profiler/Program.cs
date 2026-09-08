@@ -21,22 +21,22 @@ var configurations = new Dictionary<string, Action<OrtSessionOptions>>
     //["TensorRT"] = options =>
     //{
     //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
-    //    options.AppendTensorRtExecutionProvider();
+    //    options.AppendExecutionProvider_TensorRT();
     //},
     //["CUDA"] = options =>
     //{
     //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
-    //    options.AppendCudaExecutionProvider();
+    //    options.AppendExecutionProvider_CUDA();
     //},
     //["OpenVINO"] = options =>
     //{
     //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
-    //    options.AppendOpenVinoExecutionProvider();
+    //    options.AppendExecutionProvider_OpenVINO();
     //},
     //["OpenVINO Throughput"] = options =>
     //{
     //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
-    //    options.AppendOpenVinoExecutionProvider(new Dictionary<string, string>
+    //    options.AppendExecutionProvider_OpenVINO(new Dictionary<string, string>
     //    {
     //        { "device_type", "CPU" },
     //        { "load_config", "{\"CPU\":{\"PERFORMANCE_HINT\":\"THROUGHPUT\"}}" },
@@ -45,7 +45,7 @@ var configurations = new Dictionary<string, Action<OrtSessionOptions>>
     //["OpenVINO 1×Threads 1×Streams"] = options =>
     //{
     //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
-    //    options.AppendOpenVinoExecutionProvider(new Dictionary<string, string>
+    //    options.AppendExecutionProvider_OpenVINO(new Dictionary<string, string>
     //    {
     //        { "device_type", "CPU" },
     //        { "num_of_threads", "1" },
@@ -55,7 +55,7 @@ var configurations = new Dictionary<string, Action<OrtSessionOptions>>
     ["OpenVINO 16×Threads 8×Streams"] = options =>
     {
         options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
-        options.AppendOpenVinoExecutionProvider(new Dictionary<string, string>
+        options.AppendExecutionProvider_OpenVINO(new Dictionary<string, string>
         {
             { "device_type", "CPU" },
             { "num_of_threads", "16" },
@@ -73,6 +73,24 @@ var configurations = new Dictionary<string, Action<OrtSessionOptions>>
     //{
     //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
     //    options.SetIntraOpThreadCount(1);
+    //    options.SetInterOpThreadCount(1);
+    //},
+    //["CPU 2×Intra 1×Inter"] = options =>
+    //{
+    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
+    //    options.SetIntraOpThreadCount(2);
+    //    options.SetInterOpThreadCount(1);
+    //},
+    //["CPU 2×Intra 2×Inter"] = options =>
+    //{
+    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
+    //    options.SetIntraOpThreadCount(2);
+    //    options.SetInterOpThreadCount(2);
+    //},
+    //["CPU 4×Intra 1×Inter"] = options =>
+    //{
+    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
+    //    options.SetIntraOpThreadCount(4);
     //    options.SetInterOpThreadCount(1);
     //},
 };
