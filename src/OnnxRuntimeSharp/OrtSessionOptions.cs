@@ -13,11 +13,9 @@ public sealed class OrtSessionOptions : SafeHandle
         unsafe
         {
             Ort.OrtSessionOptions* options;
-            Ort.Ok(Ort.CreateSessionOptions(&options));
+            Ort.CreateSessionOptions(&options).Ok();
             SetHandle((IntPtr)options);
-            Ort.Ok(Ort.SetSessionGraphOptimizationLevel(
-                options,
-                Ort.GraphOptimizationLevel.ORT_ENABLE_ALL));
+            Ort.SetSessionGraphOptimizationLevel(options, Ort.GraphOptimizationLevel.ORT_ENABLE_ALL).Ok();
         }
     }
 

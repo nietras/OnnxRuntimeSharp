@@ -28,38 +28,53 @@ var configurations = new Dictionary<string, Action<OrtSessionOptions>>
     //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
     //    options.AppendCudaExecutionProvider();
     //},
-    ["OpenVINO"] = options =>
-    {
-        options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
-        options.AppendOpenVinoExecutionProvider();
-    },
-    ["OpenVINO 1×Threads 1×Streams"] = options =>
-    {
-        options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
-        options.SetIntraOpThreadCount(1);
-        options.SetInterOpThreadCount(1);
-        options.AppendOpenVinoExecutionProvider(new Dictionary<string, string>
-        {
-            { "num_of_threads", "1" },
-            { "num_streams", "1" },
-        });
-    },
+    //["OpenVINO"] = options =>
+    //{
+    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
+    //    options.AppendOpenVinoExecutionProvider();
+    //},
+    //["OpenVINO Throughput"] = options =>
+    //{
+    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
+    //    options.AppendOpenVinoExecutionProvider(new Dictionary<string, string>
+    //    {
+    //        { "device_type", "CPU" },
+    //        { "load_config", "{\"CPU\":{\"PERFORMANCE_HINT\":\"THROUGHPUT\"}}" },
+    //    });
+    //},
+    //["OpenVINO 1×Threads 1×Streams"] = options =>
+    //{
+    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
+    //    options.AppendOpenVinoExecutionProvider(new Dictionary<string, string>
+    //    {
+    //        { "device_type", "CPU" },
+    //        { "num_of_threads", "1" },
+    //        { "num_streams", "1" },
+    //    });
+    //},
     ["OpenVINO 16×Threads 8×Streams"] = options =>
     {
         options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
         options.AppendOpenVinoExecutionProvider(new Dictionary<string, string>
         {
+            { "device_type", "CPU" },
             { "num_of_threads", "16" },
             { "num_streams", "8" },
         });
     },
-    ["CPU"] = options => options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL),
-    ["CPU 1×Intra 1×Inter"] = options =>
-    {
-        options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
-        options.SetIntraOpThreadCount(1);
-        options.SetInterOpThreadCount(1);
-    },
+    //["CPU"] = options => options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL),
+    //["CPU 2×Intra 16×Inter"] = options =>
+    //{
+    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
+    //    options.SetIntraOpThreadCount(2);
+    //    options.SetInterOpThreadCount(16);
+    //},
+    //["CPU 1×Intra 1×Inter"] = options =>
+    //{
+    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
+    //    options.SetIntraOpThreadCount(1);
+    //    options.SetInterOpThreadCount(1);
+    //},
 };
 
 Action<string> log = message =>
