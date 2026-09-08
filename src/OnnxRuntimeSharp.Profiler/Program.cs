@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -13,18 +12,55 @@ const int BatchSize = 1;
 const int WarmupCount = 3;
 const int MinimumIterations = 10;
 const int ProfilingSamples = 10;
-const int OpenVinoNumThreads = 16;
-const int OpenVinoNumStreams = 8;
+const bool EnableProfiling = false;
 const double TargetRunDurationMilliseconds = 1_000;
 var concurrentTestDuration = TimeSpan.FromSeconds(1);
 int[] concurrentThreadCountsToTest = [1, 2, 4, 8, 16]; // SKIP CONCURRENT FOR NOW
-string[] preferredExecutionProviders =
-[
-    //"TensorrtExecutionProvider",
-    //"CUDAExecutionProvider",
-    "OpenVINOExecutionProvider",
-    "CPUExecutionProvider",
-];
+var configurations = new Dictionary<string, Action<OrtSessionOptions>>
+{
+    //["TensorRT"] = options =>
+    //{
+    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
+    //    options.AppendTensorRtExecutionProvider();
+    //},
+    //["CUDA"] = options =>
+    //{
+    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
+    //    options.AppendCudaExecutionProvider();
+    //},
+    ["OpenVINO"] = options =>
+    {
+        options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
+        options.AppendOpenVinoExecutionProvider();
+    },
+    ["OpenVINO 1×Threads 1×Streams"] = options =>
+    {
+        options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
+        options.SetIntraOpThreadCount(1);
+        options.SetInterOpThreadCount(1);
+        options.AppendOpenVinoExecutionProvider(new Dictionary<string, string>
+        {
+            { "num_of_threads", "1" },
+            { "num_streams", "1" },
+        });
+    },
+    ["OpenVINO 16×Threads 8×Streams"] = options =>
+    {
+        options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
+        options.AppendOpenVinoExecutionProvider(new Dictionary<string, string>
+        {
+            { "num_of_threads", "16" },
+            { "num_streams", "8" },
+        });
+    },
+    ["CPU"] = options => options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL),
+    ["CPU 1×Intra 1×Inter"] = options =>
+    {
+        options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
+        options.SetIntraOpThreadCount(1);
+        options.SetInterOpThreadCount(1);
+    },
+};
 
 Action<string> log = message =>
 {
@@ -37,7 +73,6 @@ var modelPaths = Directory.GetFiles(workingDirectory, SearchPattern, SearchOptio
 Array.Sort(modelPaths, StringComparer.Ordinal);
 AddNativeRuntimeDirectoryToPath();
 var availableExecutionProviders = Ort.GetAvailableExecutionProviders();
-var configurations = CreateConfigurations(availableExecutionProviders, preferredExecutionProviders);
 
 log($"Current directory: '{workingDirectory}'");
 log($"Found {modelPaths.Length} files for '{SearchPattern}': " +
@@ -62,16 +97,16 @@ foreach (var modelPath in modelPaths)
     report("## Execution provider performance");
     report("```");
     report($"{"Execution Provider",-32};BatchSize;Create [ms];First [ms];Iterations;Mean/b [ms];Mean/s [ms]");
-    var configurationToProfilingInfo = new List<(ProfilingConfiguration Configuration, NodeProfileReport Report)>();
-    foreach (var configuration in configurations)
+    var configurationToProfilingInfo = new List<(string Name, NodeProfileReport Report)>();
+    foreach (var (configurationName, configureSessionOptions) in configurations)
     {
         try
         {
-            configurationToProfilingInfo.Add((configuration, RunModel(modelPath, configuration, report)));
+            configurationToProfilingInfo.Add((configurationName, RunModel(modelPath, configurationName, configureSessionOptions, report)));
         }
         catch (OrtException exception)
         {
-            report($"{configuration.Name,-32};Unavailable: {exception.Message}");
+            report($"{configurationName,-32};Unavailable: {exception.Message}");
         }
     }
     report("```");
@@ -80,24 +115,24 @@ foreach (var modelPath in modelPaths)
     report("## Concurrent app-thread scaling (single shared session)");
     report("```");
     report($"{"Execution Provider",-32};Threads;Iterations;Throughput [calls/s];Min Mean/call [ms];Avg Mean/call [ms];Max Mean/call [ms]");
-    foreach (var configuration in configurations)
+    foreach (var (configurationName, configureSessionOptions) in configurations)
     {
         try
         {
-            RunModelConcurrent(modelPath, configuration, concurrentThreadCountsToTest, concurrentTestDuration, report);
+            RunModelConcurrent(modelPath, configurationName, configureSessionOptions, concurrentThreadCountsToTest, concurrentTestDuration, report);
         }
         catch (OrtException exception)
         {
-            report($"{configuration.Name,-32};Unavailable: {exception.Message}");
+            report($"{configurationName,-32};Unavailable: {exception.Message}");
         }
     }
     report("```");
 
-    foreach (var (configuration, profileReport) in configurationToProfilingInfo)
+    foreach (var (configurationName, profileReport) in configurationToProfilingInfo)
     {
         if (profileReport.Profiles.Count > 0)
         {
-            WriteNodeProfileSummary(configuration.Name, modelPath, profileReport, report);
+            WriteNodeProfileSummary(configurationName, modelPath, profileReport, report);
         }
     }
     log($"Wrote report: '{reportPath}'.");
@@ -110,17 +145,18 @@ if (modelPaths.Length == 0)
 
 static NodeProfileReport RunModel(
     string modelPath,
-    ProfilingConfiguration configuration,
+    string configurationName,
+    Action<OrtSessionOptions> configureSessionOptions,
     Action<string> log)
 {
     var model = File.ReadAllBytes(modelPath);
     using var environment = new OrtEnvironment();
-    var profilePrefix = configuration.EnableProfiling
+    var profilePrefix = EnableProfiling
         ? Path.Combine(
             Path.GetDirectoryName(modelPath)!,
-            $"{Path.GetFileNameWithoutExtension(modelPath)}-onnxruntime-profile-{SanitizeFileName(configuration.Name)}")
+            $"{Path.GetFileNameWithoutExtension(modelPath)}-onnxruntime-profile-{SanitizeFileName(configurationName)}")
         : null;
-    using var options = CreateSessionOptions(configuration, profilePrefix);
+    using var options = CreateSessionOptions(configureSessionOptions, profilePrefix);
     var beforeCreate = Stopwatch.GetTimestamp();
     using var session = new OrtSession(environment, model, options);
     var createMilliseconds = ElapsedMilliseconds(beforeCreate);
@@ -153,14 +189,14 @@ static NodeProfileReport RunModel(
     var allocatedBytes = GC.GetAllocatedBytesForCurrentThread() - allocatedBytesBefore;
 
     var meanPerBatchMilliseconds = totalMilliseconds / iterations;
-    log($"{configuration.Name,-32};{BatchSize,9};{createMilliseconds,11:F3};{firstInferenceMilliseconds,10:F3};" +
+    log($"{configurationName,-32};{BatchSize,9};{createMilliseconds,11:F3};{firstInferenceMilliseconds,10:F3};" +
         $"{iterations,10};{meanPerBatchMilliseconds,11:F3};{meanPerBatchMilliseconds / BatchSize,11:F3}");
     if (allocatedBytes != 0)
     {
-        log($"WARNING: `{configuration.Name}` inference allocated {allocatedBytes} managed bytes.");
+        log($"WARNING: `{configurationName}` inference allocated {allocatedBytes} managed bytes.");
     }
 
-    if (!configuration.EnableProfiling)
+    if (!EnableProfiling)
     {
         return new(null, []);
     }
@@ -178,7 +214,8 @@ static NodeProfileReport RunModel(
 
 static void RunModelConcurrent(
     string modelPath,
-    ProfilingConfiguration configuration,
+    string configurationName,
+    Action<OrtSessionOptions> configureSessionOptions,
     int[] threadCounts,
     TimeSpan duration,
     Action<string> log)
@@ -187,7 +224,7 @@ static void RunModelConcurrent(
     foreach (var threadCount in threadCounts)
     {
         using var environment = new OrtEnvironment();
-        using var options = CreateSessionOptions(configuration, null);
+        using var options = CreateSessionOptions(configureSessionOptions, null);
         using var session = new OrtSession(environment, model, options);
         using var barrier = new Barrier(threadCount + 1);
         var iterationsPerThread = new long[threadCount];
@@ -276,58 +313,22 @@ static void RunModelConcurrent(
             .ToArray();
         var throughputPerSecond = totalIterations / (elapsedMilliseconds / 1_000.0);
 
-        log($"{configuration.Name,-32};{threadCount,7};{totalIterations,10};{throughputPerSecond,20:F1};" +
+        log($"{configurationName,-32};{threadCount,7};{totalIterations,10};{throughputPerSecond,20:F1};" +
             $"{meanCallMilliseconds.Min(),18:F3};{meanCallMilliseconds.Average(),18:F3};{meanCallMilliseconds.Max(),18:F3}");
         if (allocatedBytesPerThread.Any(allocatedBytes => allocatedBytes != 0))
         {
-            log($"WARNING: `{configuration.Name}` concurrent inference with {threadCount} threads allocated " +
+            log($"WARNING: `{configurationName}` concurrent inference with {threadCount} threads allocated " +
                 $"managed bytes per thread: {string.Join(", ", allocatedBytesPerThread)}.");
         }
     }
 }
 
-static OrtSessionOptions CreateSessionOptions(ProfilingConfiguration configuration, string? profilePrefix)
+static OrtSessionOptions CreateSessionOptions(
+    Action<OrtSessionOptions> configureSessionOptions,
+    string? profilePrefix)
 {
-    var providerName = configuration.ProviderName;
-    var isOpenVino = providerName is not null &&
-        string.Equals(providerName, "OpenVINOExecutionProvider", StringComparison.Ordinal);
-
     var options = new OrtSessionOptions();
-    if (!isOpenVino)
-    {
-        if (configuration.IntraOpThreadCount is { } threadCount)
-        {
-            options.SetIntraOpThreadCount(threadCount);
-        }
-        if (configuration.InterOpThreadCount is { } interOpThreadCount)
-        {
-            options.SetInterOpThreadCount(interOpThreadCount);
-        }
-    }
-    // Prefer OpenVino's own optimizations over ORT's graph optimizations.
-    options.SetGraphOptimizationLevel(isOpenVino ? Ort.GraphOptimizationLevel.ORT_DISABLE_ALL
-                                                 : Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
-    if (providerName is not null)
-    {
-        if (isOpenVino)
-        {
-            var providerOptions = new Dictionary<string, string>();
-            if (configuration.OpenVinoThreadCount is { } openVinoThreadCount)
-            {
-                providerOptions.Add("num_of_threads", openVinoThreadCount.ToString(CultureInfo.InvariantCulture));
-            }
-            if (configuration.OpenVinoStreamCount is { } openVinoStreamCount)
-            {
-                providerOptions.Add("num_streams", openVinoStreamCount.ToString(CultureInfo.InvariantCulture));
-            }
-            options.AppendOpenVinoExecutionProvider(providerOptions);
-        }
-        else
-        {
-            options.AppendExecutionProvider(providerName);
-        }
-    }
-
+    configureSessionOptions(options);
     if (profilePrefix is not null)
     {
         options.EnableProfiling(profilePrefix ?? throw new ArgumentNullException(nameof(profilePrefix)));
@@ -499,53 +500,6 @@ static void AddNativeRuntimeDirectoryToPath()
         string.Concat(nativeRuntimeDirectory, Path.PathSeparator, path),
         EnvironmentVariableTarget.Process);
 }
-
-static ProfilingConfiguration[] CreateConfigurations(
-    IReadOnlyList<string> availableExecutionProviders,
-    IReadOnlyList<string> preferredExecutionProviders)
-{
-    var configurations = new List<ProfilingConfiguration>();
-    foreach (var providerName in preferredExecutionProviders)
-    {
-        if (!availableExecutionProviders.Contains(providerName, StringComparer.Ordinal))
-        {
-            continue;
-        }
-
-        if (string.Equals(providerName, "CPUExecutionProvider", StringComparison.Ordinal))
-        {
-            configurations.Add(new("CPU", null, null, null, null, null, false));
-            configurations.Add(new("CPU 1×Intra 1×Inter", null, 1, 1, null, null, false));
-        }
-        else if (string.Equals(providerName, "OpenVINOExecutionProvider", StringComparison.Ordinal))
-        {
-            configurations.Add(new("OpenVINO", providerName, null, null, null, null, false));
-            configurations.Add(new(
-                $"OpenVINO {OpenVinoNumThreads}×Threads {OpenVinoNumStreams}×Streams",
-                providerName,
-                null,
-                null,
-                OpenVinoNumThreads,
-                OpenVinoNumStreams,
-                false));
-        }
-        else
-        {
-            configurations.Add(new(providerName, providerName, null, null, null, null, false));
-        }
-    }
-
-    return [.. configurations];
-}
-
-sealed record ProfilingConfiguration(
-    string Name,
-    string? ProviderName,
-    int? IntraOpThreadCount,
-    int? InterOpThreadCount,
-    int? OpenVinoThreadCount,
-    int? OpenVinoStreamCount,
-    bool EnableProfiling);
 
 sealed record NodeProfileReport(string? TracePath, IReadOnlyList<NodeProfile> Profiles);
 
