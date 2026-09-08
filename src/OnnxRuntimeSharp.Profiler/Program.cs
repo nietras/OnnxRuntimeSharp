@@ -14,12 +14,11 @@ const int MinimumIterations = 10;
 const int ProfilingSamples = 10;
 const double TargetRunDurationMilliseconds = 1_000;
 var concurrentTestDuration = TimeSpan.FromSeconds(1);
-int[] concurrentThreadCountsToTest = []; //[1, 2, 4, 8, 16]; // SKIP CONCURRENT FOR NOW
+int[] concurrentThreadCountsToTest = [1, 2, 4, 8, 16]; // SKIP CONCURRENT FOR NOW
 string[] preferredExecutionProviders =
 [
     "TensorrtExecutionProvider",
     "CUDAExecutionProvider",
-    "DnnlExecutionProvider",
     "CPUExecutionProvider",
 ];
 
