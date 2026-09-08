@@ -13,8 +13,8 @@ const int BatchSize = 1;
 const int WarmupCount = 3;
 const int MinimumIterations = 10;
 const int ProfilingSamples = 10;
-const int OpenVinoNumThreads = 1;
-const int OpenVinoNumStreams = 1;
+const int OpenVinoNumThreads = 16;
+const int OpenVinoNumStreams = 8;
 const double TargetRunDurationMilliseconds = 1_000;
 var concurrentTestDuration = TimeSpan.FromSeconds(1);
 int[] concurrentThreadCountsToTest = [1, 2, 4, 8, 16]; // SKIP CONCURRENT FOR NOW
@@ -288,19 +288,28 @@ static void RunModelConcurrent(
 
 static OrtSessionOptions CreateSessionOptions(ProfilingConfiguration configuration, string? profilePrefix)
 {
+    var providerName = configuration.ProviderName;
+    var isOpenVino = providerName is not null &&
+        string.Equals(providerName, "OpenVINOExecutionProvider", StringComparison.Ordinal);
+
     var options = new OrtSessionOptions();
-    if (configuration.IntraOpThreadCount is { } threadCount)
+    if (!isOpenVino)
     {
-        options.SetIntraOpThreadCount(threadCount);
+        if (configuration.IntraOpThreadCount is { } threadCount)
+        {
+            options.SetIntraOpThreadCount(threadCount);
+        }
+        if (configuration.InterOpThreadCount is { } interOpThreadCount)
+        {
+            options.SetInterOpThreadCount(interOpThreadCount);
+        }
     }
-    if (configuration.InterOpThreadCount is { } interOpThreadCount)
+    // Prefer OpenVino's own optimizations over ORT's graph optimizations.
+    options.SetGraphOptimizationLevel(isOpenVino ? Ort.GraphOptimizationLevel.ORT_DISABLE_ALL
+                                                 : Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
+    if (providerName is not null)
     {
-        options.SetInterOpThreadCount(interOpThreadCount);
-    }
-    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
-    if (configuration.ProviderName is { } providerName)
-    {
-        if (string.Equals(providerName, "OpenVINOExecutionProvider", StringComparison.Ordinal))
+        if (isOpenVino)
         {
             var providerOptions = new Dictionary<string, string>();
             if (configuration.OpenVinoThreadCount is { } openVinoThreadCount)
@@ -318,6 +327,7 @@ static OrtSessionOptions CreateSessionOptions(ProfilingConfiguration configurati
             options.AppendExecutionProvider(providerName);
         }
     }
+
     if (profilePrefix is not null)
     {
         options.EnableProfiling(profilePrefix ?? throw new ArgumentNullException(nameof(profilePrefix)));
@@ -505,7 +515,7 @@ static ProfilingConfiguration[] CreateConfigurations(
         if (string.Equals(providerName, "CPUExecutionProvider", StringComparison.Ordinal))
         {
             configurations.Add(new("CPU", null, null, null, null, null, false));
-            configurations.Add(new("CPU 1×Intra 1×Inter", null, 1, 1, null, null, true));
+            configurations.Add(new("CPU 1×Intra 1×Inter", null, 1, 1, null, null, false));
         }
         else if (string.Equals(providerName, "OpenVINOExecutionProvider", StringComparison.Ordinal))
         {
@@ -517,7 +527,7 @@ static ProfilingConfiguration[] CreateConfigurations(
                 null,
                 OpenVinoNumThreads,
                 OpenVinoNumStreams,
-                true));
+                false));
         }
         else
         {
