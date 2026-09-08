@@ -17,8 +17,8 @@ var concurrentTestDuration = TimeSpan.FromSeconds(1);
 int[] concurrentThreadCountsToTest = [1, 2, 4, 8, 16]; // SKIP CONCURRENT FOR NOW
 string[] preferredExecutionProviders =
 [
-    "TensorrtExecutionProvider",
-    "CUDAExecutionProvider",
+    //"TensorrtExecutionProvider",
+    //"CUDAExecutionProvider",
     "CPUExecutionProvider",
 ];
 
