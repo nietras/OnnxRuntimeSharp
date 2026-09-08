@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -12,6 +13,8 @@ const int BatchSize = 1;
 const int WarmupCount = 3;
 const int MinimumIterations = 10;
 const int ProfilingSamples = 10;
+const int OpenVinoNumThreads = 1;
+const int OpenVinoNumStreams = 1;
 const double TargetRunDurationMilliseconds = 1_000;
 var concurrentTestDuration = TimeSpan.FromSeconds(1);
 int[] concurrentThreadCountsToTest = [1, 2, 4, 8, 16]; // SKIP CONCURRENT FOR NOW
@@ -19,6 +22,7 @@ string[] preferredExecutionProviders =
 [
     //"TensorrtExecutionProvider",
     //"CUDAExecutionProvider",
+    "OpenVINOExecutionProvider",
     "CPUExecutionProvider",
 ];
 
@@ -296,7 +300,23 @@ static OrtSessionOptions CreateSessionOptions(ProfilingConfiguration configurati
     options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
     if (configuration.ProviderName is { } providerName)
     {
-        options.AppendExecutionProvider(providerName);
+        if (string.Equals(providerName, "OpenVINOExecutionProvider", StringComparison.Ordinal))
+        {
+            var providerOptions = new Dictionary<string, string>();
+            if (configuration.OpenVinoThreadCount is { } openVinoThreadCount)
+            {
+                providerOptions.Add("num_of_threads", openVinoThreadCount.ToString(CultureInfo.InvariantCulture));
+            }
+            if (configuration.OpenVinoStreamCount is { } openVinoStreamCount)
+            {
+                providerOptions.Add("num_streams", openVinoStreamCount.ToString(CultureInfo.InvariantCulture));
+            }
+            options.AppendOpenVinoExecutionProvider(providerOptions);
+        }
+        else
+        {
+            options.AppendExecutionProvider(providerName);
+        }
     }
     if (profilePrefix is not null)
     {
@@ -484,12 +504,24 @@ static ProfilingConfiguration[] CreateConfigurations(
 
         if (string.Equals(providerName, "CPUExecutionProvider", StringComparison.Ordinal))
         {
-            configurations.Add(new("CPU", null, null, null, false));
-            configurations.Add(new("CPU 1×Intra 1×Inter", null, 1, 1, true));
+            configurations.Add(new("CPU", null, null, null, null, null, false));
+            configurations.Add(new("CPU 1×Intra 1×Inter", null, 1, 1, null, null, true));
+        }
+        else if (string.Equals(providerName, "OpenVINOExecutionProvider", StringComparison.Ordinal))
+        {
+            configurations.Add(new("OpenVINO", providerName, null, null, null, null, false));
+            configurations.Add(new(
+                $"OpenVINO {OpenVinoNumThreads}×Threads {OpenVinoNumStreams}×Streams",
+                providerName,
+                null,
+                null,
+                OpenVinoNumThreads,
+                OpenVinoNumStreams,
+                true));
         }
         else
         {
-            configurations.Add(new(providerName, providerName, null, null, false));
+            configurations.Add(new(providerName, providerName, null, null, null, null, false));
         }
     }
 
@@ -501,6 +533,8 @@ sealed record ProfilingConfiguration(
     string? ProviderName,
     int? IntraOpThreadCount,
     int? InterOpThreadCount,
+    int? OpenVinoThreadCount,
+    int? OpenVinoStreamCount,
     bool EnableProfiling);
 
 sealed record NodeProfileReport(string? TracePath, IReadOnlyList<NodeProfile> Profiles);

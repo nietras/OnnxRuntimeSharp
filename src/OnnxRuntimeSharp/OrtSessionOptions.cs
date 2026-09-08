@@ -180,6 +180,41 @@ public sealed class OrtSessionOptions : SafeHandle
     public unsafe void AppendExecutionProvider(string providerName)
         => AppendExecutionProvider(providerName, null);
 
+    public unsafe void AppendOpenVinoExecutionProvider(IReadOnlyDictionary<string, string>? providerOptions = null)
+    {
+        ThrowIfDisposed();
+        var optionCount = providerOptions?.Count ?? 0;
+        var keys = stackalloc sbyte*[optionCount];
+        var values = stackalloc sbyte*[optionCount];
+        var initializedCount = 0;
+        try
+        {
+            if (providerOptions is not null)
+            {
+                foreach (var option in providerOptions)
+                {
+                    keys[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Key);
+                    values[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Value);
+                    ++initializedCount;
+                }
+            }
+
+            Ort.Ok(Ort.SessionOptionsAppendExecutionProvider_OpenVINO_V2(
+                Pointer,
+                keys,
+                values,
+                (nuint)optionCount));
+        }
+        finally
+        {
+            for (var index = 0; index < initializedCount; ++index)
+            {
+                Utf8StringMarshaller.Free((byte*)values[index]);
+                Utf8StringMarshaller.Free((byte*)keys[index]);
+            }
+        }
+    }
+
     public unsafe void AppendExecutionProvider(
         string providerName,
         IReadOnlyDictionary<string, string>? providerOptions)

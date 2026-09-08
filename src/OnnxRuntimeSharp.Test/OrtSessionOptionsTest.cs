@@ -151,6 +151,12 @@ public class OrtSessionOptionsTest
         ExerciseOptionalProvider(options => options.AppendTensorRtExecutionProvider());
         ExerciseOptionalProvider(options => options.AppendTensorRtExecutionProvider(
             new Dictionary<string, string> { ["device_id"] = "0" }));
+        ExerciseOptionalProvider(options => options.AppendOpenVinoExecutionProvider(
+            new Dictionary<string, string>
+            {
+                ["num_of_threads"] = "1",
+                ["num_streams"] = "1",
+            }));
         ExerciseOptionalProvider(options => options.AppendExecutionProvider("CUDAExecutionProvider"));
         ExerciseOptionalProvider(options => options.AppendExecutionProvider("TensorrtExecutionProvider"));
     }
