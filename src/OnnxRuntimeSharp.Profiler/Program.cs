@@ -15,7 +15,7 @@ const int ProfilingSamples = 10;
 const bool EnableProfiling = false;
 const double TargetRunDurationMilliseconds = 1_000;
 var concurrentTestDuration = TimeSpan.FromSeconds(1);
-int[] concurrentThreadCountsToTest = [1, 2, 4, 8, 16]; // SKIP CONCURRENT FOR NOW
+int[] concurrentThreadCountsToTest = [1, 2, 4, 8, 16];
 var configurations = new Dictionary<string, Action<OrtSessionOptions>>
 {
     //["TensorRT"] = options =>

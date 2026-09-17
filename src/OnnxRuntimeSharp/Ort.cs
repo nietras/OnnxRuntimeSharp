@@ -30,11 +30,11 @@ public static unsafe partial class Ort
 
     public static void Ok(this OrtStatusHandle status)
     {
-        if (!status.IsNull) { ThrowOrtStatusError(status); }
+        if (!status.IsNull) { ThrowStatusError(status); }
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    static void ThrowOrtStatusError(OrtStatusHandle status)
+    static void ThrowStatusError(OrtStatusHandle status)
     {
         try
         {

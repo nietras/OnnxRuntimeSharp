@@ -13,7 +13,7 @@
     <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.osx-arm64" Version="1.29.0" />
     <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.win-x64" Version="1.29.0" />
     <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.win-arm64" Version="1.29.0" />
-    <PackageReference Include="MSTest" Version="4.4.0" />
+    <PackageReference Include="MSTest" Version="4.4.1" />
     <PackageReference Include="coverlet.collector" Version="10.0.1" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>

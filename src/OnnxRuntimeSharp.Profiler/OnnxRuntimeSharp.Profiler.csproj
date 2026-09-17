@@ -16,6 +16,6 @@
     <PackageReference Include="NtvLibs.MSVCP.runtime.win-x64" Version="14.42.34430" />-->
   </ItemGroup>
   <ItemGroup>
-    <!--<None Include="..\..\models\mnist-8.onnx" Link="mnist-8.onnx" CopyToOutputDirectory="PreserveNewest" />-->
+    <None Include="..\..\models\mnist-8.onnx" Link="mnist-8.onnx" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
