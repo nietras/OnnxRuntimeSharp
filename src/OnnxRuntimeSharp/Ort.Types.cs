@@ -786,7 +786,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, long*, nuint, OrtStatusHandle> GetDimensions;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTensorTypeAndShapeInfo *, const char **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, sbyte*, nuint, OrtStatusHandle> GetSymbolicDimensions;
+        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, sbyte**, nuint, OrtStatusHandle> GetSymbolicDimensions;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTensorTypeAndShapeInfo *, size_t *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, nuint*, OrtStatusHandle> GetTensorShapeElementCount;
@@ -1410,7 +1410,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtShapeInferContext*, nuint, OrtTensorTypeAndShapeInfo*, OrtStatusHandle> ShapeInferContext_SetOutputTypeShape;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtTensorTypeAndShapeInfo *, const char **, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, sbyte*, nuint, OrtStatusHandle> SetSymbolicDimensions;
+        public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, sbyte**, nuint, OrtStatusHandle> SetSymbolicDimensions;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtOpAttr *, OrtOpAttrType, void *, size_t, size_t *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtOpAttr*, OrtOpAttrType, void*, nuint, nuint*, OrtStatusHandle> ReadOpAttr;
@@ -2125,22 +2125,22 @@ public static unsafe partial class Ort
 
         [DllImport("onnxruntime", CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
         [return: NativeTypeName("OrtStatusPtr")]
-        public static extern void* OrtSessionOptionsAppendExecutionProvider_CUDA(OrtSessionOptions* options, int device_id);
+        public static extern OrtStatusHandle OrtSessionOptionsAppendExecutionProvider_CUDA(OrtSessionOptions* options, int device_id);
 
         [DllImport("onnxruntime", CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
         [return: NativeTypeName("OrtStatusPtr")]
-        public static extern void* OrtSessionOptionsAppendExecutionProvider_ROCM(OrtSessionOptions* options, int device_id);
+        public static extern OrtStatusHandle OrtSessionOptionsAppendExecutionProvider_ROCM(OrtSessionOptions* options, int device_id);
 
         [DllImport("onnxruntime", CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
         [return: NativeTypeName("OrtStatusPtr")]
-        public static extern void* OrtSessionOptionsAppendExecutionProvider_MIGraphX(OrtSessionOptions* options, int device_id);
+        public static extern OrtStatusHandle OrtSessionOptionsAppendExecutionProvider_MIGraphX(OrtSessionOptions* options, int device_id);
 
         [DllImport("onnxruntime", CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
         [return: NativeTypeName("OrtStatusPtr")]
-        public static extern void* OrtSessionOptionsAppendExecutionProvider_Dnnl(OrtSessionOptions* options, int use_arena);
+        public static extern OrtStatusHandle OrtSessionOptionsAppendExecutionProvider_Dnnl(OrtSessionOptions* options, int use_arena);
 
         [DllImport("onnxruntime", CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
         [return: NativeTypeName("OrtStatusPtr")]
-        public static extern void* OrtSessionOptionsAppendExecutionProvider_Tensorrt(OrtSessionOptions* options, int device_id);
+        public static extern OrtStatusHandle OrtSessionOptionsAppendExecutionProvider_Tensorrt(OrtSessionOptions* options, int device_id);
     }
 }

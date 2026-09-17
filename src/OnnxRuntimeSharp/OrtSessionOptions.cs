@@ -13,11 +13,9 @@ public sealed class OrtSessionOptions : SafeHandle
         unsafe
         {
             Ort.OrtSessionOptions* options;
-            Ort.Ok(Ort.CreateSessionOptions(&options));
+            Ort.CreateSessionOptions(&options).Ok();
             SetHandle((IntPtr)options);
-            Ort.Ok(Ort.SetSessionGraphOptimizationLevel(
-                options,
-                Ort.GraphOptimizationLevel.ORT_ENABLE_ALL));
+            Ort.SetSessionGraphOptimizationLevel(options, Ort.GraphOptimizationLevel.ORT_ENABLE_ALL).Ok();
         }
     }
 
@@ -180,23 +178,47 @@ public sealed class OrtSessionOptions : SafeHandle
     public unsafe void AppendExecutionProvider(string providerName)
         => AppendExecutionProvider(providerName, null);
 
+    public unsafe void AppendExecutionProvider_OpenVINO(IReadOnlyDictionary<string, string>? providerOptions = null)
+    {
+        ThrowIfDisposed();
+        var optionCount = providerOptions?.Count ?? 0;
+        var keys = stackalloc sbyte*[optionCount];
+        var values = stackalloc sbyte*[optionCount];
+        var initializedCount = 0;
+        try
+        {
+            if (providerOptions is not null)
+            {
+                foreach (var option in providerOptions)
+                {
+                    keys[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Key);
+                    values[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Value);
+                    ++initializedCount;
+                }
+            }
+
+            Ort.Ok(Ort.SessionOptionsAppendExecutionProvider_OpenVINO_V2(
+                Pointer,
+                keys,
+                values,
+                (nuint)optionCount));
+        }
+        finally
+        {
+            for (var index = 0; index < initializedCount; ++index)
+            {
+                Utf8StringMarshaller.Free((byte*)values[index]);
+                Utf8StringMarshaller.Free((byte*)keys[index]);
+            }
+        }
+    }
+
     public unsafe void AppendExecutionProvider(
         string providerName,
         IReadOnlyDictionary<string, string>? providerOptions)
     {
         ThrowIfDisposed();
         ArgumentException.ThrowIfNullOrWhiteSpace(providerName);
-        if (string.Equals(providerName, "CUDAExecutionProvider", StringComparison.Ordinal))
-        {
-            AppendCudaExecutionProvider(providerOptions);
-            return;
-        }
-        if (string.Equals(providerName, "TensorrtExecutionProvider", StringComparison.Ordinal))
-        {
-            AppendTensorRtExecutionProvider(providerOptions);
-            return;
-        }
-
         var utf8ProviderName = Utf8StringMarshaller.ConvertToUnmanaged(providerName);
         var optionCount = providerOptions?.Count ?? 0;
         var keys = stackalloc sbyte*[optionCount];
@@ -241,7 +263,7 @@ public sealed class OrtSessionOptions : SafeHandle
         ArgumentNullException.ThrowIfNull(environment);
         if (devices.IsEmpty)
         {
-            throw new ArgumentException("At least one execution-provider device is required.", nameof(devices));
+            Throws.ThrowExecutionProviderDevicesEmpty();
         }
 
         var nativeDevices = stackalloc Ort.OrtEpDevice*[devices.Length];
@@ -250,7 +272,7 @@ public sealed class OrtSessionOptions : SafeHandle
             ArgumentNullException.ThrowIfNull(devices[index], nameof(devices));
             if (!ReferenceEquals(devices[index].Environment, environment))
             {
-                throw new ArgumentException("All devices must originate from the supplied environment.", nameof(devices));
+                Throws.ThrowExecutionProviderDeviceEnvironmentMismatch();
             }
             if (index > 0 &&
                 !string.Equals(
@@ -258,7 +280,7 @@ public sealed class OrtSessionOptions : SafeHandle
                     devices[index].ExecutionProviderName,
                     StringComparison.Ordinal))
             {
-                throw new ArgumentException("All devices must belong to the same execution provider.", nameof(devices));
+                Throws.ThrowExecutionProviderDeviceNameMismatch();
             }
             nativeDevices[index] = devices[index].Pointer;
         }
@@ -309,7 +331,7 @@ public sealed class OrtSessionOptions : SafeHandle
         Ort.Ok(Ort.SessionOptionsSetEpSelectionPolicy(Pointer, policy));
     }
 
-    public unsafe void AppendCudaExecutionProvider(IReadOnlyDictionary<string, string>? providerOptions = null)
+    public unsafe void AppendExecutionProvider_CUDA(IReadOnlyDictionary<string, string>? providerOptions = null)
     {
         ThrowIfDisposed();
         Ort.OrtCUDAProviderOptionsV2* nativeProviderOptions;
@@ -327,7 +349,7 @@ public sealed class OrtSessionOptions : SafeHandle
         }
     }
 
-    public unsafe void AppendTensorRtExecutionProvider(IReadOnlyDictionary<string, string>? providerOptions = null)
+    public unsafe void AppendExecutionProvider_TensorRT(IReadOnlyDictionary<string, string>? providerOptions = null)
     {
         ThrowIfDisposed();
         Ort.OrtTensorRTProviderOptionsV2* nativeProviderOptions;

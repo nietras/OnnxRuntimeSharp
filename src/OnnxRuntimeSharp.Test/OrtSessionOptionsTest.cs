@@ -143,16 +143,23 @@ public class OrtSessionOptionsTest
     }
 
     [TestMethod]
-    public void OptionalProviderRoutesReturnSuccessOrStructuredError()
+    public void OptionalExecutionProviderMethodsAndProviderNamesReturnSuccessOrStructuredError()
     {
-        ExerciseOptionalProvider(options => options.AppendCudaExecutionProvider());
-        ExerciseOptionalProvider(options => options.AppendCudaExecutionProvider(
+        ExerciseOptionalExecutionProvider(options => options.AppendExecutionProvider_CUDA());
+        ExerciseOptionalExecutionProvider(options => options.AppendExecutionProvider_CUDA(
             new Dictionary<string, string> { ["device_id"] = "0" }));
-        ExerciseOptionalProvider(options => options.AppendTensorRtExecutionProvider());
-        ExerciseOptionalProvider(options => options.AppendTensorRtExecutionProvider(
+        ExerciseOptionalExecutionProvider(options => options.AppendExecutionProvider_TensorRT());
+        ExerciseOptionalExecutionProvider(options => options.AppendExecutionProvider_TensorRT(
             new Dictionary<string, string> { ["device_id"] = "0" }));
-        ExerciseOptionalProvider(options => options.AppendExecutionProvider("CUDAExecutionProvider"));
-        ExerciseOptionalProvider(options => options.AppendExecutionProvider("TensorrtExecutionProvider"));
+        ExerciseOptionalExecutionProvider(options => options.AppendExecutionProvider_OpenVINO(
+            new Dictionary<string, string>
+            {
+                ["num_of_threads"] = "1",
+                ["num_streams"] = "1",
+            }));
+        ExerciseOptionalExecutionProvider(options => options.AppendExecutionProvider("CUDAExecutionProvider"));
+        ExerciseOptionalExecutionProvider(options => options.AppendExecutionProvider("TensorrtExecutionProvider"));
+        ExerciseOptionalExecutionProvider(options => options.AppendExecutionProvider("OpenVINOExecutionProvider"));
     }
 
     [TestMethod]
@@ -165,7 +172,7 @@ public class OrtSessionOptionsTest
             options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL));
     }
 
-    static void ExerciseOptionalProvider(Action<OrtSessionOptions> append)
+    static void ExerciseOptionalExecutionProvider(Action<OrtSessionOptions> append)
     {
         using var options = new OrtSessionOptions();
         try

@@ -15,13 +15,13 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
         ArgumentNullException.ThrowIfNull(data);
         if (data.Length == 0)
         {
-            throw new ArgumentException("Tensor data cannot be empty.", nameof(data));
+            Throws.ThrowTensorDataEmpty();
         }
 
         var elementCount = GetElementCount(dimensions);
         if (elementCount != data.Length)
         {
-            throw new ArgumentException("Tensor dimensions do not match data length.", nameof(dimensions));
+            Throws.ThrowTensorDimensionsDataLengthMismatch();
         }
 
         _dataHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
@@ -66,13 +66,13 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
     {
         if (data is null)
         {
-            throw new ArgumentNullException(nameof(data));
+            Throws.ThrowNativeTensorDataNull();
         }
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(elementCount);
         ArgumentNullException.ThrowIfNull(memoryInfo);
         if (GetElementCount(dimensions) != elementCount)
         {
-            throw new ArgumentException("Tensor dimensions do not match element count.", nameof(dimensions));
+            Throws.ThrowTensorDimensionsElementCountMismatch();
         }
 
         var memoryInfoReferenceAdded = false;
@@ -112,7 +112,7 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
             ObjectDisposedException.ThrowIf(IsClosed || IsInvalid, this);
             if (!_dataHandle.IsAllocated)
             {
-                throw new InvalidOperationException("The tensor wraps externally owned native memory.");
+                Throws.ThrowExternallyOwnedTensorData();
             }
             return ((T[])_dataHandle.Target!).AsSpan();
         }
@@ -148,7 +148,7 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
         {
             if (dimension < 0)
             {
-                throw new ArgumentOutOfRangeException(nameof(dimensions), "Tensor dimensions must be non-negative.");
+                Throws.ThrowNegativeTensorDimension();
             }
 
             checked
