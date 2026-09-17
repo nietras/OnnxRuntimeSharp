@@ -62,6 +62,17 @@ var configurations = new Dictionary<string, Action<OrtSessionOptions>>
             { "num_streams", "8" },
         });
     },
+    ["OpenVINO bf16 16×Threads 8×Streams"] = options =>
+    {
+        options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
+        options.AppendExecutionProvider_OpenVINO(new Dictionary<string, string>
+        {
+            { "device_type", "CPU" },
+            { "num_of_threads", "16" },
+            { "num_streams", "8" },
+            { "load_config", "{\"CPU\":{\"INFERENCE_PRECISION_HINT\":\"bf16\"}}" },
+        });
+    },
     //["CPU"] = options => options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL),
     //["CPU 2×Intra 16×Inter"] = options =>
     //{
