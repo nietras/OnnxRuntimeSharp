@@ -33,15 +33,6 @@ var configurations = new Dictionary<string, Action<OrtSessionOptions>>
     //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
     //    options.AppendExecutionProvider_OpenVINO();
     //},
-    //["OpenVINO Throughput"] = options =>
-    //{
-    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
-    //    options.AppendExecutionProvider_OpenVINO(new Dictionary<string, string>
-    //    {
-    //        { "device_type", "CPU" },
-    //        { "load_config", "{\"CPU\":{\"PERFORMANCE_HINT\":\"THROUGHPUT\"}}" },
-    //    });
-    //},
     //["OpenVINO 1×Threads 1×Streams"] = options =>
     //{
     //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
@@ -74,34 +65,10 @@ var configurations = new Dictionary<string, Action<OrtSessionOptions>>
         });
     },
     //["CPU"] = options => options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL),
-    //["CPU 2×Intra 16×Inter"] = options =>
-    //{
-    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
-    //    options.SetIntraOpThreadCount(2);
-    //    options.SetInterOpThreadCount(16);
-    //},
     //["CPU 1×Intra 1×Inter"] = options =>
     //{
     //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
     //    options.SetIntraOpThreadCount(1);
-    //    options.SetInterOpThreadCount(1);
-    //},
-    //["CPU 2×Intra 1×Inter"] = options =>
-    //{
-    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
-    //    options.SetIntraOpThreadCount(2);
-    //    options.SetInterOpThreadCount(1);
-    //},
-    //["CPU 2×Intra 2×Inter"] = options =>
-    //{
-    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
-    //    options.SetIntraOpThreadCount(2);
-    //    options.SetInterOpThreadCount(2);
-    //},
-    //["CPU 4×Intra 1×Inter"] = options =>
-    //{
-    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
-    //    options.SetIntraOpThreadCount(4);
     //    options.SetInterOpThreadCount(1);
     //},
 };
