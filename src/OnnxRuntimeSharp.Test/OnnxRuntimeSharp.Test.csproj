@@ -9,7 +9,7 @@
     
     <PackageReference Include="Intel.ML.OnnxRuntime.EP.OpenVINO" Version="1.7.0" />
     <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.linux-x64" Version="1.30.0.1" />
-    <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.linux-arm64" Version="1.29.0" />
+    <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.linux-arm64" Version="1.30.0.1" />
     <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.osx-arm64" Version="1.30.0.1" />
     <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.win-x64" Version="1.30.0.1" />
     <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.win-arm64" Version="1.30.0.1" />
