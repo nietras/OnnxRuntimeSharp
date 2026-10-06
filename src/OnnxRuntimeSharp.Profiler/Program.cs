@@ -19,6 +19,7 @@ var concurrentTestDuration = TimeSpan.FromSeconds(1);
 int[] concurrentThreadCountsToTest = [1, 2, 4, 8, 16];
 var configurations = new Dictionary<string, Action<OrtSessionOptions>>
 {
+#if ENABLE_GPU_PROVIDERS
     ["TensorRT"] = options =>
     {
         options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
@@ -29,6 +30,7 @@ var configurations = new Dictionary<string, Action<OrtSessionOptions>>
         options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
         options.AppendExecutionProvider_CUDA();
     },
+#endif
     //["OpenVINO"] = options =>
     //{
     //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
