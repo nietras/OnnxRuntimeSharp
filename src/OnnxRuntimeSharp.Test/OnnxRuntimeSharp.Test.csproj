@@ -7,12 +7,17 @@
   <ItemGroup>
     <ProjectReference Include="../OnnxRuntimeSharp/OnnxRuntimeSharp.csproj" />
     
-    <PackageReference Include="Intel.ML.OnnxRuntime.EP.OpenVINO" Version="1.7.0" />
     <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.linux-x64" Version="1.30.0.1" />
     <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.linux-arm64" Version="1.30.0.1" />
     <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.osx-arm64" Version="1.30.0.1" />
     <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.win-x64" Version="1.30.0.1" />
     <PackageReference Include="NtvLibs.OnnxRuntime.CPU.runtime.win-arm64" Version="1.30.0.1" />
+    <!-- Only reference the onnxruntime_providers_openvino.dll package, main onnxruntime.dll still comes from above -->
+    <PackageReference Include="NtvLibs.OnnxRuntime.CPU.OpenVino.onnxruntime_providers_openvino.runtime.win-x64" Version="1.29.0.1-preview.1" />
+    <PackageReference Include="NtvLibs.OpenVino.cpu.runtime.win-x64" Version="2026.3.1.1" />
+    <PackageReference Include="NtvLibs.oneTBB.tbb12.runtime.win-x64" Version="2023.1.0.1" />
+    <!--<PackageReference Include="Intel.ML.OnnxRuntime.EP.OpenVINO" Version="1.7.0" />-->
+
     <PackageReference Include="MSTest" Version="4.4.1" />
     <PackageReference Include="coverlet.collector" Version="10.1.0" PrivateAssets="all" />
   </ItemGroup>

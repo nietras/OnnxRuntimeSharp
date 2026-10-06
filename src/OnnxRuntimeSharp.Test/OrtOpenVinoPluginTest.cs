@@ -1,20 +1,30 @@
 ﻿using System;
 using System.Linq;
-using Intel.ML.OnnxRuntime.EP.OpenVINO;
 
 namespace OnnxRuntimeSharp.Test;
 
 [TestClass]
 public class OrtOpenVinoPluginTest
 {
+    const string OpenVINORegistrationName = "openvino_ep_registration";
+    const string OpenVINOExecutionProviderName = "OpenVINOExecutionProvider";
+    const string OpenVINOLibraryPath = "onnxruntime_providers_openvino.dll";
+
     [TestMethod]
     public void OpenVinoPluginCanRegisterAndRunWhenSupported()
     {
-        const string RegistrationName = "openvino_ep_registration";
-        var executionProviderName = OpenVINOEp.GetEpName();
+        var registrationName = OpenVINORegistrationName;
+        var libraryPath = OpenVINOLibraryPath;
+        var executionProviderName = OpenVINOExecutionProviderName;
         using var environment = new OrtEnvironment();
-        var libraryPath = OpenVINOEp.GetLibraryPath();
-        environment.RegisterExecutionProviderLibrary(RegistrationName, libraryPath);
+        try
+        {
+            environment.RegisterExecutionProviderLibrary(registrationName, libraryPath);
+        }
+        catch (OrtException ex) when (ex.Message.Contains("Failed to load"))
+        {
+            Assert.Inconclusive($"OpenVINO is unavailable on this machine. Could not load '{libraryPath}'.");
+        }
         try
         {
             var allDevices = environment.GetExecutionProviderDevices();
@@ -50,7 +60,7 @@ public class OrtOpenVinoPluginTest
         }
         finally
         {
-            environment.UnregisterExecutionProviderLibrary(RegistrationName);
+            environment.UnregisterExecutionProviderLibrary(OpenVINORegistrationName);
         }
     }
 }
