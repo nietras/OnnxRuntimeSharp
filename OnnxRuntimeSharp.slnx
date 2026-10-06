@@ -1,7 +1,14 @@
 <Solution>
   <Folder Name="/ci/">
     <File Path=".github/dependabot.yml" />
+    <File Path=".github/workflows/bench.yml" />
+    <File Path=".github/workflows/codeql.yml" />
+    <File Path=".github/workflows/comparison-bench.yml" />
+    <File Path=".github/workflows/dependency-review.yml" />
     <File Path=".github/workflows/dotnet.yml" />
+    <File Path=".github/workflows/nativeaot.yml" />
+    <File Path=".github/workflows/scorecard.yml" />
+    <File Path=".github/workflows/super-linter.yml" />
   </Folder>
   <Folder Name="/root/">
     <File Path=".editorconfig" />
