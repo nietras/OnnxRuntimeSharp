@@ -17,7 +17,14 @@ public class OrtOpenVinoPluginTest
         var libraryPath = OpenVINOLibraryPath;
         var executionProviderName = OpenVINOExecutionProviderName;
         using var environment = new OrtEnvironment();
-        environment.RegisterExecutionProviderLibrary(registrationName, libraryPath);
+        try
+        {
+            environment.RegisterExecutionProviderLibrary(registrationName, libraryPath);
+        }
+        catch (OrtException ex) when (ex.Message.Contains("Failed to load"))
+        {
+            Assert.Inconclusive($"OpenVINO is unavailable on this machine. Could not load '{libraryPath}'.");
+        }
         try
         {
             var allDevices = environment.GetExecutionProviderDevices();
