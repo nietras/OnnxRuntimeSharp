@@ -38,7 +38,8 @@ jobs:
           global-json-file: global.json
       - name: Publish profiler
         shell: pwsh
-        run: ./publish-tester.ps1
+        run: ./publish-profiler.ps1
       - name: Run profiler
         shell: pwsh
-        run: ./artifacts/publish/OnnxRuntimeSharp.Profiler/release_win-x64/OnnxRuntimeSharp.Profiler.exe
+        working-directory: ./artifacts/publish/OnnxRuntimeSharp.Profiler/release_win-x64/
+        run: ./OnnxRuntimeSharp.Profiler.exe
