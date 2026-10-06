@@ -14,20 +14,21 @@ const int MinimumIterations = 10;
 const int ProfilingSamples = 10;
 const bool EnableProfiling = false;
 const double TargetRunDurationMilliseconds = 1_000;
+const int EPAlign = -36;
 var concurrentTestDuration = TimeSpan.FromSeconds(1);
 int[] concurrentThreadCountsToTest = [1, 2, 4, 8, 16];
 var configurations = new Dictionary<string, Action<OrtSessionOptions>>
 {
-    //["TensorRT"] = options =>
-    //{
-    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
-    //    options.AppendExecutionProvider_TensorRT();
-    //},
-    //["CUDA"] = options =>
-    //{
-    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
-    //    options.AppendExecutionProvider_CUDA();
-    //},
+    ["TensorRT"] = options =>
+    {
+        options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
+        options.AppendExecutionProvider_TensorRT();
+    },
+    ["CUDA"] = options =>
+    {
+        options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
+        options.AppendExecutionProvider_CUDA();
+    },
     //["OpenVINO"] = options =>
     //{
     //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
@@ -64,13 +65,13 @@ var configurations = new Dictionary<string, Action<OrtSessionOptions>>
             { "load_config", "{\"CPU\":{\"INFERENCE_PRECISION_HINT\":\"bf16\"}}" },
         });
     },
-    //["CPU"] = options => options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL),
-    //["CPU 1×Intra 1×Inter"] = options =>
-    //{
-    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
-    //    options.SetIntraOpThreadCount(1);
-    //    options.SetInterOpThreadCount(1);
-    //},
+    ["CPU"] = options => options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL),
+    ["CPU 1×Intra 1×Inter"] = options =>
+    {
+        options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
+        options.SetIntraOpThreadCount(1);
+        options.SetInterOpThreadCount(1);
+    },
 };
 
 Action<string> log = message =>
@@ -88,7 +89,7 @@ var availableExecutionProviders = Ort.GetAvailableExecutionProviders();
 log($"Current directory: '{workingDirectory}'");
 log($"Found {modelPaths.Length} files for '{SearchPattern}': " +
     $"{string.Join(", ", modelPaths.Select(path => $"'{path}'"))}");
-log($"Available execution providers: {string.Join(", ", availableExecutionProviders)}");
+log($"Available execution providers (excl. plugins): {string.Join(", ", availableExecutionProviders)}");
 
 foreach (var modelPath in modelPaths)
 {
@@ -107,17 +108,18 @@ foreach (var modelPath in modelPaths)
     report(string.Empty);
     report("## Execution provider performance");
     report("```");
-    report($"{"Execution Provider",-32};BatchSize;Create [ms];First [ms];Iterations;Mean/b [ms];Mean/s [ms]");
+    report($"{"Execution Provider",EPAlign};BatchSize;Create [ms];First [ms];Iterations;Mean/b [ms];Mean/s [ms]");
     var configurationToProfilingInfo = new List<(string Name, NodeProfileReport Report)>();
     foreach (var (configurationName, configureSessionOptions) in configurations)
     {
         try
         {
-            configurationToProfilingInfo.Add((configurationName, RunModel(modelPath, configurationName, configureSessionOptions, report)));
+            var profileReport = RunModel(modelPath, configurationName, configureSessionOptions, report, EnableProfiling);
+            configurationToProfilingInfo.Add((configurationName, profileReport));
         }
         catch (OrtException exception)
         {
-            report($"{configurationName,-32};Unavailable: {exception.Message}");
+            report($"{configurationName,EPAlign};Unavailable: {exception.Message}");
         }
     }
     report("```");
@@ -125,7 +127,7 @@ foreach (var modelPath in modelPaths)
     report(string.Empty);
     report("## Concurrent app-thread scaling (single shared session)");
     report("```");
-    report($"{"Execution Provider",-32};Threads;Iterations;Throughput [calls/s];Min Mean/call [ms];Avg Mean/call [ms];Max Mean/call [ms]");
+    report($"{"Execution Provider",EPAlign};Threads;Iterations;Throughput [calls/s];Min Mean/call [ms];Avg Mean/call [ms];Max Mean/call [ms]");
     foreach (var (configurationName, configureSessionOptions) in configurations)
     {
         try
@@ -134,7 +136,7 @@ foreach (var modelPath in modelPaths)
         }
         catch (OrtException exception)
         {
-            report($"{configurationName,-32};Unavailable: {exception.Message}");
+            report($"{configurationName,EPAlign};Unavailable: {exception.Message}");
         }
     }
     report("```");
@@ -158,11 +160,12 @@ static NodeProfileReport RunModel(
     string modelPath,
     string configurationName,
     Action<OrtSessionOptions> configureSessionOptions,
-    Action<string> log)
+    Action<string> log,
+    bool enableProfiling)
 {
     var model = File.ReadAllBytes(modelPath);
     using var environment = new OrtEnvironment();
-    var profilePrefix = EnableProfiling
+    var profilePrefix = enableProfiling
         ? Path.Combine(
             Path.GetDirectoryName(modelPath)!,
             $"{Path.GetFileNameWithoutExtension(modelPath)}-onnxruntime-profile-{SanitizeFileName(configurationName)}")
@@ -200,14 +203,14 @@ static NodeProfileReport RunModel(
     var allocatedBytes = GC.GetAllocatedBytesForCurrentThread() - allocatedBytesBefore;
 
     var meanPerBatchMilliseconds = totalMilliseconds / iterations;
-    log($"{configurationName,-32};{BatchSize,9};{createMilliseconds,11:F3};{firstInferenceMilliseconds,10:F3};" +
+    log($"{configurationName,EPAlign};{BatchSize,9};{createMilliseconds,11:F3};{firstInferenceMilliseconds,10:F3};" +
         $"{iterations,10};{meanPerBatchMilliseconds,11:F3};{meanPerBatchMilliseconds / BatchSize,11:F3}");
     if (allocatedBytes != 0)
     {
         log($"WARNING: `{configurationName}` inference allocated {allocatedBytes} managed bytes.");
     }
 
-    if (!EnableProfiling)
+    if (!enableProfiling)
     {
         return new(null, []);
     }
@@ -232,11 +235,13 @@ static void RunModelConcurrent(
     Action<string> log)
 {
     var model = File.ReadAllBytes(modelPath);
+
+    using var environment = new OrtEnvironment();
+    using var options = CreateSessionOptions(configureSessionOptions, null);
+    using var session = new OrtSession(environment, model, options);
+
     foreach (var threadCount in threadCounts)
     {
-        using var environment = new OrtEnvironment();
-        using var options = CreateSessionOptions(configureSessionOptions, null);
-        using var session = new OrtSession(environment, model, options);
         using var barrier = new Barrier(threadCount + 1);
         var iterationsPerThread = new long[threadCount];
         var totalMillisecondsPerThread = new double[threadCount];
@@ -324,7 +329,7 @@ static void RunModelConcurrent(
             .ToArray();
         var throughputPerSecond = totalIterations / (elapsedMilliseconds / 1_000.0);
 
-        log($"{configurationName,-32};{threadCount,7};{totalIterations,10};{throughputPerSecond,20:F1};" +
+        log($"{configurationName,EPAlign};{threadCount,7};{totalIterations,10};{throughputPerSecond,20:F1};" +
             $"{meanCallMilliseconds.Min(),18:F3};{meanCallMilliseconds.Average(),18:F3};{meanCallMilliseconds.Max(),18:F3}");
         if (allocatedBytesPerThread.Any(allocatedBytes => allocatedBytes != 0))
         {

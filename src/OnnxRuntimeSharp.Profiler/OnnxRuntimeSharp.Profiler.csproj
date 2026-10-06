@@ -5,15 +5,17 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../OnnxRuntimeSharp/OnnxRuntimeSharp.csproj" />
-    <PackageReference Include="NtvLibs.OnnxRuntime.CPU.OpenVino.runtime.win-x64" Version="1.29.0.1-preview.1" />
+
+    <PackageReference Include="NtvLibs.OnnxRuntime.CPU.cuda13.Tensorrt.runtime.win-x64" Version="1.30.0.1" />
+    <PackageReference Include="NtvLibs.TensorRT10.cuda13.runtime.win-x64" Version="10.16.1.12" />
+    <PackageReference Include="NtvLibs.cuDNN.cuda13.runtime.win-x64" Version="9.27.0.42" />
+    <PackageReference Include="NtvLibs.cuda13.cublas.runtime.win-x64" Version="13.4.2.1" />
+    <PackageReference Include="NtvLibs.MSVCP.runtime.win-x64" Version="14.42.34430" />
+    <!-- Only reference the onnxruntime_providers_openvino.dll package, main onnxruntime.dll still comes from above -->
+    <PackageReference Include="NtvLibs.OnnxRuntime.CPU.OpenVino.onnxruntime_providers_openvino.runtime.win-x64" Version="1.29.0.1-preview.1" />
+    <!--<PackageReference Include="NtvLibs.OnnxRuntime.CPU.OpenVino.runtime.win-x64" Version="1.29.0.1-preview.1" />-->
     <PackageReference Include="NtvLibs.OpenVino.cpu.runtime.win-x64" Version="2026.3.1.1" />
     <PackageReference Include="NtvLibs.oneTBB.tbb12.runtime.win-x64" Version="2023.1.0.1" />
-    <!--<PackageReference Include="NtvLibs.OnnxRuntime.CPU.cuda13.Tensorrt.runtime.win-x64" Version="1.29.0.3" />
-    <PackageReference Include="NtvLibs.TensorRT10.cuda13.runtime.win-x64" Version="10.16.1.11" />
-    <PackageReference Include="NtvLibs.cuDNN.cuda13.runtime.win-x64" Version="9.25.1.1" />
-    <PackageReference Include="NtvLibs.zlib.zlibwapi.runtime.win-x64" Version="1.3.1" />
-    <PackageReference Include="NtvLibs.cuda13.cublas.runtime.win-x64" Version="13.3.1" />
-    <PackageReference Include="NtvLibs.MSVCP.runtime.win-x64" Version="14.42.34430" />-->
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\models\mnist-8.onnx" Link="mnist-8.onnx" CopyToOutputDirectory="PreserveNewest" />
