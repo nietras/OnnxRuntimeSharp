@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace OnnxRuntimeSharp;
@@ -126,13 +127,17 @@ public static unsafe partial class Ort
     {
         public IntPtr Value { get; }
     }
+    public interface IOrtHandle<TSelf> : IOrtHandle where TSelf : unmanaged, IOrtHandle
+    {
+        internal static virtual TSelf Cast(IntPtr ptr)
+        {
+            Debug.Assert(Unsafe.SizeOf<TSelf>() == IntPtr.Size);
+            return Unsafe.As<IntPtr, TSelf>(ref ptr);
+        }
+    }
     extension<THandle>(THandle handle) where THandle : unmanaged, IOrtHandle
     {
         public bool IsNull => handle.Value == IntPtr.Zero;
-    }
-    public interface IOrtHandle<TSelf> : IOrtHandle where TSelf : unmanaged, IOrtHandle
-    {
-        internal static virtual TSelf Cast(IntPtr ptr) => Unsafe.As<IntPtr, TSelf>(ref ptr);
     }
 
     public readonly record struct OrtEnvHandle(IntPtr Value) : IOrtHandle<OrtEnvHandle>;
