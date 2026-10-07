@@ -49,30 +49,13 @@ public sealed unsafe class OrtEnv : OrtSafeHandle<Ort.OrtEnvHandle>
         try
         {
             DangerousAddRef(ref referenceAdded);
-            if (OperatingSystem.IsWindows())
+            fixed (char* pathPointer = libraryPath)
             {
-                fixed (char* pathPointer = libraryPath)
-                {
-                    Ort.Ok(Ort.RegisterExecutionProviderLibrary(
-                        Handle,
-                        (sbyte*)utf8Name,
-                        (ushort*)pathPointer));
-                }
-            }
-            else
-            {
-                var utf8Path = Utf8StringMarshaller.ConvertToUnmanaged(libraryPath);
-                try
-                {
-                    Ort.Ok(Ort.RegisterExecutionProviderLibrary(
-                        Handle,
-                        (sbyte*)utf8Name,
-                        (ushort*)utf8Path));
-                }
-                finally
-                {
-                    Utf8StringMarshaller.Free(utf8Path);
-                }
+                using var nativePath = new OrtNativePath(libraryPath, pathPointer);
+                Ort.Ok(Ort.RegisterExecutionProviderLibrary(
+                    Handle,
+                    (sbyte*)utf8Name,
+                    nativePath.Pointer));
             }
         }
         finally

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.Marshalling;
 
 namespace OnnxRuntimeSharp;
 
@@ -80,32 +79,14 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
             environment.DangerousAddRef(ref _environmentReferenceAdded);
             options.DangerousAddRef(ref optionsReferenceAdded);
             Ort.OrtSessionHandle session;
-            if (OperatingSystem.IsWindows())
+            fixed (char* pathPointer = modelPath)
             {
-                fixed (char* pathPointer = modelPath)
-                {
-                    Ort.Ok(Ort.CreateSession(
-                        environment.Handle,
-                        (ushort*)pathPointer,
-                        options.Handle,
-                        &session));
-                }
-            }
-            else
-            {
-                var utf8Path = Utf8StringMarshaller.ConvertToUnmanaged(modelPath);
-                try
-                {
-                    Ort.Ok(Ort.CreateSession(
-                        environment.Handle,
-                        (ushort*)utf8Path,
-                        options.Handle,
-                        &session));
-                }
-                finally
-                {
-                    Utf8StringMarshaller.Free(utf8Path);
-                }
+                using var nativePath = new OrtNativePath(modelPath, pathPointer);
+                Ort.Ok(Ort.CreateSession(
+                    environment.Handle,
+                    nativePath.Pointer,
+                    options.Handle,
+                    &session));
             }
             SetHandle(session.Value);
 

@@ -21,24 +21,10 @@ public sealed class OrtSessionOptions : OrtSafeHandle<Ort.OrtSessionOptionsHandl
     {
         ThrowIfDisposed();
         ArgumentException.ThrowIfNullOrWhiteSpace(profileFilePrefix);
-        if (OperatingSystem.IsWindows())
+        fixed (char* pathPointer = profileFilePrefix)
         {
-            fixed (char* utf16Prefix = profileFilePrefix)
-            {
-                Ort.Ok(Ort.EnableProfiling(Handle, (ushort*)utf16Prefix));
-            }
-
-            return;
-        }
-
-        var utf8Prefix = Utf8StringMarshaller.ConvertToUnmanaged(profileFilePrefix);
-        try
-        {
-            Ort.Ok(Ort.EnableProfiling(Handle, (ushort*)utf8Prefix));
-        }
-        finally
-        {
-            Utf8StringMarshaller.Free(utf8Prefix);
+            using var nativePath = new OrtNativePath(profileFilePrefix, pathPointer);
+            Ort.Ok(Ort.EnableProfiling(Handle, nativePath.Pointer));
         }
     }
 
@@ -153,23 +139,10 @@ public sealed class OrtSessionOptions : OrtSafeHandle<Ort.OrtSessionOptionsHandl
     {
         ThrowIfDisposed();
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
-        if (OperatingSystem.IsWindows())
+        fixed (char* pathPointer = path)
         {
-            fixed (char* pathPointer = path)
-            {
-                Ort.Ok(Ort.SetOptimizedModelFilePath(Handle, (ushort*)pathPointer));
-            }
-            return;
-        }
-
-        var utf8Path = Utf8StringMarshaller.ConvertToUnmanaged(path);
-        try
-        {
-            Ort.Ok(Ort.SetOptimizedModelFilePath(Handle, (ushort*)utf8Path));
-        }
-        finally
-        {
-            Utf8StringMarshaller.Free(utf8Path);
+            using var nativePath = new OrtNativePath(path, pathPointer);
+            Ort.Ok(Ort.SetOptimizedModelFilePath(Handle, nativePath.Pointer));
         }
     }
 
@@ -182,33 +155,13 @@ public sealed class OrtSessionOptions : OrtSafeHandle<Ort.OrtSessionOptionsHandl
         var optionCount = providerOptions?.Count ?? 0;
         var keys = stackalloc sbyte*[optionCount];
         var values = stackalloc sbyte*[optionCount];
-        var initializedCount = 0;
-        try
-        {
-            if (providerOptions is not null)
-            {
-                foreach (var option in providerOptions)
-                {
-                    keys[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Key);
-                    values[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Value);
-                    ++initializedCount;
-                }
-            }
+        using var nativePairs = new OrtUtf8KeyValuePairs(providerOptions, keys, values, optionCount);
 
-            Ort.Ok(Ort.SessionOptionsAppendExecutionProvider_OpenVINO_V2(
-                Handle,
-                keys,
-                values,
-                (nuint)optionCount));
-        }
-        finally
-        {
-            for (var index = 0; index < initializedCount; ++index)
-            {
-                Utf8StringMarshaller.Free((byte*)values[index]);
-                Utf8StringMarshaller.Free((byte*)keys[index]);
-            }
-        }
+        Ort.Ok(Ort.SessionOptionsAppendExecutionProvider_OpenVINO_V2(
+            Handle,
+            nativePairs.Keys,
+            nativePairs.Values,
+            nativePairs.Count));
     }
 
     public unsafe void AppendExecutionProvider(
@@ -217,37 +170,23 @@ public sealed class OrtSessionOptions : OrtSafeHandle<Ort.OrtSessionOptionsHandl
     {
         ThrowIfDisposed();
         ArgumentException.ThrowIfNullOrWhiteSpace(providerName);
-        var utf8ProviderName = Utf8StringMarshaller.ConvertToUnmanaged(providerName);
         var optionCount = providerOptions?.Count ?? 0;
         var keys = stackalloc sbyte*[optionCount];
         var values = stackalloc sbyte*[optionCount];
-        var initializedCount = 0;
+        var utf8ProviderName = Utf8StringMarshaller.ConvertToUnmanaged(providerName);
         try
         {
-            if (providerOptions is not null)
-            {
-                foreach (var option in providerOptions)
-                {
-                    keys[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Key);
-                    values[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Value);
-                    ++initializedCount;
-                }
-            }
+            using var nativePairs = new OrtUtf8KeyValuePairs(providerOptions, keys, values, optionCount);
 
             Ort.Ok(Ort.SessionOptionsAppendExecutionProvider(
                 Handle,
                 (sbyte*)utf8ProviderName,
-                keys,
-                values,
-                (nuint)optionCount));
+                nativePairs.Keys,
+                nativePairs.Values,
+                nativePairs.Count));
         }
         finally
         {
-            for (var index = 0; index < initializedCount; ++index)
-            {
-                Utf8StringMarshaller.Free((byte*)values[index]);
-                Utf8StringMarshaller.Free((byte*)keys[index]);
-            }
             Utf8StringMarshaller.Free(utf8ProviderName);
         }
     }
@@ -286,36 +225,22 @@ public sealed class OrtSessionOptions : OrtSafeHandle<Ort.OrtSessionOptionsHandl
         var optionCount = providerOptions?.Count ?? 0;
         var keys = stackalloc sbyte*[optionCount];
         var values = stackalloc sbyte*[optionCount];
-        var initializedCount = 0;
         var environmentReferenceAdded = false;
         try
         {
             environment.DangerousAddRef(ref environmentReferenceAdded);
-            if (providerOptions is not null)
-            {
-                foreach (var option in providerOptions)
-                {
-                    keys[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Key);
-                    values[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Value);
-                    ++initializedCount;
-                }
-            }
+            using var nativePairs = new OrtUtf8KeyValuePairs(providerOptions, keys, values, optionCount);
             Ort.Ok(Ort.SessionOptionsAppendExecutionProvider_V2(
                 Handle,
                 environment.Handle,
                 nativeDevices,
                 (nuint)devices.Length,
-                keys,
-                values,
-                (nuint)optionCount));
+                nativePairs.Keys,
+                nativePairs.Values,
+                nativePairs.Count));
         }
         finally
         {
-            for (var index = 0; index < initializedCount; ++index)
-            {
-                Utf8StringMarshaller.Free((byte*)values[index]);
-                Utf8StringMarshaller.Free((byte*)keys[index]);
-            }
             if (environmentReferenceAdded)
             {
                 environment.DangerousRelease();
@@ -396,27 +321,11 @@ public sealed class OrtSessionOptions : OrtSafeHandle<Ort.OrtSessionOptionsHandl
             return;
         }
 
-        var keys = stackalloc sbyte*[options.Count];
-        var values = stackalloc sbyte*[options.Count];
-        var initializedCount = 0;
-        try
-        {
-            foreach (var option in options)
-            {
-                keys[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Key);
-                values[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Value);
-                ++initializedCount;
-            }
-            Ort.Ok(Ort.UpdateCUDAProviderOptions(nativeOptions, keys, values, (nuint)options.Count));
-        }
-        finally
-        {
-            for (var index = 0; index < initializedCount; ++index)
-            {
-                Utf8StringMarshaller.Free((byte*)values[index]);
-                Utf8StringMarshaller.Free((byte*)keys[index]);
-            }
-        }
+        var optionCount = options.Count;
+        var keys = stackalloc sbyte*[optionCount];
+        var values = stackalloc sbyte*[optionCount];
+        using var nativePairs = new OrtUtf8KeyValuePairs(options, keys, values, optionCount);
+        Ort.Ok(Ort.UpdateCUDAProviderOptions(nativeOptions, nativePairs.Keys, nativePairs.Values, nativePairs.Count));
     }
 
     static unsafe void UpdateTensorRtProviderOptions(
@@ -428,27 +337,11 @@ public sealed class OrtSessionOptions : OrtSafeHandle<Ort.OrtSessionOptionsHandl
             return;
         }
 
-        var keys = stackalloc sbyte*[options.Count];
-        var values = stackalloc sbyte*[options.Count];
-        var initializedCount = 0;
-        try
-        {
-            foreach (var option in options)
-            {
-                keys[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Key);
-                values[initializedCount] = (sbyte*)Utf8StringMarshaller.ConvertToUnmanaged(option.Value);
-                ++initializedCount;
-            }
-            Ort.Ok(Ort.UpdateTensorRTProviderOptions(nativeOptions, keys, values, (nuint)options.Count));
-        }
-        finally
-        {
-            for (var index = 0; index < initializedCount; ++index)
-            {
-                Utf8StringMarshaller.Free((byte*)values[index]);
-                Utf8StringMarshaller.Free((byte*)keys[index]);
-            }
-        }
+        var optionCount = options.Count;
+        var keys = stackalloc sbyte*[optionCount];
+        var values = stackalloc sbyte*[optionCount];
+        using var nativePairs = new OrtUtf8KeyValuePairs(options, keys, values, optionCount);
+        Ort.Ok(Ort.UpdateTensorRTProviderOptions(nativeOptions, nativePairs.Keys, nativePairs.Values, nativePairs.Count));
     }
 
     unsafe delegate Ort.OrtStatusHandle Utf8Action(Ort.OrtSessionOptionsHandle options, sbyte* value);
