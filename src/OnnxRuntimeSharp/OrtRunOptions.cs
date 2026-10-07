@@ -13,61 +13,55 @@ public sealed unsafe class OrtRunOptions : OrtSafeHandle<Ort.OrtRunOptionsHandle
         SetHandle(options.Value);
     }
 
-    public int LogVerbosityLevel
+    public int GetLogVerbosityLevel()
     {
-        get
-        {
-            ThrowIfDisposed();
-            int value;
-            Ort.Ok(Ort.RunOptionsGetRunLogVerbosityLevel(Handle, &value));
-            return value;
-        }
-        set
-        {
-            ThrowIfDisposed();
-            ArgumentOutOfRangeException.ThrowIfNegative(value);
-            Ort.Ok(Ort.RunOptionsSetRunLogVerbosityLevel(Handle, value));
-        }
+        ThrowIfDisposed();
+        int value;
+        Ort.Ok(Ort.RunOptionsGetRunLogVerbosityLevel(Handle, &value));
+        return value;
     }
 
-    public Ort.OrtLoggingLevel LogSeverityLevel
+    public void SetLogVerbosityLevel(int level)
     {
-        get
-        {
-            ThrowIfDisposed();
-            int value;
-            Ort.Ok(Ort.RunOptionsGetRunLogSeverityLevel(Handle, &value));
-            return (Ort.OrtLoggingLevel)value;
-        }
-        set
-        {
-            ThrowIfDisposed();
-            Ort.Ok(Ort.RunOptionsSetRunLogSeverityLevel(Handle, (int)value));
-        }
+        ThrowIfDisposed();
+        ArgumentOutOfRangeException.ThrowIfNegative(level);
+        Ort.Ok(Ort.RunOptionsSetRunLogVerbosityLevel(Handle, level));
     }
 
-    public string Tag
+    public Ort.OrtLoggingLevel GetLogSeverityLevel()
     {
-        get
+        ThrowIfDisposed();
+        int value;
+        Ort.Ok(Ort.RunOptionsGetRunLogSeverityLevel(Handle, &value));
+        return (Ort.OrtLoggingLevel)value;
+    }
+
+    public void SetLogSeverityLevel(Ort.OrtLoggingLevel level)
+    {
+        ThrowIfDisposed();
+        Ort.Ok(Ort.RunOptionsSetRunLogSeverityLevel(Handle, (int)level));
+    }
+
+    public string GetTag()
+    {
+        ThrowIfDisposed();
+        sbyte* value;
+        Ort.Ok(Ort.RunOptionsGetRunTag(Handle, &value));
+        return Marshal.PtrToStringUTF8((IntPtr)value) ?? string.Empty;
+    }
+
+    public void SetTag(string tag)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(tag);
+        var utf8Value = Utf8StringMarshaller.ConvertToUnmanaged(tag);
+        try
         {
-            ThrowIfDisposed();
-            sbyte* value;
-            Ort.Ok(Ort.RunOptionsGetRunTag(Handle, &value));
-            return Marshal.PtrToStringUTF8((IntPtr)value) ?? string.Empty;
+            Ort.Ok(Ort.RunOptionsSetRunTag(Handle, (sbyte*)utf8Value));
         }
-        set
+        finally
         {
-            ThrowIfDisposed();
-            ArgumentNullException.ThrowIfNull(value);
-            var utf8Value = Utf8StringMarshaller.ConvertToUnmanaged(value);
-            try
-            {
-                Ort.Ok(Ort.RunOptionsSetRunTag(Handle, (sbyte*)utf8Value));
-            }
-            finally
-            {
-                Utf8StringMarshaller.Free(utf8Value);
-            }
+            Utf8StringMarshaller.Free(utf8Value);
         }
     }
 

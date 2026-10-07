@@ -6,18 +6,18 @@ namespace OnnxRuntimeSharp.Test;
 public class OrtMemoryInfoTest
 {
     [TestMethod]
-    public void CpuMemoryInfoExposesProperties()
+    public void CpuMemoryInfoCanBeQueried()
     {
         using var memoryInfo = OrtMemoryInfo.CreateCpu();
 
-        Assert.IsFalse(string.IsNullOrWhiteSpace(memoryInfo.Name));
-        Assert.AreEqual(0, memoryInfo.DeviceId);
-        Assert.AreEqual(Ort.OrtMemType.OrtMemTypeDefault, memoryInfo.MemoryType);
-        Assert.AreEqual(Ort.OrtAllocatorType.OrtArenaAllocator, memoryInfo.AllocatorType);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(memoryInfo.GetName()));
+        Assert.AreEqual(0, memoryInfo.GetDeviceId());
+        Assert.AreEqual(Ort.OrtMemType.OrtMemTypeDefault, memoryInfo.GetMemoryType());
+        Assert.AreEqual(Ort.OrtAllocatorType.OrtArenaAllocator, memoryInfo.GetAllocatorType());
     }
 
     [TestMethod]
-    public void ExplicitCpuMemoryInfoExposesProperties()
+    public void ExplicitCpuMemoryInfoCanBeQueried()
     {
         using var memoryInfo = new OrtMemoryInfo(
             "Cpu",
@@ -25,9 +25,10 @@ public class OrtMemoryInfoTest
             0,
             Ort.OrtMemType.OrtMemTypeCPUInput);
 
-        Assert.AreEqual("Cpu", memoryInfo.Name);
-        Assert.AreEqual(Ort.OrtAllocatorType.OrtDeviceAllocator, memoryInfo.AllocatorType);
-        Assert.AreEqual(Ort.OrtMemType.OrtMemTypeCPUInput, memoryInfo.MemoryType);
+        Assert.AreEqual("Cpu", memoryInfo.GetName());
+        Assert.AreEqual(0, memoryInfo.GetDeviceId());
+        Assert.AreEqual(Ort.OrtAllocatorType.OrtDeviceAllocator, memoryInfo.GetAllocatorType());
+        Assert.AreEqual(Ort.OrtMemType.OrtMemTypeCPUInput, memoryInfo.GetMemoryType());
     }
 
     [TestMethod]
@@ -38,6 +39,9 @@ public class OrtMemoryInfoTest
 
         var memoryInfo = OrtMemoryInfo.CreateCpu();
         memoryInfo.Dispose();
-        Assert.ThrowsExactly<ObjectDisposedException>(() => _ = memoryInfo.Name);
+        Assert.ThrowsExactly<ObjectDisposedException>(() => memoryInfo.GetName());
+        Assert.ThrowsExactly<ObjectDisposedException>(() => memoryInfo.GetDeviceId());
+        Assert.ThrowsExactly<ObjectDisposedException>(() => memoryInfo.GetMemoryType());
+        Assert.ThrowsExactly<ObjectDisposedException>(() => memoryInfo.GetAllocatorType());
     }
 }

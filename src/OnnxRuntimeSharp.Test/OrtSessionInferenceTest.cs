@@ -58,7 +58,8 @@ public class OrtSessionInferenceTest
         using var session = TestData.CreateMnistSession(environment);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
-        using var runOptions = new OrtRunOptions { Tag = "test" };
+        using var runOptions = new OrtRunOptions();
+        runOptions.SetTag("test");
 
         session.Run(input, output, runOptions);
     }

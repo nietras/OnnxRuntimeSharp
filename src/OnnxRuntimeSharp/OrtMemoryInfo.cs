@@ -42,48 +42,36 @@ public sealed unsafe class OrtMemoryInfo : OrtSafeHandle<Ort.OrtMemoryInfoHandle
 
     OrtMemoryInfo(Ort.OrtMemoryInfoHandle info) => SetHandle(info.Value);
 
-    public string Name
+    public string GetName()
     {
-        get
-        {
-            ThrowIfDisposed();
-            sbyte* value;
-            Ort.Ok(Ort.MemoryInfoGetName(Handle, &value));
-            return Marshal.PtrToStringUTF8((IntPtr)value) ?? string.Empty;
-        }
+        ThrowIfDisposed();
+        sbyte* value;
+        Ort.Ok(Ort.MemoryInfoGetName(Handle, &value));
+        return Marshal.PtrToStringUTF8((IntPtr)value) ?? string.Empty;
     }
 
-    public int DeviceId
+    public int GetDeviceId()
     {
-        get
-        {
-            ThrowIfDisposed();
-            int value;
-            Ort.Ok(Ort.MemoryInfoGetId(Handle, &value));
-            return value;
-        }
+        ThrowIfDisposed();
+        int value;
+        Ort.Ok(Ort.MemoryInfoGetId(Handle, &value));
+        return value;
     }
 
-    public Ort.OrtMemType MemoryType
+    public Ort.OrtMemType GetMemoryType()
     {
-        get
-        {
-            ThrowIfDisposed();
-            Ort.OrtMemType value;
-            Ort.Ok(Ort.MemoryInfoGetMemType(Handle, &value));
-            return value;
-        }
+        ThrowIfDisposed();
+        Ort.OrtMemType value;
+        Ort.Ok(Ort.MemoryInfoGetMemType(Handle, &value));
+        return value;
     }
 
-    public Ort.OrtAllocatorType AllocatorType
+    public Ort.OrtAllocatorType GetAllocatorType()
     {
-        get
-        {
-            ThrowIfDisposed();
-            Ort.OrtAllocatorType value;
-            Ort.Ok(Ort.MemoryInfoGetType(Handle, &value));
-            return value;
-        }
+        ThrowIfDisposed();
+        Ort.OrtAllocatorType value;
+        Ort.Ok(Ort.MemoryInfoGetType(Handle, &value));
+        return value;
     }
 
     protected override bool ReleaseHandle()

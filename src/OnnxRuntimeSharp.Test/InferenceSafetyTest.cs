@@ -54,6 +54,55 @@ public class InferenceSafetyTest
     }
 
     [TestMethod]
+    public void CachedPropertiesDoNotAllocate()
+    {
+        using var environment = new OrtEnv();
+        using var session = TestData.CreateMnistSession(environment);
+        using var input = TestData.CreateMnistInput();
+        var device = environment.GetExecutionProviderDevices()[0];
+
+        for (var warmup = 0; warmup < 3; ++warmup)
+        {
+            ReadProperties();
+        }
+
+        var allocatedBytesBefore = GC.GetAllocatedBytesForCurrentThread();
+        for (var iteration = 0; iteration < 3; ++iteration)
+        {
+            ReadProperties();
+        }
+
+        Assert.AreEqual(0, GC.GetAllocatedBytesForCurrentThread() - allocatedBytesBefore);
+
+        void ReadProperties()
+        {
+            _ = session.Inputs;
+            _ = session.Outputs;
+            _ = session.OverridableInitializers;
+            _ = session.InputName;
+            _ = session.OutputName;
+            _ = session.InputDimensions;
+            _ = session.OutputDimensions;
+            _ = session.Inputs[0].Name;
+            _ = session.Inputs[0].SymbolicDimensions;
+            _ = session.ModelMetadata.ProducerName;
+            _ = session.ModelMetadata.GraphName;
+            _ = session.ModelMetadata.GraphDescription;
+            _ = session.ModelMetadata.Domain;
+            _ = session.ModelMetadata.Description;
+            _ = session.ModelMetadata.CustomMetadata;
+            _ = device.ExecutionProviderName;
+            _ = device.ExecutionProviderVendor;
+            _ = device.ExecutionProviderMetadata;
+            _ = device.ExecutionProviderOptions;
+            _ = device.HardwareDevice.Vendor;
+            _ = device.HardwareDevice.Metadata;
+            _ = input.Data;
+            _ = input.ElementType;
+        }
+    }
+
+    [TestMethod]
     public void ConcurrentRunsOnSharedSessionComplete()
     {
         using var environment = new OrtEnv();
