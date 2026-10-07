@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 
 namespace OnnxRuntimeSharp;
 
@@ -455,13 +454,13 @@ public static unsafe partial class Ort
 
     public readonly struct OrtTrainingApi;
 
-    public unsafe partial struct OrtApiBase
+    public unsafe readonly partial struct OrtApiBase
     {
         [NativeTypeName("const OrtApi *(*)(uint32_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<uint, OrtApi*> GetApi;
+        public readonly delegate* unmanaged[Stdcall]<uint, OrtApi*> GetApi;
 
         [NativeTypeName("const char *(*)(void) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<sbyte*> GetVersionString;
+        public readonly delegate* unmanaged[Stdcall]<sbyte*> GetVersionString;
     }
 
     public partial struct OrtCustomHandleType
@@ -2120,32 +2119,5 @@ public static unsafe partial class Ort
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEpDevice *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtEpDevice*, OrtStatusHandle> DeinitGraphicsInteropForEpDevice;
-    }
-
-    internal static unsafe partial class NativeExports
-    {
-        [DllImport("onnxruntime", CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
-        [return: NativeTypeName("const OrtApiBase *")]
-        public static extern OrtApiBase* OrtGetApiBase();
-
-        [DllImport("onnxruntime", CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
-        [return: NativeTypeName("OrtStatusPtr")]
-        public static extern OrtStatusHandle OrtSessionOptionsAppendExecutionProvider_CUDA(OrtSessionOptions* options, int device_id);
-
-        [DllImport("onnxruntime", CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
-        [return: NativeTypeName("OrtStatusPtr")]
-        public static extern OrtStatusHandle OrtSessionOptionsAppendExecutionProvider_ROCM(OrtSessionOptions* options, int device_id);
-
-        [DllImport("onnxruntime", CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
-        [return: NativeTypeName("OrtStatusPtr")]
-        public static extern OrtStatusHandle OrtSessionOptionsAppendExecutionProvider_MIGraphX(OrtSessionOptions* options, int device_id);
-
-        [DllImport("onnxruntime", CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
-        [return: NativeTypeName("OrtStatusPtr")]
-        public static extern OrtStatusHandle OrtSessionOptionsAppendExecutionProvider_Dnnl(OrtSessionOptions* options, int use_arena);
-
-        [DllImport("onnxruntime", CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
-        [return: NativeTypeName("OrtStatusPtr")]
-        public static extern OrtStatusHandle OrtSessionOptionsAppendExecutionProvider_Tensorrt(OrtSessionOptions* options, int device_id);
     }
 }

@@ -1371,4 +1371,28 @@ public static unsafe partial class Ort
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle KernelContext_GetSyncStream(OrtKernelContext* context, OrtSyncStream** @out) => Api->KernelContext_GetSyncStream(context, @out);
+
+    internal static unsafe partial class NativeExports
+    {
+        const string LibraryFileName = "onnxruntime";
+
+        [DllImport(LibraryFileName, CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
+        [return: NativeTypeName("const OrtApiBase *")]
+        public static extern OrtApiBase* OrtGetApiBase();
+
+        [DllImport(LibraryFileName, CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
+        public static extern OrtStatusHandle OrtSessionOptionsAppendExecutionProvider_CUDA(OrtSessionOptions* options, int device_id);
+
+        [DllImport(LibraryFileName, CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
+        public static extern OrtStatusHandle OrtSessionOptionsAppendExecutionProvider_ROCM(OrtSessionOptions* options, int device_id);
+
+        [DllImport(LibraryFileName, CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
+        public static extern OrtStatusHandle OrtSessionOptionsAppendExecutionProvider_MIGraphX(OrtSessionOptions* options, int device_id);
+
+        [DllImport(LibraryFileName, CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
+        public static extern OrtStatusHandle OrtSessionOptionsAppendExecutionProvider_Dnnl(OrtSessionOptions* options, int use_arena);
+
+        [DllImport(LibraryFileName, CallingConvention = CallingConvention.StdCall, ExactSpelling = true)]
+        public static extern OrtStatusHandle OrtSessionOptionsAppendExecutionProvider_Tensorrt(OrtSessionOptions* options, int device_id);
+    }
 }
