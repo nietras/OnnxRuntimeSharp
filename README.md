@@ -20,7 +20,7 @@ state inference does not allocate managed memory.
 ```csharp
 using OnnxRuntimeSharp;
 
-using var environment = new OrtEnvironment();
+using var environment = new OrtEnv();
 using var session = new OrtSession(environment, File.ReadAllBytes("mnist-8.onnx"));
 using var input = new OrtTensor<float>(new float[28 * 28], [1, 1, 28, 28]);
 using var output = new OrtTensor<float>(new float[10], [1, 10]);
