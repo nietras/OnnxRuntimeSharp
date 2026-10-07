@@ -104,8 +104,8 @@ public class OrtIoBindingTest
     {
         using var environment = new OrtEnv();
         using var session = TestData.CreateTwoInputSession(environment);
-        using var firstInput = new OrtTensor<float>([3], [1]);
-        using var secondInput = new OrtTensor<float>([7], [1]);
+        using var firstInput = new OrtValue<float>([3], [1]);
+        using var secondInput = new OrtValue<float>([7], [1]);
         var values = session.Run(
         [
             session.CreateInputBinding(0, firstInput),
@@ -113,8 +113,8 @@ public class OrtIoBindingTest
         ]);
         using var firstValue = values[0];
         using var secondValue = values[1];
-        using var firstOutput = new OrtTensor<float>(new float[1], [1]);
-        using var secondOutput = new OrtTensor<float>(new float[1], [1]);
+        using var firstOutput = new OrtValue<float>(new float[1], [1]);
+        using var secondOutput = new OrtValue<float>(new float[1], [1]);
         using var binding = session.CreateIoBinding();
         binding.BindInput(0, firstValue);
         binding.BindInput(1, secondValue);

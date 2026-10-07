@@ -17,13 +17,17 @@ The application supplies the native ONNX Runtime runtime package and owns the
 managed input and output buffers. Tensors pin those buffers once, so steady
 state inference does not allocate managed memory.
 
+`OrtValue<T>` derives from `OrtValue` and uses the same native handle owner.
+Construction snapshots the tensor shape once; typed data access and binding
+do not allocate additional wrappers or copy the tensor data.
+
 ```csharp
 using OnnxRuntimeSharp;
 
 using var environment = new OrtEnv();
 using var session = new OrtSession(environment, File.ReadAllBytes("mnist-8.onnx"));
-using var input = new OrtTensor<float>(new float[28 * 28], [1, 1, 28, 28]);
-using var output = new OrtTensor<float>(new float[10], [1, 10]);
+using var input = new OrtValue<float>(new float[28 * 28], [1, 1, 28, 28]);
+using var output = new OrtValue<float>(new float[10], [1, 10]);
 
 session.Run(input, output);
 ```

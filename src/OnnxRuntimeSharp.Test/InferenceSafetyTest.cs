@@ -54,6 +54,94 @@ public class InferenceSafetyTest
     }
 
     [TestMethod]
+    public void TypedValuesRunDirectlyWithoutManagedAllocations()
+    {
+        using var environment = new OrtEnv();
+        using var session = TestData.CreateMnistSession(environment);
+        using var input = TestData.CreateMnistInput();
+        using var output = TestData.CreateMnistOutput();
+        for (var warmup = 0; warmup < 3; ++warmup)
+        {
+            session.Run(input, output);
+        }
+
+        var allocatedBytesBefore = GC.GetAllocatedBytesForCurrentThread();
+        for (var iteration = 0; iteration < 1_000; ++iteration)
+        {
+            session.Run(input, output);
+        }
+        Assert.AreEqual(0, GC.GetAllocatedBytesForCurrentThread() - allocatedBytesBefore);
+    }
+
+    [TestMethod]
+    public void TypedAndUntypedDataAccessDoesNotAllocate()
+    {
+        using var typed = new OrtValue<float>(new float[1], [1]);
+        OrtValue untyped = typed;
+        for (var warmup = 0; warmup < 3; ++warmup)
+        {
+            _ = typed.Data[0];
+            _ = typed.GetTensorData()[0];
+            _ = untyped.GetTensorData<float>()[0];
+        }
+
+        var allocatedBytesBefore = GC.GetAllocatedBytesForCurrentThread();
+        for (var iteration = 0; iteration < 1_000; ++iteration)
+        {
+            typed.Data[0] = iteration;
+            _ = typed.GetTensorData()[0];
+            _ = untyped.GetTensorData<float>()[0];
+            _ = typed.Dimensions;
+            _ = untyped.ElementType;
+        }
+
+        Assert.AreEqual(0, GC.GetAllocatedBytesForCurrentThread() - allocatedBytesBefore);
+    }
+
+    [TestMethod]
+    public unsafe void TypedValueConstructionAvoidsBackingWrapperAllocations()
+    {
+        var data = new float[1];
+        var nativeData = stackalloc float[1];
+        long[] dimensions = [1];
+        using var memoryInfo = OrtMemoryInfo.CreateCpu();
+        _ = MeasureManaged(data, dimensions);
+        _ = MeasureManaged(data, []);
+        _ = MeasureExternal(nativeData, dimensions, memoryInfo);
+
+        var managedBytes = MeasureManaged(data, dimensions);
+        var externalBytes = MeasureExternal(nativeData, dimensions, memoryInfo);
+        var scalarBytes = MeasureManaged(data, []);
+        var allocatedBytesBefore = GC.GetAllocatedBytesForCurrentThread();
+        var shapeSnapshot = new long[1];
+        var shapeBytes = GC.GetAllocatedBytesForCurrentThread() - allocatedBytesBefore;
+        GC.KeepAlive(shapeSnapshot);
+
+        Assert.AreEqual(externalBytes, managedBytes);
+        Assert.AreEqual(100 * shapeBytes, managedBytes - scalarBytes);
+
+        static long MeasureManaged(float[] data, ReadOnlySpan<long> dimensions)
+        {
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            for (var iteration = 0; iteration < 100; ++iteration)
+            {
+                using var value = new OrtValue<float>(data, dimensions);
+            }
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        static long MeasureExternal(float* data, ReadOnlySpan<long> dimensions, OrtMemoryInfo memoryInfo)
+        {
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            for (var iteration = 0; iteration < 100; ++iteration)
+            {
+                using var value = new OrtValue<float>(data, 1, dimensions, memoryInfo);
+            }
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+    }
+
+    [TestMethod]
     public void CachedPropertiesDoNotAllocate()
     {
         using var environment = new OrtEnv();

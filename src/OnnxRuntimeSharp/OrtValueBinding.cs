@@ -2,7 +2,7 @@
 
 public readonly unsafe struct OrtValueBinding
 {
-    internal OrtValueBinding(OrtSession session, OrtTensorInfo info, OrtSafeHandle<Ort.OrtValueHandle> value)
+    internal OrtValueBinding(OrtSession session, OrtTensorInfo info, OrtValue value)
     {
         Session = session;
         Info = info;
@@ -17,5 +17,5 @@ public readonly unsafe struct OrtValueBinding
 
     internal Ort.OrtValueHandle ValueHandle => Value.Handle;
 
-    internal OrtSafeHandle<Ort.OrtValueHandle> Value { get; }
+    internal OrtValue Value { get; }
 }

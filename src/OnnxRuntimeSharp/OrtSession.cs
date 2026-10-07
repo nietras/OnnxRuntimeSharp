@@ -172,26 +172,22 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
 
     public ReadOnlyMemory<long> OutputDimensions => _outputs[0].Dimensions;
 
-    public OrtValueBinding CreateInputBinding<T>(int index, OrtTensor<T> value)
-        where T : unmanaged
+    public OrtValueBinding CreateInputBinding(int index, OrtValue value)
     {
         ThrowIfDisposed();
         return CreateBinding(_inputs, index, value);
     }
 
-    public OrtValueBinding CreateOutputBinding<T>(int index, OrtTensor<T> value)
-        where T : unmanaged
+    public OrtValueBinding CreateOutputBinding(int index, OrtValue value)
     {
         ThrowIfDisposed();
         return CreateBinding(_outputs, index, value);
     }
 
-    public void Run<TInput, TOutput>(
-        OrtTensor<TInput> input,
-        OrtTensor<TOutput> output,
+    public void Run(
+        OrtValue input,
+        OrtValue output,
         OrtRunOptions? runOptions = null)
-        where TInput : unmanaged
-        where TOutput : unmanaged
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(input);
@@ -467,8 +463,7 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
         return true;
     }
 
-    OrtValueBinding CreateBinding<T>(OrtTensorInfo[] infos, int index, OrtTensor<T> value)
-        where T : unmanaged
+    OrtValueBinding CreateBinding(OrtTensorInfo[] infos, int index, OrtValue value)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(index);
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, infos.Length);

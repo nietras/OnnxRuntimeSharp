@@ -46,7 +46,7 @@ public class OrtSafeHandleTest
         Assert.IsFalse(info.IsNull);
         Assert.AreEqual(info, allocator->Info(allocator));
 
-        using var tensor = new OrtTensor<float>([1], [1]);
+        using var tensor = new OrtValue<float>([1], [1]);
         Ort.OrtMemoryInfoHandle tensorInfo;
         Ort.GetTensorMemoryInfo(tensor.Handle, &tensorInfo).Ok();
         Assert.IsFalse(tensorInfo.IsNull);
@@ -61,7 +61,7 @@ public class OrtSafeHandleTest
     [TestMethod]
     [DataRow(typeof(OrtEnv), typeof(OrtSafeHandle<Ort.OrtEnvHandle>))]
     [DataRow(typeof(OrtValue), typeof(OrtSafeHandle<Ort.OrtValueHandle>))]
-    [DataRow(typeof(OrtTensor<float>), typeof(OrtSafeHandle<Ort.OrtValueHandle>))]
+    [DataRow(typeof(OrtValue<float>), typeof(OrtValue))]
     [DataRow(typeof(OrtMemoryInfo), typeof(OrtSafeHandle<Ort.OrtMemoryInfoHandle>))]
     [DataRow(typeof(OrtIoBinding), typeof(OrtSafeHandle<Ort.OrtIoBindingHandle>))]
     [DataRow(typeof(OrtSession), typeof(OrtSafeHandle<Ort.OrtSessionHandle>))]

@@ -3,26 +3,15 @@ using System.Runtime.InteropServices;
 
 namespace OnnxRuntimeSharp;
 
-public sealed unsafe class OrtTensor<T> : OrtSafeHandle<Ort.OrtValueHandle> where T : unmanaged
+public sealed unsafe class OrtValue<T> : OrtValue where T : unmanaged
 {
     readonly GCHandle _dataHandle;
     readonly OrtMemoryInfo? _memoryInfo;
     readonly bool _memoryInfoReferenceAdded;
 
-    public OrtTensor(T[] data, ReadOnlySpan<long> dimensions)
+    public OrtValue(T[] data, ReadOnlySpan<long> dimensions)
+        : base(ValidateManagedData(data, dimensions), dimensions, OrtTensorElementType.Get<T>())
     {
-        ArgumentNullException.ThrowIfNull(data);
-        if (data.Length == 0)
-        {
-            Throws.ThrowTensorDataEmpty();
-        }
-
-        var elementCount = GetElementCount(dimensions);
-        if (elementCount != data.Length)
-        {
-            Throws.ThrowTensorDimensionsDataLengthMismatch();
-        }
-
         _dataHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
         Ort.OrtMemoryInfoHandle memoryInfo = default;
         try
@@ -34,10 +23,10 @@ public sealed unsafe class OrtTensor<T> : OrtSafeHandle<Ort.OrtValueHandle> wher
                 Ort.CreateTensorWithDataAsOrtValue(
                     memoryInfo,
                     _dataHandle.AddrOfPinnedObject().ToPointer(),
-                    checked((nuint)(data.Length * sizeof(T))),
+                    checked((nuint)data.Length * (nuint)sizeof(T)),
                     dimensionsPointer,
                     (nuint)dimensions.Length,
-                    OrtTensorElementType.Get<T>(),
+                    ElementType,
                     &value).Ok();
                 SetHandle(value.Value);
             }
@@ -56,23 +45,13 @@ public sealed unsafe class OrtTensor<T> : OrtSafeHandle<Ort.OrtValueHandle> wher
         }
     }
 
-    public OrtTensor(
+    public OrtValue(
         T* data,
         int elementCount,
         ReadOnlySpan<long> dimensions,
         OrtMemoryInfo memoryInfo)
+        : base(ValidateNativeData(data, elementCount, dimensions, memoryInfo), dimensions, OrtTensorElementType.Get<T>())
     {
-        if (data is null)
-        {
-            Throws.ThrowNativeTensorDataNull();
-        }
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(elementCount);
-        ArgumentNullException.ThrowIfNull(memoryInfo);
-        if (GetElementCount(dimensions) != elementCount)
-        {
-            Throws.ThrowTensorDimensionsElementCountMismatch();
-        }
-
         var memoryInfoReferenceAdded = false;
         try
         {
@@ -83,10 +62,10 @@ public sealed unsafe class OrtTensor<T> : OrtSafeHandle<Ort.OrtValueHandle> wher
                 Ort.CreateTensorWithDataAsOrtValue(
                     memoryInfo.Handle,
                     data,
-                    checked((nuint)(elementCount * sizeof(T))),
+                    checked((nuint)elementCount * (nuint)sizeof(T)),
                     dimensionsPointer,
                     (nuint)dimensions.Length,
-                    OrtTensorElementType.Get<T>(),
+                    ElementType,
                     &value).Ok();
                 SetHandle(value.Value);
             }
@@ -116,11 +95,11 @@ public sealed unsafe class OrtTensor<T> : OrtSafeHandle<Ort.OrtValueHandle> wher
         }
     }
 
-    public Ort.ONNXTensorElementDataType ElementType => OrtTensorElementType.Get<T>();
+    public Span<T> GetTensorData() => base.GetTensorData<T>();
 
     protected override bool ReleaseHandle()
     {
-        Ort.ReleaseValue(Handle);
+        var released = base.ReleaseHandle();
         if (_dataHandle.IsAllocated)
         {
             _dataHandle.Free();
@@ -129,29 +108,36 @@ public sealed unsafe class OrtTensor<T> : OrtSafeHandle<Ort.OrtValueHandle> wher
         {
             _memoryInfo!.DangerousRelease();
         }
-        return true;
+        return released;
     }
 
-    static int GetElementCount(ReadOnlySpan<long> dimensions)
+    static int ValidateManagedData(T[] data, ReadOnlySpan<long> dimensions)
     {
-        if (dimensions.IsEmpty)
+        ArgumentNullException.ThrowIfNull(data);
+        if (data.Length == 0)
         {
-            return 1;
+            Throws.ThrowTensorDataEmpty();
         }
-
-        long count = 1;
-        foreach (var dimension in dimensions)
+        var elementCount = GetElementCount(dimensions);
+        if (elementCount != data.Length)
         {
-            if (dimension < 0)
-            {
-                Throws.ThrowNegativeTensorDimension();
-            }
-
-            checked
-            {
-                count *= dimension;
-            }
+            Throws.ThrowTensorDimensionsDataLengthMismatch();
         }
-        return checked((int)count);
+        return elementCount;
+    }
+
+    static int ValidateNativeData(T* data, int elementCount, ReadOnlySpan<long> dimensions, OrtMemoryInfo memoryInfo)
+    {
+        if (data is null)
+        {
+            Throws.ThrowNativeTensorDataNull();
+        }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(elementCount);
+        ArgumentNullException.ThrowIfNull(memoryInfo);
+        if (GetElementCount(dimensions) != elementCount)
+        {
+            Throws.ThrowTensorDimensionsElementCountMismatch();
+        }
+        return elementCount;
     }
 }

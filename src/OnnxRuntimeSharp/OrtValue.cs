@@ -2,9 +2,19 @@
 
 namespace OnnxRuntimeSharp;
 
-public sealed unsafe class OrtValue : OrtSafeHandle<Ort.OrtValueHandle>
+public unsafe class OrtValue : OrtSafeHandle<Ort.OrtValueHandle>
 {
     readonly long[] _dimensions;
+
+    private protected OrtValue(
+        int elementCount,
+        ReadOnlySpan<long> dimensions,
+        Ort.ONNXTensorElementDataType elementType)
+    {
+        ElementCount = elementCount;
+        _dimensions = dimensions.ToArray();
+        ElementType = elementType;
+    }
 
     internal OrtValue(Ort.OrtValueHandle value)
     {
@@ -37,6 +47,7 @@ public sealed unsafe class OrtValue : OrtSafeHandle<Ort.OrtValueHandle>
             {
                 Ort.GetDimensions(tensorInfo, dimensionsPointer, dimensionCount).Ok();
             }
+            ElementCount = GetElementCount(_dimensions);
         }
         catch
         {
@@ -53,6 +64,8 @@ public sealed unsafe class OrtValue : OrtSafeHandle<Ort.OrtValueHandle>
 
     public ReadOnlyMemory<long> Dimensions => _dimensions;
 
+    private protected int ElementCount { get; }
+
     public Span<T> GetTensorData<T>() where T : unmanaged
     {
         ThrowIfDisposed();
@@ -62,19 +75,37 @@ public sealed unsafe class OrtValue : OrtSafeHandle<Ort.OrtValueHandle>
             Throws.ThrowTensorElementTypeMismatch(ElementType, expectedType);
         }
 
-        nuint elementCount = 1;
-        foreach (var dimension in _dimensions)
+        Ort.OrtMemoryInfoHandle memoryInfo;
+        Ort.GetTensorMemoryInfo(Handle, &memoryInfo).Ok();
+        Ort.OrtMemoryInfoDeviceType deviceType;
+        Ort.MemoryInfoGetDeviceType(memoryInfo, &deviceType);
+        if (deviceType != Ort.OrtMemoryInfoDeviceType.OrtMemoryInfoDeviceType_CPU)
         {
-            elementCount = checked(elementCount * (nuint)dimension);
+            Throws.ThrowTensorDataNotCpuAccessible();
         }
+
         void* data;
         Ort.GetTensorMutableData(Handle, &data).Ok();
-        return new Span<T>(data, checked((int)elementCount));
+        return new Span<T>(data, ElementCount);
     }
 
     protected override bool ReleaseHandle()
     {
         Ort.ReleaseValue(Handle);
         return true;
+    }
+
+    private protected static int GetElementCount(ReadOnlySpan<long> dimensions)
+    {
+        long count = 1;
+        foreach (var dimension in dimensions)
+        {
+            if (dimension < 0)
+            {
+                Throws.ThrowNegativeTensorDimension();
+            }
+            count = checked(count * dimension);
+        }
+        return checked((int)count);
     }
 }

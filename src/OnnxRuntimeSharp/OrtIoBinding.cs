@@ -28,14 +28,8 @@ public sealed unsafe class OrtIoBinding : OrtSafeHandle<Ort.OrtIoBindingHandle>
         }
     }
 
-    public void BindInput<T>(int index, OrtTensor<T> value) where T : unmanaged =>
-        BindInputValue(index, value);
-
     public void BindInput(int index, OrtValue value) =>
         BindInputValue(index, value);
-
-    public void BindOutput<T>(int index, OrtTensor<T> value) where T : unmanaged =>
-        BindOutputValue(index, value);
 
     public void BindOutput(int index, OrtValue value) =>
         BindOutputValue(index, value);
@@ -130,7 +124,7 @@ public sealed unsafe class OrtIoBinding : OrtSafeHandle<Ort.OrtIoBindingHandle>
         return true;
     }
 
-    void BindInputValue(int index, OrtSafeHandle<Ort.OrtValueHandle> owner)
+    void BindInputValue(int index, OrtValue owner)
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(owner);
@@ -141,7 +135,7 @@ public sealed unsafe class OrtIoBinding : OrtSafeHandle<Ort.OrtIoBindingHandle>
             value => Ort.BindInput(Handle, info.NamePointer, value));
     }
 
-    void BindOutputValue(int index, OrtSafeHandle<Ort.OrtValueHandle> owner)
+    void BindOutputValue(int index, OrtValue owner)
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(owner);
@@ -159,7 +153,7 @@ public sealed unsafe class OrtIoBinding : OrtSafeHandle<Ort.OrtIoBindingHandle>
         return infos[index];
     }
 
-    static void AddBoundValue(List<SafeHandle> values, OrtSafeHandle<Ort.OrtValueHandle> value, BindAction bind)
+    static void AddBoundValue(List<SafeHandle> values, OrtValue value, BindAction bind)
     {
         var referenceAdded = false;
         try

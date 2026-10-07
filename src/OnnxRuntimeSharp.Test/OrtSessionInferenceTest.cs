@@ -69,7 +69,7 @@ public class OrtSessionInferenceTest
     {
         using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
-        using var input = new OrtTensor<byte>(new byte[28 * 28], [1, 1, 28, 28]);
+        using var input = new OrtValue<byte>(new byte[28 * 28], [1, 1, 28, 28]);
 
         Assert.ThrowsExactly<ArgumentException>(() => session.CreateInputBinding(0, input));
     }
@@ -112,8 +112,8 @@ public class OrtSessionInferenceTest
     {
         using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
-        using var input = new OrtTensor<float>(new float[28 * 28], [1, 1, 28, 28]);
-        using var output = new OrtTensor<float>(new float[9], [1, 9]);
+        using var input = new OrtValue<float>(new float[28 * 28], [1, 1, 28, 28]);
+        using var output = new OrtValue<float>(new float[9], [1, 9]);
 
         var exception = Assert.ThrowsExactly<OrtException>(() => session.Run(input, output));
 
@@ -216,10 +216,10 @@ public class OrtSessionInferenceTest
     {
         using var environment = new OrtEnv();
         using var session = TestData.CreateTwoInputSession(environment);
-        using var firstInput = new OrtTensor<float>([3], [1]);
-        using var secondInput = new OrtTensor<float>([7], [1]);
-        using var firstOutput = new OrtTensor<float>(new float[1], [1]);
-        using var secondOutput = new OrtTensor<float>(new float[1], [1]);
+        using var firstInput = new OrtValue<float>([3], [1]);
+        using var secondInput = new OrtValue<float>([7], [1]);
+        using var firstOutput = new OrtValue<float>(new float[1], [1]);
+        using var secondOutput = new OrtValue<float>(new float[1], [1]);
         var inputs = new[]
         {
             session.CreateInputBinding(0, firstInput),

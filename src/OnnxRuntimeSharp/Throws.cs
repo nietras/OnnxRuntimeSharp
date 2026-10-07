@@ -183,6 +183,13 @@ static class Throws
 
     [DoesNotReturn]
     [MethodImpl(MethodImplOptions.NoInlining)]
+    public static void ThrowTensorDataNotCpuAccessible()
+    {
+        throw new InvalidOperationException("Tensor data must be in CPU-accessible memory to expose a managed span.");
+    }
+
+    [DoesNotReturn]
+    [MethodImpl(MethodImplOptions.NoInlining)]
     public static T ThrowTensorInteropNotSupported<T>(Type elementType)
     {
         throw new NotSupportedException($"ONNX Runtime does not support {elementType} tensor interop.");
