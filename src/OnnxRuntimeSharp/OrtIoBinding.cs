@@ -18,7 +18,7 @@ public sealed unsafe class OrtIoBinding : OrtSafeHandle<Ort.OrtIoBindingHandle>
         {
             session.DangerousAddRef(ref _sessionReferenceAdded);
             Ort.OrtIoBindingHandle binding;
-            Ort.Ok(Ort.CreateIoBinding(session.Handle, &binding));
+            Ort.CreateIoBinding(session.Handle, &binding).Ok();
             SetHandle(binding.Value);
         }
         catch
@@ -68,23 +68,23 @@ public sealed unsafe class OrtIoBinding : OrtSafeHandle<Ort.OrtIoBindingHandle>
     public void SynchronizeInputs()
     {
         ThrowIfDisposed();
-        Ort.Ok(Ort.SynchronizeBoundInputs(Handle));
+        Ort.SynchronizeBoundInputs(Handle).Ok();
     }
 
     public void SynchronizeOutputs()
     {
         ThrowIfDisposed();
-        Ort.Ok(Ort.SynchronizeBoundOutputs(Handle));
+        Ort.SynchronizeBoundOutputs(Handle).Ok();
     }
 
     public OrtValue[] GetOutputValues()
     {
         ThrowIfDisposed();
         Ort.OrtAllocator* allocator;
-        Ort.Ok(Ort.GetAllocatorWithDefaultOptions(&allocator));
+        Ort.GetAllocatorWithDefaultOptions(&allocator).Ok();
         Ort.OrtValueHandle* values;
         nuint valueCount;
-        Ort.Ok(Ort.GetBoundOutputValues(Handle, allocator, &values, &valueCount));
+        Ort.GetBoundOutputValues(Handle, allocator, &values, &valueCount).Ok();
         var result = new OrtValue[checked((int)valueCount)];
         var initializedCount = 0;
         try
@@ -165,7 +165,7 @@ public sealed unsafe class OrtIoBinding : OrtSafeHandle<Ort.OrtIoBindingHandle>
         try
         {
             value.DangerousAddRef(ref referenceAdded);
-            Ort.Ok(bind(value.Handle));
+            bind(value.Handle).Ok();
             values.Add(value);
             referenceAdded = false;
         }
@@ -184,7 +184,7 @@ public sealed unsafe class OrtIoBinding : OrtSafeHandle<Ort.OrtIoBindingHandle>
         try
         {
             value.DangerousAddRef(ref referenceAdded);
-            Ort.Ok(bind());
+            bind().Ok();
             values.Add(value);
             referenceAdded = false;
         }

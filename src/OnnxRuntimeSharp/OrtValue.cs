@@ -17,7 +17,7 @@ public sealed unsafe class OrtValue : OrtSafeHandle<Ort.OrtValueHandle>
         Ort.OrtTensorTypeAndShapeInfo* tensorInfo;
         try
         {
-            Ort.Ok(Ort.GetTensorTypeAndShape(value, &tensorInfo));
+            Ort.GetTensorTypeAndShape(value, &tensorInfo).Ok();
         }
         catch
         {
@@ -28,14 +28,14 @@ public sealed unsafe class OrtValue : OrtSafeHandle<Ort.OrtValueHandle>
         try
         {
             Ort.ONNXTensorElementDataType elementType;
-            Ort.Ok(Ort.GetTensorElementType(tensorInfo, &elementType));
+            Ort.GetTensorElementType(tensorInfo, &elementType).Ok();
             ElementType = elementType;
             nuint dimensionCount;
-            Ort.Ok(Ort.GetDimensionsCount(tensorInfo, &dimensionCount));
+            Ort.GetDimensionsCount(tensorInfo, &dimensionCount).Ok();
             _dimensions = new long[checked((int)dimensionCount)];
             fixed (long* dimensionsPointer = _dimensions)
             {
-                Ort.Ok(Ort.GetDimensions(tensorInfo, dimensionsPointer, dimensionCount));
+                Ort.GetDimensions(tensorInfo, dimensionsPointer, dimensionCount).Ok();
             }
         }
         catch
@@ -68,7 +68,7 @@ public sealed unsafe class OrtValue : OrtSafeHandle<Ort.OrtValueHandle>
             elementCount = checked(elementCount * (nuint)dimension);
         }
         void* data;
-        Ort.Ok(Ort.GetTensorMutableData(Handle, &data));
+        Ort.GetTensorMutableData(Handle, &data).Ok();
         return new Span<T>(data, checked((int)elementCount));
     }
 

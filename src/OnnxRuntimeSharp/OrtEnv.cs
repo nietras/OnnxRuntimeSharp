@@ -52,10 +52,10 @@ public sealed unsafe class OrtEnv : OrtSafeHandle<Ort.OrtEnvHandle>
             fixed (char* pathPointer = libraryPath)
             {
                 using var nativePath = new OrtNativePath(libraryPath, pathPointer);
-                Ort.Ok(Ort.RegisterExecutionProviderLibrary(
+                Ort.RegisterExecutionProviderLibrary(
                     Handle,
                     (sbyte*)utf8Name,
-                    nativePath.Pointer));
+                    nativePath.Pointer).Ok();
             }
         }
         finally
@@ -77,7 +77,7 @@ public sealed unsafe class OrtEnv : OrtSafeHandle<Ort.OrtEnvHandle>
         try
         {
             DangerousAddRef(ref referenceAdded);
-            Ort.Ok(Ort.UnregisterExecutionProviderLibrary(Handle, (sbyte*)utf8Name));
+            Ort.UnregisterExecutionProviderLibrary(Handle, (sbyte*)utf8Name).Ok();
         }
         finally
         {
@@ -92,7 +92,7 @@ public sealed unsafe class OrtEnv : OrtSafeHandle<Ort.OrtEnvHandle>
     public void SetLogLevel(Ort.OrtLoggingLevel loggingLevel)
     {
         ThrowIfDisposed();
-        Ort.Ok(Ort.UpdateEnvWithCustomLogLevel(Handle, loggingLevel));
+        Ort.UpdateEnvWithCustomLogLevel(Handle, loggingLevel).Ok();
     }
 
     protected override bool ReleaseHandle()

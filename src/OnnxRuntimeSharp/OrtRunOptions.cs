@@ -9,7 +9,7 @@ public sealed unsafe class OrtRunOptions : OrtSafeHandle<Ort.OrtRunOptionsHandle
     public OrtRunOptions()
     {
         Ort.OrtRunOptionsHandle options;
-        Ort.Ok(Ort.CreateRunOptions(&options));
+        Ort.CreateRunOptions(&options).Ok();
         SetHandle(options.Value);
     }
 
@@ -17,7 +17,7 @@ public sealed unsafe class OrtRunOptions : OrtSafeHandle<Ort.OrtRunOptionsHandle
     {
         ThrowIfDisposed();
         int value;
-        Ort.Ok(Ort.RunOptionsGetRunLogVerbosityLevel(Handle, &value));
+        Ort.RunOptionsGetRunLogVerbosityLevel(Handle, &value).Ok();
         return value;
     }
 
@@ -25,28 +25,28 @@ public sealed unsafe class OrtRunOptions : OrtSafeHandle<Ort.OrtRunOptionsHandle
     {
         ThrowIfDisposed();
         ArgumentOutOfRangeException.ThrowIfNegative(level);
-        Ort.Ok(Ort.RunOptionsSetRunLogVerbosityLevel(Handle, level));
+        Ort.RunOptionsSetRunLogVerbosityLevel(Handle, level).Ok();
     }
 
     public Ort.OrtLoggingLevel GetLogSeverityLevel()
     {
         ThrowIfDisposed();
         int value;
-        Ort.Ok(Ort.RunOptionsGetRunLogSeverityLevel(Handle, &value));
+        Ort.RunOptionsGetRunLogSeverityLevel(Handle, &value).Ok();
         return (Ort.OrtLoggingLevel)value;
     }
 
     public void SetLogSeverityLevel(Ort.OrtLoggingLevel level)
     {
         ThrowIfDisposed();
-        Ort.Ok(Ort.RunOptionsSetRunLogSeverityLevel(Handle, (int)level));
+        Ort.RunOptionsSetRunLogSeverityLevel(Handle, (int)level).Ok();
     }
 
     public string GetTag()
     {
         ThrowIfDisposed();
         sbyte* value;
-        Ort.Ok(Ort.RunOptionsGetRunTag(Handle, &value));
+        Ort.RunOptionsGetRunTag(Handle, &value).Ok();
         return Marshal.PtrToStringUTF8((IntPtr)value) ?? string.Empty;
     }
 
@@ -57,7 +57,7 @@ public sealed unsafe class OrtRunOptions : OrtSafeHandle<Ort.OrtRunOptionsHandle
         var utf8Value = Utf8StringMarshaller.ConvertToUnmanaged(tag);
         try
         {
-            Ort.Ok(Ort.RunOptionsSetRunTag(Handle, (sbyte*)utf8Value));
+            Ort.RunOptionsSetRunTag(Handle, (sbyte*)utf8Value).Ok();
         }
         finally
         {
@@ -74,7 +74,7 @@ public sealed unsafe class OrtRunOptions : OrtSafeHandle<Ort.OrtRunOptionsHandle
         var utf8Value = Utf8StringMarshaller.ConvertToUnmanaged(value);
         try
         {
-            Ort.Ok(Ort.AddRunConfigEntry(Handle, (sbyte*)utf8Key, (sbyte*)utf8Value));
+            Ort.AddRunConfigEntry(Handle, (sbyte*)utf8Key, (sbyte*)utf8Value).Ok();
         }
         finally
         {
@@ -86,13 +86,13 @@ public sealed unsafe class OrtRunOptions : OrtSafeHandle<Ort.OrtRunOptionsHandle
     public void RequestTermination()
     {
         ThrowIfDisposed();
-        Ort.Ok(Ort.RunOptionsSetTerminate(Handle));
+        Ort.RunOptionsSetTerminate(Handle).Ok();
     }
 
     public void ResetTermination()
     {
         ThrowIfDisposed();
-        Ort.Ok(Ort.RunOptionsUnsetTerminate(Handle));
+        Ort.RunOptionsUnsetTerminate(Handle).Ok();
     }
 
     protected override bool ReleaseHandle()

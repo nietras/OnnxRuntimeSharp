@@ -27,18 +27,18 @@ public sealed unsafe class OrtTensor<T> : OrtSafeHandle<Ort.OrtValueHandle> wher
         Ort.OrtMemoryInfoHandle memoryInfo = default;
         try
         {
-            Ort.Ok(Ort.CreateCpuMemoryInfo(Ort.OrtAllocatorType.OrtArenaAllocator, Ort.OrtMemType.OrtMemTypeDefault, &memoryInfo));
+            Ort.CreateCpuMemoryInfo(Ort.OrtAllocatorType.OrtArenaAllocator, Ort.OrtMemType.OrtMemTypeDefault, &memoryInfo).Ok();
             fixed (long* dimensionsPointer = dimensions)
             {
                 Ort.OrtValueHandle value;
-                Ort.Ok(Ort.CreateTensorWithDataAsOrtValue(
+                Ort.CreateTensorWithDataAsOrtValue(
                     memoryInfo,
                     _dataHandle.AddrOfPinnedObject().ToPointer(),
                     checked((nuint)(data.Length * sizeof(T))),
                     dimensionsPointer,
                     (nuint)dimensions.Length,
                     OrtTensorElementType.Get<T>(),
-                    &value));
+                    &value).Ok();
                 SetHandle(value.Value);
             }
         }
@@ -80,14 +80,14 @@ public sealed unsafe class OrtTensor<T> : OrtSafeHandle<Ort.OrtValueHandle> wher
             fixed (long* dimensionsPointer = dimensions)
             {
                 Ort.OrtValueHandle value;
-                Ort.Ok(Ort.CreateTensorWithDataAsOrtValue(
+                Ort.CreateTensorWithDataAsOrtValue(
                     memoryInfo.Handle,
                     data,
                     checked((nuint)(elementCount * sizeof(T))),
                     dimensionsPointer,
                     (nuint)dimensions.Length,
                     OrtTensorElementType.Get<T>(),
-                    &value));
+                    &value).Ok();
                 SetHandle(value.Value);
             }
             _memoryInfo = memoryInfo;

@@ -17,12 +17,12 @@ public sealed unsafe class OrtMemoryInfo : OrtSafeHandle<Ort.OrtMemoryInfoHandle
         try
         {
             Ort.OrtMemoryInfoHandle info;
-            Ort.Ok(Ort.CreateMemoryInfo(
+            Ort.CreateMemoryInfo(
                 (sbyte*)utf8Name,
                 allocatorType,
                 deviceId,
                 memoryType,
-                &info));
+                &info).Ok();
             SetHandle(info.Value);
         }
         finally
@@ -36,7 +36,7 @@ public sealed unsafe class OrtMemoryInfo : OrtSafeHandle<Ort.OrtMemoryInfoHandle
         Ort.OrtMemType memoryType = Ort.OrtMemType.OrtMemTypeDefault)
     {
         Ort.OrtMemoryInfoHandle info;
-        Ort.Ok(Ort.CreateCpuMemoryInfo(allocatorType, memoryType, &info));
+        Ort.CreateCpuMemoryInfo(allocatorType, memoryType, &info).Ok();
         return new OrtMemoryInfo(info);
     }
 
@@ -46,7 +46,7 @@ public sealed unsafe class OrtMemoryInfo : OrtSafeHandle<Ort.OrtMemoryInfoHandle
     {
         ThrowIfDisposed();
         sbyte* value;
-        Ort.Ok(Ort.MemoryInfoGetName(Handle, &value));
+        Ort.MemoryInfoGetName(Handle, &value).Ok();
         return Marshal.PtrToStringUTF8((IntPtr)value) ?? string.Empty;
     }
 
@@ -54,7 +54,7 @@ public sealed unsafe class OrtMemoryInfo : OrtSafeHandle<Ort.OrtMemoryInfoHandle
     {
         ThrowIfDisposed();
         int value;
-        Ort.Ok(Ort.MemoryInfoGetId(Handle, &value));
+        Ort.MemoryInfoGetId(Handle, &value).Ok();
         return value;
     }
 
@@ -62,7 +62,7 @@ public sealed unsafe class OrtMemoryInfo : OrtSafeHandle<Ort.OrtMemoryInfoHandle
     {
         ThrowIfDisposed();
         Ort.OrtMemType value;
-        Ort.Ok(Ort.MemoryInfoGetMemType(Handle, &value));
+        Ort.MemoryInfoGetMemType(Handle, &value).Ok();
         return value;
     }
 
@@ -70,7 +70,7 @@ public sealed unsafe class OrtMemoryInfo : OrtSafeHandle<Ort.OrtMemoryInfoHandle
     {
         ThrowIfDisposed();
         Ort.OrtAllocatorType value;
-        Ort.Ok(Ort.MemoryInfoGetType(Handle, &value));
+        Ort.MemoryInfoGetType(Handle, &value).Ok();
         return value;
     }
 
