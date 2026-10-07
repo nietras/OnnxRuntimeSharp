@@ -5,7 +5,7 @@ using System.Runtime.InteropServices.Marshalling;
 
 namespace OnnxRuntimeSharp;
 
-public sealed unsafe class OrtSession : SafeHandle
+public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
 {
     readonly OrtEnv _environment;
     readonly OrtTensorInfo[] _inputs = [];
@@ -15,7 +15,6 @@ public sealed unsafe class OrtSession : SafeHandle
     bool _environmentReferenceAdded;
 
     public OrtSession(OrtEnv environment, ReadOnlySpan<byte> model, OrtSessionOptions? options = null)
-        : base(IntPtr.Zero, ownsHandle: true)
     {
         ArgumentNullException.ThrowIfNull(environment);
         if (model.IsEmpty)
@@ -33,14 +32,14 @@ public sealed unsafe class OrtSession : SafeHandle
             options.DangerousAddRef(ref optionsReferenceAdded);
             fixed (byte* modelPointer = model)
             {
-                Ort.OrtSession* session;
+                Ort.OrtSessionHandle session;
                 Ort.Ok(Ort.CreateSessionFromArray(
                     environment.Handle,
                     modelPointer,
                     (nuint)model.Length,
-                    (Ort.OrtSessionOptions*)options.DangerousGetHandle(),
+                    options.Handle,
                     &session));
-                SetHandle((IntPtr)session);
+                SetHandle(session.Value);
             }
 
             _inputs = GetTensorInfos(TensorInfoKind.Input);
@@ -68,7 +67,6 @@ public sealed unsafe class OrtSession : SafeHandle
     }
 
     public OrtSession(OrtEnv environment, string modelPath, OrtSessionOptions? options = null)
-        : base(IntPtr.Zero, ownsHandle: true)
     {
         ArgumentNullException.ThrowIfNull(environment);
         ArgumentException.ThrowIfNullOrWhiteSpace(modelPath);
@@ -81,7 +79,7 @@ public sealed unsafe class OrtSession : SafeHandle
         {
             environment.DangerousAddRef(ref _environmentReferenceAdded);
             options.DangerousAddRef(ref optionsReferenceAdded);
-            Ort.OrtSession* session;
+            Ort.OrtSessionHandle session;
             if (OperatingSystem.IsWindows())
             {
                 fixed (char* pathPointer = modelPath)
@@ -89,7 +87,7 @@ public sealed unsafe class OrtSession : SafeHandle
                     Ort.Ok(Ort.CreateSession(
                         environment.Handle,
                         (ushort*)pathPointer,
-                        options.Pointer,
+                        options.Handle,
                         &session));
                 }
             }
@@ -101,7 +99,7 @@ public sealed unsafe class OrtSession : SafeHandle
                     Ort.Ok(Ort.CreateSession(
                         environment.Handle,
                         (ushort*)utf8Path,
-                        options.Pointer,
+                        options.Handle,
                         &session));
                 }
                 finally
@@ -109,7 +107,7 @@ public sealed unsafe class OrtSession : SafeHandle
                     Utf8StringMarshaller.Free(utf8Path);
                 }
             }
-            SetHandle((IntPtr)session);
+            SetHandle(session.Value);
 
             _inputs = GetTensorInfos(TensorInfoKind.Input);
             _outputs = GetTensorInfos(TensorInfoKind.Output);
@@ -143,8 +141,6 @@ public sealed unsafe class OrtSession : SafeHandle
 
     public OrtModelMetadata ModelMetadata => _modelMetadata;
 
-    internal Ort.OrtSession* Pointer => (Ort.OrtSession*)handle;
-
     public OrtIoBinding CreateIoBinding()
     {
         ThrowIfDisposed();
@@ -168,7 +164,7 @@ public sealed unsafe class OrtSession : SafeHandle
             DangerousAddRef(ref sessionReferenceAdded);
             binding.DangerousAddRef(ref bindingReferenceAdded);
             runOptions?.DangerousAddRef(ref runOptionsReferenceAdded);
-            Ort.Ok(Ort.RunWithBinding(Pointer, runOptions?.Pointer, binding.Pointer));
+            Ort.Ok(Ort.RunWithBinding(Handle, runOptions?.Handle ?? default, binding.Handle));
         }
         finally
         {
@@ -239,8 +235,8 @@ public sealed unsafe class OrtSession : SafeHandle
             var inputValue = new Ort.OrtValueHandle(input.DangerousGetHandle());
             var outputValue = new Ort.OrtValueHandle(output.DangerousGetHandle());
             Ort.Ok(Ort.Run(
-                (Ort.OrtSession*)handle,
-                runOptions?.Pointer,
+                Handle,
+                runOptions?.Handle ?? default,
                 &inputName,
                 &inputValue,
                 1,
@@ -324,8 +320,8 @@ public sealed unsafe class OrtSession : SafeHandle
             }
 
             Ort.Ok(Ort.Run(
-                (Ort.OrtSession*)handle,
-                runOptions?.Pointer,
+                Handle,
+                runOptions?.Handle ?? default,
                 inputNames,
                 inputValues,
                 (nuint)inputs.Length,
@@ -392,8 +388,8 @@ public sealed unsafe class OrtSession : SafeHandle
             }
 
             Ort.Ok(Ort.Run(
-                (Ort.OrtSession*)handle,
-                runOptions?.Pointer,
+                Handle,
+                runOptions?.Handle ?? default,
                 inputNames,
                 inputValues,
                 (nuint)inputs.Length,
@@ -452,7 +448,7 @@ public sealed unsafe class OrtSession : SafeHandle
             Ort.OrtAllocator* allocator;
             Ort.Ok(Ort.GetAllocatorWithDefaultOptions(&allocator));
             sbyte* profilePath;
-            Ort.Ok(Ort.SessionEndProfiling((Ort.OrtSession*)handle, allocator, &profilePath));
+            Ort.Ok(Ort.SessionEndProfiling(Handle, allocator, &profilePath));
             try
             {
                 return Marshal.PtrToStringUTF8((IntPtr)profilePath) ?? string.Empty;
@@ -471,8 +467,6 @@ public sealed unsafe class OrtSession : SafeHandle
         }
     }
 
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
     protected override bool ReleaseHandle()
     {
         foreach (var input in _inputs)
@@ -487,7 +481,7 @@ public sealed unsafe class OrtSession : SafeHandle
         {
             initializer.Dispose();
         }
-        Ort.ReleaseSession((Ort.OrtSession*)handle);
+        Ort.ReleaseSession(Handle);
         ReleaseEnvironmentReference();
         return true;
     }
@@ -556,9 +550,9 @@ public sealed unsafe class OrtSession : SafeHandle
         nuint count;
         Ort.Ok(kind switch
         {
-            TensorInfoKind.Input => Ort.SessionGetInputCount((Ort.OrtSession*)handle, &count),
-            TensorInfoKind.Output => Ort.SessionGetOutputCount((Ort.OrtSession*)handle, &count),
-            _ => Ort.SessionGetOverridableInitializerCount((Ort.OrtSession*)handle, &count),
+            TensorInfoKind.Input => Ort.SessionGetInputCount(Handle, &count),
+            TensorInfoKind.Output => Ort.SessionGetOutputCount(Handle, &count),
+            _ => Ort.SessionGetOverridableInitializerCount(Handle, &count),
         });
         var infos = new OrtTensorInfo[checked((int)count)];
         var initializedCount = 0;
@@ -588,10 +582,10 @@ public sealed unsafe class OrtSession : SafeHandle
         sbyte* nativeName;
         Ort.Ok(kind switch
         {
-            TensorInfoKind.Input => Ort.SessionGetInputName((Ort.OrtSession*)handle, index, allocator, &nativeName),
-            TensorInfoKind.Output => Ort.SessionGetOutputName((Ort.OrtSession*)handle, index, allocator, &nativeName),
+            TensorInfoKind.Input => Ort.SessionGetInputName(Handle, index, allocator, &nativeName),
+            TensorInfoKind.Output => Ort.SessionGetOutputName(Handle, index, allocator, &nativeName),
             _ => Ort.SessionGetOverridableInitializerName(
-                (Ort.OrtSession*)handle,
+                Handle,
                 index,
                 allocator,
                 &nativeName),
@@ -603,10 +597,10 @@ public sealed unsafe class OrtSession : SafeHandle
             Ort.OrtTypeInfo* typeInfo;
             Ort.Ok(kind switch
             {
-                TensorInfoKind.Input => Ort.SessionGetInputTypeInfo((Ort.OrtSession*)handle, index, &typeInfo),
-                TensorInfoKind.Output => Ort.SessionGetOutputTypeInfo((Ort.OrtSession*)handle, index, &typeInfo),
+                TensorInfoKind.Input => Ort.SessionGetInputTypeInfo(Handle, index, &typeInfo),
+                TensorInfoKind.Output => Ort.SessionGetOutputTypeInfo(Handle, index, &typeInfo),
                 _ => Ort.SessionGetOverridableInitializerTypeInfo(
-                    (Ort.OrtSession*)handle,
+                    Handle,
                     index,
                     &typeInfo),
             });
@@ -660,7 +654,7 @@ public sealed unsafe class OrtSession : SafeHandle
         Ort.OrtAllocator* allocator;
         Ort.Ok(Ort.GetAllocatorWithDefaultOptions(&allocator));
         Ort.OrtModelMetadata* metadata;
-        Ort.Ok(Ort.SessionGetModelMetadata((Ort.OrtSession*)handle, &metadata));
+        Ort.Ok(Ort.SessionGetModelMetadata(Handle, &metadata));
         try
         {
             long version;

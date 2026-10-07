@@ -3,14 +3,13 @@ using System.Runtime.InteropServices;
 
 namespace OnnxRuntimeSharp;
 
-public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
+public sealed unsafe class OrtTensor<T> : OrtSafeHandle<Ort.OrtValueHandle> where T : unmanaged
 {
     readonly GCHandle _dataHandle;
     readonly OrtMemoryInfo? _memoryInfo;
     readonly bool _memoryInfoReferenceAdded;
 
     public OrtTensor(T[] data, ReadOnlySpan<long> dimensions)
-        : base(IntPtr.Zero, ownsHandle: true)
     {
         ArgumentNullException.ThrowIfNull(data);
         if (data.Length == 0)
@@ -25,7 +24,7 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
         }
 
         _dataHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
-        Ort.OrtMemoryInfo* memoryInfo = null;
+        Ort.OrtMemoryInfoHandle memoryInfo = default;
         try
         {
             Ort.Ok(Ort.CreateCpuMemoryInfo(Ort.OrtAllocatorType.OrtArenaAllocator, Ort.OrtMemType.OrtMemTypeDefault, &memoryInfo));
@@ -50,7 +49,7 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
         }
         finally
         {
-            if (memoryInfo is not null)
+            if (!memoryInfo.IsNull)
             {
                 Ort.ReleaseMemoryInfo(memoryInfo);
             }
@@ -62,7 +61,6 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
         int elementCount,
         ReadOnlySpan<long> dimensions,
         OrtMemoryInfo memoryInfo)
-        : base(IntPtr.Zero, ownsHandle: true)
     {
         if (data is null)
         {
@@ -83,7 +81,7 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
             {
                 Ort.OrtValueHandle value;
                 Ort.Ok(Ort.CreateTensorWithDataAsOrtValue(
-                    memoryInfo.Pointer,
+                    memoryInfo.Handle,
                     data,
                     checked((nuint)(elementCount * sizeof(T))),
                     dimensionsPointer,
@@ -120,11 +118,9 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
 
     public Ort.ONNXTensorElementDataType ElementType => OrtTensorElementType.Get<T>();
 
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
     protected override bool ReleaseHandle()
     {
-        Ort.ReleaseValue(new Ort.OrtValueHandle(handle));
+        Ort.ReleaseValue(Handle);
         if (_dataHandle.IsAllocated)
         {
             _dataHandle.Free();

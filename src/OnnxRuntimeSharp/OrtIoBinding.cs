@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace OnnxRuntimeSharp;
 
-public sealed unsafe class OrtIoBinding : SafeHandle
+public sealed unsafe class OrtIoBinding : OrtSafeHandle<Ort.OrtIoBindingHandle>
 {
     readonly OrtSession _session;
     readonly List<SafeHandle> _boundInputs = [];
@@ -12,15 +12,14 @@ public sealed unsafe class OrtIoBinding : SafeHandle
     bool _sessionReferenceAdded;
 
     internal OrtIoBinding(OrtSession session)
-        : base(IntPtr.Zero, ownsHandle: true)
     {
         _session = session;
         try
         {
             session.DangerousAddRef(ref _sessionReferenceAdded);
-            Ort.OrtIoBinding* binding;
-            Ort.Ok(Ort.CreateIoBinding(session.Pointer, &binding));
-            SetHandle((IntPtr)binding);
+            Ort.OrtIoBindingHandle binding;
+            Ort.Ok(Ort.CreateIoBinding(session.Handle, &binding));
+            SetHandle(binding.Value);
         }
         catch
         {
@@ -49,33 +48,33 @@ public sealed unsafe class OrtIoBinding : SafeHandle
         AddBoundResource(
             _boundOutputs,
             memoryInfo,
-            () => Ort.BindOutputToDevice(Pointer, info.NamePointer, memoryInfo.Pointer));
+            () => Ort.BindOutputToDevice(Handle, info.NamePointer, memoryInfo.Handle));
     }
 
     public void ClearInputs()
     {
         ThrowIfDisposed();
-        Ort.ClearBoundInputs(Pointer);
+        Ort.ClearBoundInputs(Handle);
         ReleaseBoundValues(_boundInputs);
     }
 
     public void ClearOutputs()
     {
         ThrowIfDisposed();
-        Ort.ClearBoundOutputs(Pointer);
+        Ort.ClearBoundOutputs(Handle);
         ReleaseBoundValues(_boundOutputs);
     }
 
     public void SynchronizeInputs()
     {
         ThrowIfDisposed();
-        Ort.Ok(Ort.SynchronizeBoundInputs(Pointer));
+        Ort.Ok(Ort.SynchronizeBoundInputs(Handle));
     }
 
     public void SynchronizeOutputs()
     {
         ThrowIfDisposed();
-        Ort.Ok(Ort.SynchronizeBoundOutputs(Pointer));
+        Ort.Ok(Ort.SynchronizeBoundOutputs(Handle));
     }
 
     public OrtValue[] GetOutputValues()
@@ -85,7 +84,7 @@ public sealed unsafe class OrtIoBinding : SafeHandle
         Ort.Ok(Ort.GetAllocatorWithDefaultOptions(&allocator));
         Ort.OrtValueHandle* values;
         nuint valueCount;
-        Ort.Ok(Ort.GetBoundOutputValues(Pointer, allocator, &values, &valueCount));
+        Ort.Ok(Ort.GetBoundOutputValues(Handle, allocator, &values, &valueCount));
         var result = new OrtValue[checked((int)valueCount)];
         var initializedCount = 0;
         try
@@ -120,16 +119,13 @@ public sealed unsafe class OrtIoBinding : SafeHandle
         }
     }
 
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
     internal OrtSession Session => _session;
-    internal Ort.OrtIoBinding* Pointer => (Ort.OrtIoBinding*)handle;
 
     protected override bool ReleaseHandle()
     {
         ReleaseBoundValues(_boundOutputs);
         ReleaseBoundValues(_boundInputs);
-        Ort.ReleaseIoBinding(Pointer);
+        Ort.ReleaseIoBinding(Handle);
         ReleaseSessionReference();
         return true;
     }
@@ -142,7 +138,7 @@ public sealed unsafe class OrtIoBinding : SafeHandle
         AddBoundValue(
             _boundInputs,
             owner,
-            value => Ort.BindInput(Pointer, info.NamePointer, value));
+            value => Ort.BindInput(Handle, info.NamePointer, value));
     }
 
     void BindOutput(int index, SafeHandle owner)
@@ -153,7 +149,7 @@ public sealed unsafe class OrtIoBinding : SafeHandle
         AddBoundValue(
             _boundOutputs,
             owner,
-            value => Ort.BindOutput(Pointer, info.NamePointer, value));
+            value => Ort.BindOutput(Handle, info.NamePointer, value));
     }
 
     static OrtTensorInfo GetInfo(IReadOnlyList<OrtTensorInfo> infos, int index, string parameterName)

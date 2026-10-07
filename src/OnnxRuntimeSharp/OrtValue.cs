@@ -1,14 +1,12 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 
 namespace OnnxRuntimeSharp;
 
-public sealed unsafe class OrtValue : SafeHandle
+public sealed unsafe class OrtValue : OrtSafeHandle<Ort.OrtValueHandle>
 {
     readonly long[] _dimensions;
 
     internal OrtValue(Ort.OrtValueHandle value)
-        : base(IntPtr.Zero, ownsHandle: true)
     {
         if (value.IsNull)
         {
@@ -70,13 +68,9 @@ public sealed unsafe class OrtValue : SafeHandle
             elementCount = checked(elementCount * (nuint)dimension);
         }
         void* data;
-        Ort.Ok(Ort.GetTensorMutableData(new Ort.OrtValueHandle(handle), &data));
+        Ort.Ok(Ort.GetTensorMutableData(Handle, &data));
         return new Span<T>(data, checked((int)elementCount));
     }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    internal Ort.OrtValueHandle Handle => new Ort.OrtValueHandle(handle);
 
     protected override bool ReleaseHandle()
     {

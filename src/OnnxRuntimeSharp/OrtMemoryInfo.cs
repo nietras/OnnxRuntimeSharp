@@ -4,27 +4,26 @@ using System.Runtime.InteropServices.Marshalling;
 
 namespace OnnxRuntimeSharp;
 
-public sealed unsafe class OrtMemoryInfo : SafeHandle
+public sealed unsafe class OrtMemoryInfo : OrtSafeHandle<Ort.OrtMemoryInfoHandle>
 {
     public OrtMemoryInfo(
         string allocatorName,
         Ort.OrtAllocatorType allocatorType,
         int deviceId,
         Ort.OrtMemType memoryType)
-        : base(IntPtr.Zero, ownsHandle: true)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(allocatorName);
         var utf8Name = Utf8StringMarshaller.ConvertToUnmanaged(allocatorName);
         try
         {
-            Ort.OrtMemoryInfo* info;
+            Ort.OrtMemoryInfoHandle info;
             Ort.Ok(Ort.CreateMemoryInfo(
                 (sbyte*)utf8Name,
                 allocatorType,
                 deviceId,
                 memoryType,
                 &info));
-            SetHandle((IntPtr)info);
+            SetHandle(info.Value);
         }
         finally
         {
@@ -36,14 +35,12 @@ public sealed unsafe class OrtMemoryInfo : SafeHandle
         Ort.OrtAllocatorType allocatorType = Ort.OrtAllocatorType.OrtArenaAllocator,
         Ort.OrtMemType memoryType = Ort.OrtMemType.OrtMemTypeDefault)
     {
-        Ort.OrtMemoryInfo* info;
+        Ort.OrtMemoryInfoHandle info;
         Ort.Ok(Ort.CreateCpuMemoryInfo(allocatorType, memoryType, &info));
         return new OrtMemoryInfo(info);
     }
 
-    OrtMemoryInfo(Ort.OrtMemoryInfo* info)
-        : base(IntPtr.Zero, ownsHandle: true) =>
-        SetHandle((IntPtr)info);
+    OrtMemoryInfo(Ort.OrtMemoryInfoHandle info) => SetHandle(info.Value);
 
     public string Name
     {
@@ -51,7 +48,7 @@ public sealed unsafe class OrtMemoryInfo : SafeHandle
         {
             ThrowIfDisposed();
             sbyte* value;
-            Ort.Ok(Ort.MemoryInfoGetName(Pointer, &value));
+            Ort.Ok(Ort.MemoryInfoGetName(Handle, &value));
             return Marshal.PtrToStringUTF8((IntPtr)value) ?? string.Empty;
         }
     }
@@ -62,7 +59,7 @@ public sealed unsafe class OrtMemoryInfo : SafeHandle
         {
             ThrowIfDisposed();
             int value;
-            Ort.Ok(Ort.MemoryInfoGetId(Pointer, &value));
+            Ort.Ok(Ort.MemoryInfoGetId(Handle, &value));
             return value;
         }
     }
@@ -73,7 +70,7 @@ public sealed unsafe class OrtMemoryInfo : SafeHandle
         {
             ThrowIfDisposed();
             Ort.OrtMemType value;
-            Ort.Ok(Ort.MemoryInfoGetMemType(Pointer, &value));
+            Ort.Ok(Ort.MemoryInfoGetMemType(Handle, &value));
             return value;
         }
     }
@@ -84,18 +81,14 @@ public sealed unsafe class OrtMemoryInfo : SafeHandle
         {
             ThrowIfDisposed();
             Ort.OrtAllocatorType value;
-            Ort.Ok(Ort.MemoryInfoGetType(Pointer, &value));
+            Ort.Ok(Ort.MemoryInfoGetType(Handle, &value));
             return value;
         }
     }
 
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    internal Ort.OrtMemoryInfo* Pointer => (Ort.OrtMemoryInfo*)handle;
-
     protected override bool ReleaseHandle()
     {
-        Ort.ReleaseMemoryInfo(Pointer);
+        Ort.ReleaseMemoryInfo(Handle);
         return true;
     }
 
