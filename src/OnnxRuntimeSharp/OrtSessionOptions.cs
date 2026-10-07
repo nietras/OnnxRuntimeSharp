@@ -255,7 +255,7 @@ public sealed class OrtSessionOptions : SafeHandle
     }
 
     public unsafe void AppendExecutionProvider(
-        OrtEnvironment environment,
+        OrtEnv environment,
         ReadOnlySpan<OrtEpDevice> devices,
         IReadOnlyDictionary<string, string>? providerOptions = null)
     {

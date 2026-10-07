@@ -9,7 +9,7 @@ public class OrtIoBindingTest
     [TestMethod]
     public void PreallocatedBindingRunsInference()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
@@ -29,7 +29,7 @@ public class OrtIoBindingTest
     [TestMethod]
     public void DeviceTargetedOutputCanBeRetrieved()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         using var input = TestData.CreateMnistInput();
         using var memoryInfo = OrtMemoryInfo.CreateCpu();
@@ -56,7 +56,7 @@ public class OrtIoBindingTest
     [TestMethod]
     public void BindingsCanBeClearedAndReused()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         using var binding = session.CreateIoBinding();
 
@@ -67,7 +67,7 @@ public class OrtIoBindingTest
     [TestMethod]
     public void PopulatedBindingsCanBeClearedAndRebound()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
@@ -87,7 +87,7 @@ public class OrtIoBindingTest
     [TestMethod]
     public void OrtValueOutputCanBeBound()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         using var input = TestData.CreateMnistInput();
         var values = session.Run([session.CreateInputBinding(0, input)]);
@@ -102,7 +102,7 @@ public class OrtIoBindingTest
     [TestMethod]
     public void OrtValuesCanBeReboundAsInputs()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateTwoInputSession(environment);
         using var firstInput = new OrtTensor<float>([3], [1]);
         using var secondInput = new OrtTensor<float>([7], [1]);
@@ -130,7 +130,7 @@ public class OrtIoBindingTest
     [TestMethod]
     public void BindingArgumentsAndDisposalAreValidated()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
@@ -148,7 +148,7 @@ public class OrtIoBindingTest
     [TestMethod]
     public void DisposedValueBindingFailsWithoutLeakingReference()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         var input = TestData.CreateMnistInput();
         using var binding = session.CreateIoBinding();
@@ -160,7 +160,7 @@ public class OrtIoBindingTest
     [TestMethod]
     public void SessionRejectsBindingFromAnotherSession()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var firstSession = TestData.CreateMnistSession(environment);
         using var secondSession = TestData.CreateMnistSession(environment);
         using var binding = firstSession.CreateIoBinding();

@@ -5,9 +5,9 @@ using System.Runtime.InteropServices.Marshalling;
 
 namespace OnnxRuntimeSharp;
 
-public sealed unsafe class OrtEnvironment : SafeHandle
+public sealed unsafe class OrtEnv : SafeHandle
 {
-    public OrtEnvironment(
+    public OrtEnv(
         string logId = "OnnxRuntimeSharp",
         Ort.OrtLoggingLevel loggingLevel = Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING)
         : base(IntPtr.Zero, ownsHandle: true)

@@ -7,14 +7,14 @@ namespace OnnxRuntimeSharp;
 
 public sealed unsafe class OrtSession : SafeHandle
 {
-    readonly OrtEnvironment _environment;
+    readonly OrtEnv _environment;
     readonly OrtTensorInfo[] _inputs = [];
     readonly OrtTensorInfo[] _outputs = [];
     readonly OrtTensorInfo[] _overridableInitializers = [];
     readonly OrtModelMetadata _modelMetadata = null!;
     bool _environmentReferenceAdded;
 
-    public OrtSession(OrtEnvironment environment, ReadOnlySpan<byte> model, OrtSessionOptions? options = null)
+    public OrtSession(OrtEnv environment, ReadOnlySpan<byte> model, OrtSessionOptions? options = null)
         : base(IntPtr.Zero, ownsHandle: true)
     {
         ArgumentNullException.ThrowIfNull(environment);
@@ -67,7 +67,7 @@ public sealed unsafe class OrtSession : SafeHandle
         }
     }
 
-    public OrtSession(OrtEnvironment environment, string modelPath, OrtSessionOptions? options = null)
+    public OrtSession(OrtEnv environment, string modelPath, OrtSessionOptions? options = null)
         : base(IntPtr.Zero, ownsHandle: true)
     {
         ArgumentNullException.ThrowIfNull(environment);

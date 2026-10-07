@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 
 namespace OnnxRuntimeSharp.Test;
 
@@ -30,7 +29,7 @@ public class OrtValueTest
     [TestMethod]
     public void OrtAllocatedTensorExposesTypedData()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         using var input = TestData.CreateMnistInput();
         var inputs = new[] { session.CreateInputBinding(0, input) };
@@ -47,7 +46,7 @@ public class OrtValueTest
     [TestMethod]
     public void DisposedValueRejectsDataAccess()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         using var input = TestData.CreateMnistInput();
         var outputs = session.Run([session.CreateInputBinding(0, input)]);

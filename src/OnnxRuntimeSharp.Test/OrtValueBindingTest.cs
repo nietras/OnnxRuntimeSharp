@@ -8,7 +8,7 @@ public class OrtValueBindingTest
     [TestMethod]
     public void BindingExposesModelValueMetadata()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         using var input = TestData.CreateMnistInput();
 
@@ -20,7 +20,7 @@ public class OrtValueBindingTest
     [TestMethod]
     public void BindingFromAnotherSessionIsRejected()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var firstSession = TestData.CreateMnistSession(environment);
         using var secondSession = TestData.CreateMnistSession(environment);
         using var input = TestData.CreateMnistInput();
@@ -34,7 +34,7 @@ public class OrtValueBindingTest
     [TestMethod]
     public void DefaultBindingIsRejected()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         using var output = TestData.CreateMnistOutput();
 

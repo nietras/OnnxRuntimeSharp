@@ -10,7 +10,7 @@ public class InferenceSafetyTest
     [TestMethod]
     public void CachedBindingsRunWithoutManagedAllocations()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
@@ -34,7 +34,7 @@ public class InferenceSafetyTest
     [TestMethod]
     public void BindingCreationDoesNotAllocate()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
@@ -56,7 +56,7 @@ public class InferenceSafetyTest
     [TestMethod]
     public void ConcurrentRunsOnSharedSessionComplete()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         Exception? failure = null;
         var threads = Enumerable.Range(0, 4).Select(_ => new Thread(() =>
@@ -91,7 +91,7 @@ public class InferenceSafetyTest
     [TestMethod]
     public void DisposedSessionRejectsInference()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         var session = TestData.CreateMnistSession(environment);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
@@ -103,7 +103,7 @@ public class InferenceSafetyTest
     [TestMethod]
     public void SessionRetainsEnvironmentUntilSessionDisposal()
     {
-        var environment = new OrtEnvironment();
+        var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         environment.Dispose();
         using var input = TestData.CreateMnistInput();
@@ -115,7 +115,7 @@ public class InferenceSafetyTest
     [TestMethod]
     public void IoBindingCanBeDisposedAfterSession()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         var session = TestData.CreateMnistSession(environment);
         var binding = session.CreateIoBinding();
 

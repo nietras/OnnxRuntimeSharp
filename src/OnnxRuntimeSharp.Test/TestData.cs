@@ -11,11 +11,11 @@ static class TestData
 
     public static byte[] ReadMnistModel() => File.ReadAllBytes(MnistModelPath);
 
-    public static OrtSession CreateMnistSession(OrtEnvironment environment, OrtSessionOptions? options = null) =>
+    public static OrtSession CreateMnistSession(OrtEnv environment, OrtSessionOptions? options = null) =>
         new(environment, ReadMnistModel(), options);
 
     public static OrtSession CreateTwoInputSession(
-        OrtEnvironment environment,
+        OrtEnv environment,
         OrtSessionOptions? options = null) =>
         new(environment, TestOnnxModels.TwoInputTwoOutput, options);
 

@@ -166,7 +166,7 @@ static NodeProfileReport RunModel(
     bool enableProfiling)
 {
     var model = File.ReadAllBytes(modelPath);
-    using var environment = new OrtEnvironment();
+    using var environment = new OrtEnv();
     var profilePrefix = enableProfiling
         ? Path.Combine(
             Path.GetDirectoryName(modelPath)!,
@@ -238,7 +238,7 @@ static void RunModelConcurrent(
 {
     var model = File.ReadAllBytes(modelPath);
 
-    using var environment = new OrtEnvironment();
+    using var environment = new OrtEnv();
     using var options = CreateSessionOptions(configureSessionOptions, null);
     using var session = new OrtSession(environment, model, options);
 
