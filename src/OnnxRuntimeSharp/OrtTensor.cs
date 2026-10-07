@@ -107,7 +107,7 @@ public sealed unsafe class OrtTensor<T> : OrtSafeHandle<Ort.OrtValueHandle> wher
     {
         get
         {
-            ObjectDisposedException.ThrowIf(IsClosed || IsInvalid, this);
+            ThrowIfDisposed();
             if (!_dataHandle.IsAllocated)
             {
                 Throws.ThrowExternallyOwnedTensorData();

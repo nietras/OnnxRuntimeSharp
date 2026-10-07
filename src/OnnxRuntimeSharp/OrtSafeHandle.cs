@@ -13,4 +13,6 @@ public abstract class OrtSafeHandle<TOrtHandle> : SafeHandle
     public override bool IsInvalid => handle == IntPtr.Zero;
 
     internal TOrtHandle Handle => TOrtHandle.Cast(DangerousGetHandle());
+
+    protected void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(IsClosed || IsInvalid, this);
 }

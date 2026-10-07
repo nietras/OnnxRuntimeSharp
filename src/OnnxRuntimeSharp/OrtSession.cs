@@ -529,8 +529,6 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
         }
     }
 
-    void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(IsClosed || IsInvalid, this);
-
     void ReleaseEnvironmentReference()
     {
         if (!_environmentReferenceAdded)

@@ -451,7 +451,5 @@ public sealed class OrtSessionOptions : OrtSafeHandle<Ort.OrtSessionOptionsHandl
         }
     }
 
-    void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(IsClosed || IsInvalid, this);
-
     unsafe delegate Ort.OrtStatusHandle Utf8Action(Ort.OrtSessionOptionsHandle options, sbyte* value);
 }

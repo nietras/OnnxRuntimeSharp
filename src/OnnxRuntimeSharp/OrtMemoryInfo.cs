@@ -79,6 +79,4 @@ public sealed unsafe class OrtMemoryInfo : OrtSafeHandle<Ort.OrtMemoryInfoHandle
         Ort.ReleaseMemoryInfo(Handle);
         return true;
     }
-
-    void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(IsClosed || IsInvalid, this);
 }

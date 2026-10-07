@@ -100,6 +100,4 @@ public sealed unsafe class OrtRunOptions : OrtSafeHandle<Ort.OrtRunOptionsHandle
         Ort.ReleaseRunOptions(Handle);
         return true;
     }
-
-    void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(IsClosed || IsInvalid, this);
 }

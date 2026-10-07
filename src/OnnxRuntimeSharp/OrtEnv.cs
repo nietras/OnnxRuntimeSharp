@@ -117,6 +117,4 @@ public sealed unsafe class OrtEnv : OrtSafeHandle<Ort.OrtEnvHandle>
         Ort.ReleaseEnv(Handle);
         return true;
     }
-
-    void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(IsClosed || IsInvalid, this);
 }

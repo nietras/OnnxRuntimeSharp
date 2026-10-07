@@ -55,7 +55,7 @@ public sealed unsafe class OrtValue : OrtSafeHandle<Ort.OrtValueHandle>
 
     public Span<T> GetTensorData<T>() where T : unmanaged
     {
-        ObjectDisposedException.ThrowIf(IsClosed || IsInvalid, this);
+        ThrowIfDisposed();
         var expectedType = OrtTensorElementType.Get<T>();
         if (ElementType != expectedType)
         {

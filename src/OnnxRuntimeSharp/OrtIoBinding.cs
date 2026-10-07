@@ -206,8 +206,6 @@ public sealed unsafe class OrtIoBinding : OrtSafeHandle<Ort.OrtIoBindingHandle>
         values.Clear();
     }
 
-    void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(IsClosed || IsInvalid, this);
-
     void ReleaseSessionReference()
     {
         if (!_sessionReferenceAdded)

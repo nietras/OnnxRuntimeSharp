@@ -79,15 +79,18 @@ public class OrtSafeHandleTest
         using var invalid = new TestSafeHandle<THandle>(IntPtr.Zero);
         Assert.IsTrue(invalid.IsInvalid);
         Assert.IsTrue(invalid.Handle.IsNull);
+        Assert.ThrowsExactly<ObjectDisposedException>(() => invalid.CheckDisposed());
 
         var pointer = new IntPtr(42);
         using var valid = new TestSafeHandle<THandle>(pointer);
         Assert.IsFalse(valid.IsInvalid);
         Assert.AreEqual(pointer, valid.Handle.Value);
         Assert.IsFalse(valid.Handle.IsNull);
+        valid.CheckDisposed();
 
         valid.Dispose();
         Assert.IsTrue(valid.IsClosed);
+        Assert.ThrowsExactly<ObjectDisposedException>(() => valid.CheckDisposed());
         Assert.AreEqual(1, valid.ReleaseCount);
         valid.Dispose();
         Assert.AreEqual(1, valid.ReleaseCount);
@@ -99,6 +102,8 @@ public class OrtSafeHandleTest
         public TestSafeHandle(IntPtr pointer) => SetHandle(pointer);
 
         public int ReleaseCount { get; private set; }
+
+        public void CheckDisposed() => ThrowIfDisposed();
 
         protected override bool ReleaseHandle()
         {
