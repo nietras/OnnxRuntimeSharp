@@ -29,16 +29,16 @@ public sealed unsafe class OrtIoBinding : OrtSafeHandle<Ort.OrtIoBindingHandle>
     }
 
     public void BindInput<T>(int index, OrtTensor<T> value) where T : unmanaged =>
-        BindInput(index, (SafeHandle)value);
+        BindInputValue(index, value);
 
     public void BindInput(int index, OrtValue value) =>
-        BindInput(index, (SafeHandle)value);
+        BindInputValue(index, value);
 
     public void BindOutput<T>(int index, OrtTensor<T> value) where T : unmanaged =>
-        BindOutput(index, (SafeHandle)value);
+        BindOutputValue(index, value);
 
     public void BindOutput(int index, OrtValue value) =>
-        BindOutput(index, (SafeHandle)value);
+        BindOutputValue(index, value);
 
     public void BindOutputToDevice(int index, OrtMemoryInfo memoryInfo)
     {
@@ -130,7 +130,7 @@ public sealed unsafe class OrtIoBinding : OrtSafeHandle<Ort.OrtIoBindingHandle>
         return true;
     }
 
-    void BindInput(int index, SafeHandle owner)
+    void BindInputValue(int index, OrtSafeHandle<Ort.OrtValueHandle> owner)
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(owner);
@@ -141,7 +141,7 @@ public sealed unsafe class OrtIoBinding : OrtSafeHandle<Ort.OrtIoBindingHandle>
             value => Ort.BindInput(Handle, info.NamePointer, value));
     }
 
-    void BindOutput(int index, SafeHandle owner)
+    void BindOutputValue(int index, OrtSafeHandle<Ort.OrtValueHandle> owner)
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(owner);
@@ -159,13 +159,13 @@ public sealed unsafe class OrtIoBinding : OrtSafeHandle<Ort.OrtIoBindingHandle>
         return infos[index];
     }
 
-    static void AddBoundValue(List<SafeHandle> values, SafeHandle value, BindAction bind)
+    static void AddBoundValue(List<SafeHandle> values, OrtSafeHandle<Ort.OrtValueHandle> value, BindAction bind)
     {
         var referenceAdded = false;
         try
         {
             value.DangerousAddRef(ref referenceAdded);
-            Ort.Ok(bind(new Ort.OrtValueHandle(value.DangerousGetHandle())));
+            Ort.Ok(bind(value.Handle));
             values.Add(value);
             referenceAdded = false;
         }

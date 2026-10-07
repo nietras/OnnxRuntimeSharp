@@ -1,10 +1,8 @@
-﻿using System.Runtime.InteropServices;
-
-namespace OnnxRuntimeSharp;
+﻿namespace OnnxRuntimeSharp;
 
 public readonly unsafe struct OrtValueBinding
 {
-    internal OrtValueBinding(OrtSession session, OrtTensorInfo info, SafeHandle value)
+    internal OrtValueBinding(OrtSession session, OrtTensorInfo info, OrtSafeHandle<Ort.OrtValueHandle> value)
     {
         Session = session;
         Info = info;
@@ -17,7 +15,7 @@ public readonly unsafe struct OrtValueBinding
 
     internal sbyte* NamePointer => Info.NamePointer;
 
-    internal Ort.OrtValueHandle ValueHandle => new Ort.OrtValueHandle(Value.DangerousGetHandle());
+    internal Ort.OrtValueHandle ValueHandle => Value.Handle;
 
-    internal SafeHandle Value { get; }
+    internal OrtSafeHandle<Ort.OrtValueHandle> Value { get; }
 }

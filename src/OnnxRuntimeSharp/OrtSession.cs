@@ -232,8 +232,8 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
             runOptions?.DangerousAddRef(ref runOptionsReferenceAdded);
             var inputName = _inputs[0].NamePointer;
             var outputName = _outputs[0].NamePointer;
-            var inputValue = new Ort.OrtValueHandle(input.DangerousGetHandle());
-            var outputValue = new Ort.OrtValueHandle(output.DangerousGetHandle());
+            var inputValue = input.Handle;
+            var outputValue = output.Handle;
             Ort.Ok(Ort.Run(
                 Handle,
                 runOptions?.Handle ?? default,
