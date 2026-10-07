@@ -156,8 +156,6 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
                 count *= dimension;
             }
         }
-
         return checked((int)count);
     }
-
 }

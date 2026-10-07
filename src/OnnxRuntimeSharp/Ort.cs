@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
@@ -78,13 +77,14 @@ public static unsafe partial class Ort
         }
     }
 
-    public static IReadOnlyList<string> GetAvailableExecutionProviders()
+    public static string[] GetAvailableExecutionProviders()
     {
         sbyte** providers;
         int providerCount;
         GetAvailableProviders(&providers, &providerCount).Ok();
         try
         {
+            if (providerCount == 0) { return []; }
             var result = new string[providerCount];
             for (var index = 0; index < result.Length; ++index)
             {

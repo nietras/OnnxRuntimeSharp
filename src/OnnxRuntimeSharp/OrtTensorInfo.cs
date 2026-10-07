@@ -1,7 +1,7 @@
 ﻿using System;
 namespace OnnxRuntimeSharp;
 
-public sealed unsafe class OrtTensorInfo
+public sealed unsafe class OrtTensorInfo : IDisposable
 {
     readonly Ort.OrtAllocator* _allocator;
     sbyte* _name;
@@ -32,13 +32,9 @@ public sealed unsafe class OrtTensorInfo
 
     internal sbyte* NamePointer => _name;
 
-    internal void Dispose()
+    public void Dispose()
     {
-        if (_name is null)
-        {
-            return;
-        }
-
+        if (_name is null) { return; }
         Ort.ReleaseAllocatorValue(_allocator, _name);
         _name = null;
     }
