@@ -83,7 +83,7 @@ public sealed unsafe class OrtIoBinding : SafeHandle
         ThrowIfDisposed();
         Ort.OrtAllocator* allocator;
         Ort.Ok(Ort.GetAllocatorWithDefaultOptions(&allocator));
-        Ort.OrtValue** values;
+        Ort.OrtValueHandle* values;
         nuint valueCount;
         Ort.Ok(Ort.GetBoundOutputValues(Pointer, allocator, &values, &valueCount));
         var result = new OrtValue[checked((int)valueCount)];
@@ -93,7 +93,7 @@ public sealed unsafe class OrtIoBinding : SafeHandle
             for (var index = 0; index < result.Length; ++index)
             {
                 var value = values[index];
-                values[index] = null;
+                values[index] = default;
                 result[index] = new OrtValue(value);
                 ++initializedCount;
             }
@@ -107,7 +107,7 @@ public sealed unsafe class OrtIoBinding : SafeHandle
             }
             for (var index = initializedCount; index < result.Length; ++index)
             {
-                if (values[index] is not null)
+                if (!values[index].IsNull)
                 {
                     Ort.ReleaseValue(values[index]);
                 }
@@ -169,7 +169,7 @@ public sealed unsafe class OrtIoBinding : SafeHandle
         try
         {
             value.DangerousAddRef(ref referenceAdded);
-            Ort.Ok(bind((Ort.OrtValue*)value.DangerousGetHandle()));
+            Ort.Ok(bind(new Ort.OrtValueHandle(value.DangerousGetHandle())));
             values.Add(value);
             referenceAdded = false;
         }
@@ -223,6 +223,6 @@ public sealed unsafe class OrtIoBinding : SafeHandle
         _sessionReferenceAdded = false;
     }
 
-    delegate Ort.OrtStatusHandle BindAction(Ort.OrtValue* value);
+    delegate Ort.OrtStatusHandle BindAction(Ort.OrtValueHandle value);
     delegate Ort.OrtStatusHandle BindResourceAction();
 }

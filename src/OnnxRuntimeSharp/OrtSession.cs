@@ -236,8 +236,8 @@ public sealed unsafe class OrtSession : SafeHandle
             runOptions?.DangerousAddRef(ref runOptionsReferenceAdded);
             var inputName = _inputs[0].NamePointer;
             var outputName = _outputs[0].NamePointer;
-            var inputValue = (Ort.OrtValue*)input.DangerousGetHandle();
-            var outputValue = (Ort.OrtValue*)output.DangerousGetHandle();
+            var inputValue = new Ort.OrtValueHandle(input.DangerousGetHandle());
+            var outputValue = new Ort.OrtValueHandle(output.DangerousGetHandle());
             Ort.Ok(Ort.Run(
                 (Ort.OrtSession*)handle,
                 runOptions?.Pointer,
@@ -285,9 +285,9 @@ public sealed unsafe class OrtSession : SafeHandle
         }
 
         var inputNames = stackalloc sbyte*[inputs.Length];
-        var inputValues = stackalloc Ort.OrtValue*[inputs.Length];
+        var inputValues = stackalloc Ort.OrtValueHandle[inputs.Length];
         var outputNames = stackalloc sbyte*[outputs.Length];
-        var outputValues = stackalloc Ort.OrtValue*[outputs.Length];
+        var outputValues = stackalloc Ort.OrtValueHandle[outputs.Length];
         var sessionReferenceAdded = false;
         var runOptionsReferenceAdded = false;
         var referencedInputCount = 0;
@@ -307,7 +307,7 @@ public sealed unsafe class OrtSession : SafeHandle
                 }
                 ++referencedInputCount;
                 inputNames[index] = inputs[index].NamePointer;
-                inputValues[index] = inputs[index].ValuePointer;
+                inputValues[index] = inputs[index].ValueHandle;
             }
             for (var index = 0; index < outputs.Length; ++index)
             {
@@ -320,7 +320,7 @@ public sealed unsafe class OrtSession : SafeHandle
                 }
                 ++referencedOutputCount;
                 outputNames[index] = outputs[index].NamePointer;
-                outputValues[index] = outputs[index].ValuePointer;
+                outputValues[index] = outputs[index].ValueHandle;
             }
 
             Ort.Ok(Ort.Run(
@@ -363,13 +363,13 @@ public sealed unsafe class OrtSession : SafeHandle
         }
 
         var inputNames = stackalloc sbyte*[inputs.Length];
-        var inputValues = stackalloc Ort.OrtValue*[inputs.Length];
+        var inputValues = stackalloc Ort.OrtValueHandle[inputs.Length];
         var outputNames = stackalloc sbyte*[_outputs.Length];
-        var outputValues = stackalloc Ort.OrtValue*[_outputs.Length];
+        var outputValues = stackalloc Ort.OrtValueHandle[_outputs.Length];
         for (var index = 0; index < _outputs.Length; ++index)
         {
             outputNames[index] = _outputs[index].NamePointer;
-            outputValues[index] = null;
+            outputValues[index] = default;
         }
 
         var sessionReferenceAdded = false;
@@ -388,7 +388,7 @@ public sealed unsafe class OrtSession : SafeHandle
                 inputs[index].Value.DangerousAddRef(ref referenceAdded);
                 ++referencedInputCount;
                 inputNames[index] = inputs[index].NamePointer;
-                inputValues[index] = inputs[index].ValuePointer;
+                inputValues[index] = inputs[index].ValueHandle;
             }
 
             Ort.Ok(Ort.Run(
@@ -404,7 +404,7 @@ public sealed unsafe class OrtSession : SafeHandle
             for (var index = 0; index < results.Length; ++index)
             {
                 var value = outputValues[index];
-                outputValues[index] = null;
+                outputValues[index] = default;
                 results[index] = new OrtValue(value);
                 ++initializedResultCount;
             }
@@ -418,7 +418,7 @@ public sealed unsafe class OrtSession : SafeHandle
             }
             for (var index = 0; index < _outputs.Length; ++index)
             {
-                if (outputValues[index] is not null)
+                if (!outputValues[index].IsNull)
                 {
                     Ort.ReleaseValue(outputValues[index]);
                 }

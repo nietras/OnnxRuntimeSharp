@@ -7,9 +7,24 @@ namespace OnnxRuntimeSharp.Test;
 public class OrtValueTest
 {
     [TestMethod]
-    public unsafe void NullNativeValueIsRejected()
+    public unsafe void NativeValueHandleHasPointerSize()
     {
-        Assert.ThrowsExactly<ArgumentNullException>(() => new OrtValue(null));
+        Assert.AreEqual(IntPtr.Size, sizeof(Ort.OrtValueHandle));
+    }
+
+    [TestMethod]
+    public void NativeValueHandlePreservesPointer()
+    {
+        var value = new Ort.OrtValueHandle(new IntPtr(42));
+        Assert.AreEqual(new IntPtr(42), value.Value);
+        Assert.IsFalse(value.IsNull);
+        Assert.IsTrue(default(Ort.OrtValueHandle).IsNull);
+    }
+
+    [TestMethod]
+    public void NullNativeValueIsRejected()
+    {
+        Assert.ThrowsExactly<ArgumentNullException>(() => new OrtValue(default));
     }
 
     [TestMethod]

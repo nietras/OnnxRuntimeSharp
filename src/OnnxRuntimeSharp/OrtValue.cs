@@ -7,15 +7,15 @@ public sealed unsafe class OrtValue : SafeHandle
 {
     readonly long[] _dimensions;
 
-    internal OrtValue(Ort.OrtValue* value)
+    internal OrtValue(Ort.OrtValueHandle value)
         : base(IntPtr.Zero, ownsHandle: true)
     {
-        if (value is null)
+        if (value.IsNull)
         {
             Throws.ThrowNativeValueNull();
         }
 
-        SetHandle((IntPtr)value);
+        SetHandle(value.Value);
         Ort.OrtTensorTypeAndShapeInfo* tensorInfo;
         try
         {
@@ -70,17 +70,17 @@ public sealed unsafe class OrtValue : SafeHandle
             elementCount = checked(elementCount * (nuint)dimension);
         }
         void* data;
-        Ort.Ok(Ort.GetTensorMutableData((Ort.OrtValue*)handle, &data));
+        Ort.Ok(Ort.GetTensorMutableData(new Ort.OrtValueHandle(handle), &data));
         return new Span<T>(data, checked((int)elementCount));
     }
 
     public override bool IsInvalid => handle == IntPtr.Zero;
 
-    internal Ort.OrtValue* Pointer => (Ort.OrtValue*)handle;
+    internal Ort.OrtValueHandle Handle => new Ort.OrtValueHandle(handle);
 
     protected override bool ReleaseHandle()
     {
-        Ort.ReleaseValue(Pointer);
+        Ort.ReleaseValue(Handle);
         return true;
     }
 }

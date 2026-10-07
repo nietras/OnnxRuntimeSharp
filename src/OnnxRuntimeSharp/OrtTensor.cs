@@ -31,7 +31,7 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
             Ort.Ok(Ort.CreateCpuMemoryInfo(Ort.OrtAllocatorType.OrtArenaAllocator, Ort.OrtMemType.OrtMemTypeDefault, &memoryInfo));
             fixed (long* dimensionsPointer = dimensions)
             {
-                Ort.OrtValue* value;
+                Ort.OrtValueHandle value;
                 Ort.Ok(Ort.CreateTensorWithDataAsOrtValue(
                     memoryInfo,
                     _dataHandle.AddrOfPinnedObject().ToPointer(),
@@ -40,7 +40,7 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
                     (nuint)dimensions.Length,
                     OrtTensorElementType.Get<T>(),
                     &value));
-                SetHandle((IntPtr)value);
+                SetHandle(value.Value);
             }
         }
         catch
@@ -81,7 +81,7 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
             memoryInfo.DangerousAddRef(ref memoryInfoReferenceAdded);
             fixed (long* dimensionsPointer = dimensions)
             {
-                Ort.OrtValue* value;
+                Ort.OrtValueHandle value;
                 Ort.Ok(Ort.CreateTensorWithDataAsOrtValue(
                     memoryInfo.Pointer,
                     data,
@@ -90,7 +90,7 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
                     (nuint)dimensions.Length,
                     OrtTensorElementType.Get<T>(),
                     &value));
-                SetHandle((IntPtr)value);
+                SetHandle(value.Value);
             }
             _memoryInfo = memoryInfo;
             _memoryInfoReferenceAdded = memoryInfoReferenceAdded;
@@ -124,7 +124,7 @@ public sealed unsafe class OrtTensor<T> : SafeHandle where T : unmanaged
 
     protected override bool ReleaseHandle()
     {
-        Ort.ReleaseValue((Ort.OrtValue*)handle);
+        Ort.ReleaseValue(new Ort.OrtValueHandle(handle));
         if (_dataHandle.IsAllocated)
         {
             _dataHandle.Free();

@@ -17,7 +17,7 @@ public readonly unsafe struct OrtValueBinding
 
     internal sbyte* NamePointer => Info.NamePointer;
 
-    internal Ort.OrtValue* ValuePointer => (Ort.OrtValue*)Value.DangerousGetHandle();
+    internal Ort.OrtValueHandle ValueHandle => new Ort.OrtValueHandle(Value.DangerousGetHandle());
 
     internal SafeHandle Value { get; }
 }

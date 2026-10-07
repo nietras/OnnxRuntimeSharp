@@ -132,7 +132,12 @@ public static unsafe partial class Ort
     public readonly struct OrtMemoryInfo;
     public readonly struct OrtIoBinding;
     public readonly struct OrtSession;
-    public readonly struct OrtValue;
+    public readonly struct OrtValueHandle(IntPtr value)
+    {
+        internal readonly IntPtr Value = value;
+
+        internal bool IsNull => Value == IntPtr.Zero;
+    }
     public readonly struct OrtRunOptions;
     public readonly struct OrtTypeInfo;
     public readonly struct OrtTensorTypeAndShapeInfo;
@@ -624,7 +629,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtEnv*, void*, nuint, OrtSessionOptions*, OrtSession**, OrtStatusHandle> CreateSessionFromArray;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSession *, const OrtRunOptions *, const char *const *, const OrtValue *const *, size_t, const char *const *, size_t, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, OrtRunOptions*, sbyte**, OrtValue**, nuint, sbyte**, nuint, OrtValue**, OrtStatusHandle> Run;
+        public delegate* unmanaged[Stdcall]<OrtSession*, OrtRunOptions*, sbyte**, OrtValueHandle*, nuint, sbyte**, nuint, OrtValueHandle*, OrtStatusHandle> Run;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions **) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtSessionOptions**, OrtStatusHandle> CreateSessionOptions;
@@ -741,25 +746,25 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtRunOptions*, OrtStatusHandle> RunOptionsUnsetTerminate;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtAllocator *, const int64_t *, size_t, ONNXTensorElementDataType, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtAllocator*, long*, nuint, ONNXTensorElementDataType, OrtValue**, OrtStatusHandle> CreateTensorAsOrtValue;
+        public delegate* unmanaged[Stdcall]<OrtAllocator*, long*, nuint, ONNXTensorElementDataType, OrtValueHandle*, OrtStatusHandle> CreateTensorAsOrtValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtMemoryInfo *, void *, size_t, const int64_t *, size_t, ONNXTensorElementDataType, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, void*, nuint, long*, nuint, ONNXTensorElementDataType, OrtValue**, OrtStatusHandle> CreateTensorWithDataAsOrtValue;
+        public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, void*, nuint, long*, nuint, ONNXTensorElementDataType, OrtValueHandle*, OrtStatusHandle> CreateTensorWithDataAsOrtValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, int *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, int*, OrtStatusHandle> IsTensor;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, int*, OrtStatusHandle> IsTensor;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, void**, OrtStatusHandle> GetTensorMutableData;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, void**, OrtStatusHandle> GetTensorMutableData;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, const char *const *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, sbyte**, nuint, OrtStatusHandle> FillStringTensor;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, sbyte**, nuint, OrtStatusHandle> FillStringTensor;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, nuint*, OrtStatusHandle> GetStringTensorDataLength;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, nuint*, OrtStatusHandle> GetStringTensorDataLength;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, void *, size_t, size_t *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, void*, nuint, nuint*, nuint, OrtStatusHandle> GetStringTensorContent;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, void*, nuint, nuint*, nuint, OrtStatusHandle> GetStringTensorContent;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTypeInfo *, const OrtTensorTypeAndShapeInfo **) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtTypeInfo*, OrtTensorTypeAndShapeInfo**, OrtStatusHandle> CastTypeInfoToTensorInfo;
@@ -792,13 +797,13 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtTensorTypeAndShapeInfo*, nuint*, OrtStatusHandle> GetTensorShapeElementCount;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, OrtTensorTypeAndShapeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtTensorTypeAndShapeInfo**, OrtStatusHandle> GetTensorTypeAndShape;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, OrtTensorTypeAndShapeInfo**, OrtStatusHandle> GetTensorTypeAndShape;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, OrtTypeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtTypeInfo**, OrtStatusHandle> GetTypeInfo;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, OrtTypeInfo**, OrtStatusHandle> GetTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, enum ONNXType *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, ONNXType*, OrtStatusHandle> GetValueType;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, ONNXType*, OrtStatusHandle> GetValueType;
 
         [NativeTypeName("OrtStatusPtr (*)(const char *, enum OrtAllocatorType, int, enum OrtMemType, OrtMemoryInfo **) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<sbyte*, OrtAllocatorType, int, OrtMemType, OrtMemoryInfo**, OrtStatusHandle> CreateMemoryInfo;
@@ -837,19 +842,19 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, long, OrtStatusHandle> AddFreeDimensionOverride;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, int, OrtAllocator *, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, int, OrtAllocator*, OrtValue**, OrtStatusHandle> GetValue;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, int, OrtAllocator*, OrtValueHandle*, OrtStatusHandle> GetValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, nuint*, OrtStatusHandle> GetValueCount;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, nuint*, OrtStatusHandle> GetValueCount;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *const *, size_t, enum ONNXType, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue**, nuint, ONNXType, OrtValue**, OrtStatusHandle> CreateValue;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle*, nuint, ONNXType, OrtValueHandle*, OrtStatusHandle> CreateValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const char *, const char *, const void *, size_t, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<sbyte*, sbyte*, void*, nuint, OrtValue**, OrtStatusHandle> CreateOpaqueValue;
+        public delegate* unmanaged[Stdcall]<sbyte*, sbyte*, void*, nuint, OrtValueHandle*, OrtStatusHandle> CreateOpaqueValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const char *, const char *, const OrtValue *, void *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<sbyte*, sbyte*, OrtValue*, void*, nuint, OrtStatusHandle> GetOpaqueValue;
+        public delegate* unmanaged[Stdcall]<sbyte*, sbyte*, OrtValueHandle, void*, nuint, OrtStatusHandle> GetOpaqueValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, const char *, float *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, float*, OrtStatusHandle> KernelInfoGetAttribute_float;
@@ -867,10 +872,10 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtKernelContext*, nuint*, OrtStatusHandle> KernelContext_GetOutputCount;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelContext *, size_t, const OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelContext*, nuint, OrtValue**, OrtStatusHandle> KernelContext_GetInput;
+        public delegate* unmanaged[Stdcall]<OrtKernelContext*, nuint, OrtValueHandle*, OrtStatusHandle> KernelContext_GetInput;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtKernelContext *, size_t, const int64_t *, size_t, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelContext*, nuint, long*, nuint, OrtValue**, OrtStatusHandle> KernelContext_GetOutput;
+        public delegate* unmanaged[Stdcall]<OrtKernelContext*, nuint, long*, nuint, OrtValueHandle*, OrtStatusHandle> KernelContext_GetOutput;
 
         [NativeTypeName("void (*)(OrtEnv *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtEnv*, void> ReleaseEnv;
@@ -885,7 +890,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtSession*, void> ReleaseSession;
 
         [NativeTypeName("void (*)(OrtValue *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, void> ReleaseValue;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, void> ReleaseValue;
 
         [NativeTypeName("void (*)(OrtRunOptions *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtRunOptions*, void> ReleaseRunOptions;
@@ -978,13 +983,13 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<sbyte**, int, OrtStatusHandle> ReleaseAvailableProviders;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, size_t, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, nuint, nuint*, OrtStatusHandle> GetStringTensorElementLength;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, nuint, nuint*, OrtStatusHandle> GetStringTensorElementLength;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, size_t, size_t, void *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, nuint, nuint, void*, OrtStatusHandle> GetStringTensorElement;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, nuint, nuint, void*, OrtStatusHandle> GetStringTensorElement;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, const char *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, sbyte*, nuint, OrtStatusHandle> FillStringTensorElement;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, sbyte*, nuint, OrtStatusHandle> FillStringTensorElement;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const char *, const char *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, sbyte*, OrtStatusHandle> AddSessionConfigEntry;
@@ -1005,10 +1010,10 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtIoBinding*, void> ReleaseIoBinding;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtIoBinding *, const char *, const OrtValue *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtIoBinding*, sbyte*, OrtValue*, OrtStatusHandle> BindInput;
+        public delegate* unmanaged[Stdcall]<OrtIoBinding*, sbyte*, OrtValueHandle, OrtStatusHandle> BindInput;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtIoBinding *, const char *, const OrtValue *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtIoBinding*, sbyte*, OrtValue*, OrtStatusHandle> BindOutput;
+        public delegate* unmanaged[Stdcall]<OrtIoBinding*, sbyte*, OrtValueHandle, OrtStatusHandle> BindOutput;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtIoBinding *, const char *, const OrtMemoryInfo *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtIoBinding*, sbyte*, OrtMemoryInfo*, OrtStatusHandle> BindOutputToDevice;
@@ -1017,7 +1022,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtIoBinding*, OrtAllocator*, sbyte**, nuint**, nuint*, OrtStatusHandle> GetBoundOutputNames;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtIoBinding *, OrtAllocator *, OrtValue ***, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtIoBinding*, OrtAllocator*, OrtValue***, nuint*, OrtStatusHandle> GetBoundOutputValues;
+        public delegate* unmanaged[Stdcall]<OrtIoBinding*, OrtAllocator*, OrtValueHandle**, nuint*, OrtStatusHandle> GetBoundOutputValues;
 
         [NativeTypeName("void (*)(OrtIoBinding *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtIoBinding*, void> ClearBoundInputs;
@@ -1026,7 +1031,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtIoBinding*, void> ClearBoundOutputs;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, const int64_t *, size_t, void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, long*, nuint, void**, OrtStatusHandle> TensorAt;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, long*, nuint, void**, OrtStatusHandle> TensorAt;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtEnv *, const OrtMemoryInfo *, const OrtArenaCfg *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtEnv*, OrtMemoryInfo*, OrtArenaCfg*, OrtStatusHandle> CreateAndRegisterAllocator;
@@ -1047,7 +1052,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtThreadingOptions*, int, OrtStatusHandle> SetGlobalSpinControl;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const char *, const OrtValue *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, OrtValue*, OrtStatusHandle> AddInitializer;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, OrtValueHandle, OrtStatusHandle> AddInitializer;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtLoggingFunction, void *, OrtLoggingLevel, const char *, const struct OrtThreadingOptions *, OrtEnv **) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<delegate* unmanaged[Stdcall]<void*, OrtLoggingLevel, sbyte*, sbyte*, sbyte*, sbyte*, void>, void*, OrtLoggingLevel, sbyte*, OrtThreadingOptions*, OrtEnv**, OrtStatusHandle> CreateEnvWithCustomLoggerAndGlobalThreadPools;
@@ -1131,55 +1136,55 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtEnv*, OrtMemoryInfo*, OrtStatusHandle> UnregisterAllocator;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, int *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, int*, OrtStatusHandle> IsSparseTensor;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, int*, OrtStatusHandle> IsSparseTensor;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtAllocator *, const int64_t *, size_t, ONNXTensorElementDataType, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtAllocator*, long*, nuint, ONNXTensorElementDataType, OrtValue**, OrtStatusHandle> CreateSparseTensorAsOrtValue;
+        public delegate* unmanaged[Stdcall]<OrtAllocator*, long*, nuint, ONNXTensorElementDataType, OrtValueHandle*, OrtStatusHandle> CreateSparseTensorAsOrtValue;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, const OrtMemoryInfo *, const int64_t *, size_t, const void *, const int64_t *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtMemoryInfo*, long*, nuint, void*, long*, nuint, OrtStatusHandle> FillSparseTensorCoo;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, OrtMemoryInfo*, long*, nuint, void*, long*, nuint, OrtStatusHandle> FillSparseTensorCoo;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, const OrtMemoryInfo *, const int64_t *, size_t, const void *, const int64_t *, size_t, const int64_t *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtMemoryInfo*, long*, nuint, void*, long*, nuint, long*, nuint, OrtStatusHandle> FillSparseTensorCsr;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, OrtMemoryInfo*, long*, nuint, void*, long*, nuint, long*, nuint, OrtStatusHandle> FillSparseTensorCsr;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, const OrtMemoryInfo *, const int64_t *, size_t, const void *, const int64_t *, size_t, const int32_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtMemoryInfo*, long*, nuint, void*, long*, nuint, int*, OrtStatusHandle> FillSparseTensorBlockSparse;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, OrtMemoryInfo*, long*, nuint, void*, long*, nuint, int*, OrtStatusHandle> FillSparseTensorBlockSparse;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtMemoryInfo *, void *, const int64_t *, size_t, const int64_t *, size_t, ONNXTensorElementDataType, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, void*, long*, nuint, long*, nuint, ONNXTensorElementDataType, OrtValue**, OrtStatusHandle> CreateSparseTensorWithValuesAsOrtValue;
+        public delegate* unmanaged[Stdcall]<OrtMemoryInfo*, void*, long*, nuint, long*, nuint, ONNXTensorElementDataType, OrtValueHandle*, OrtStatusHandle> CreateSparseTensorWithValuesAsOrtValue;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, int64_t *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, long*, nuint, OrtStatusHandle> UseCooIndices;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, long*, nuint, OrtStatusHandle> UseCooIndices;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, int64_t *, size_t, int64_t *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, long*, nuint, long*, nuint, OrtStatusHandle> UseCsrIndices;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, long*, nuint, long*, nuint, OrtStatusHandle> UseCsrIndices;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, const int64_t *, size_t, int32_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, long*, nuint, int*, OrtStatusHandle> UseBlockSparseIndices;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, long*, nuint, int*, OrtStatusHandle> UseBlockSparseIndices;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, enum OrtSparseFormat *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtSparseFormat*, OrtStatusHandle> GetSparseTensorFormat;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, OrtSparseFormat*, OrtStatusHandle> GetSparseTensorFormat;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, OrtTensorTypeAndShapeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtTensorTypeAndShapeInfo**, OrtStatusHandle> GetSparseTensorValuesTypeAndShape;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, OrtTensorTypeAndShapeInfo**, OrtStatusHandle> GetSparseTensorValuesTypeAndShape;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, const void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, void**, OrtStatusHandle> GetSparseTensorValues;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, void**, OrtStatusHandle> GetSparseTensorValues;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, enum OrtSparseIndicesFormat, OrtTensorTypeAndShapeInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtSparseIndicesFormat, OrtTensorTypeAndShapeInfo**, OrtStatusHandle> GetSparseTensorIndicesTypeShape;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, OrtSparseIndicesFormat, OrtTensorTypeAndShapeInfo**, OrtStatusHandle> GetSparseTensorIndicesTypeShape;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, enum OrtSparseIndicesFormat, size_t *, const void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtSparseIndicesFormat, nuint*, void**, OrtStatusHandle> GetSparseTensorIndices;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, OrtSparseIndicesFormat, nuint*, void**, OrtStatusHandle> GetSparseTensorIndices;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, int *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, int*, OrtStatusHandle> HasValue;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, int*, OrtStatusHandle> HasValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelContext *, void **) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtKernelContext*, void**, OrtStatusHandle> KernelContext_GetGPUComputeStream;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, const OrtMemoryInfo **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, OrtMemoryInfo**, OrtStatusHandle> GetTensorMemoryInfo;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, OrtMemoryInfo**, OrtStatusHandle> GetTensorMemoryInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const char *, uint32_t, const void **) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<sbyte*, uint, void**, OrtStatusHandle> GetExecutionProviderApi;
@@ -1227,7 +1232,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtMIGraphXProviderOptions*, OrtStatusHandle> SessionOptionsAppendExecutionProvider_MIGraphX;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const char *const *, const OrtValue *const *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte**, OrtValue**, nuint, OrtStatusHandle> AddExternalInitializers;
+        public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte**, OrtValueHandle*, nuint, OrtStatusHandle> AddExternalInitializers;
 
         [NativeTypeName("OrtStatusPtr (*)(const char *, const void *, int, OrtOpAttrType, OrtOpAttr **) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<sbyte*, void*, int, OrtOpAttrType, OrtOpAttr**, OrtStatusHandle> CreateOpAttr;
@@ -1239,7 +1244,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, sbyte*, int, sbyte**, ONNXTensorElementDataType*, int, OrtOpAttr**, int, int, int, OrtOp**, OrtStatusHandle> CreateOp;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelContext *, const OrtOp *, const OrtValue *const *, int, OrtValue *const *, int) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelContext*, OrtOp*, OrtValue**, int, OrtValue**, int, OrtStatusHandle> InvokeOp;
+        public delegate* unmanaged[Stdcall]<OrtKernelContext*, OrtOp*, OrtValueHandle*, int, OrtValueHandle*, int, OrtStatusHandle> InvokeOp;
 
         [NativeTypeName("void (*)(OrtOp *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtOp*, void> ReleaseOp;
@@ -1305,7 +1310,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtKernelInfo*, nuint, OrtTypeInfo**, OrtStatusHandle> KernelInfo_GetOutputTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, const char *, OrtAllocator *, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, OrtAllocator*, OrtValue**, OrtStatusHandle> KernelInfoGetAttribute_tensor;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, sbyte*, OrtAllocator*, OrtValueHandle*, OrtStatusHandle> KernelInfoGetAttribute_tensor;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSessionOptions *, const char *, int *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtSessionOptions*, sbyte*, int*, OrtStatusHandle> HasSessionConfigEntry;
@@ -1344,7 +1349,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtLogger*, OrtLoggingLevel*, OrtStatusHandle> Logger_GetLoggingSeverityLevel;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelInfo *, size_t, int *, const OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, nuint, int*, OrtValue**, OrtStatusHandle> KernelInfoGetConstantInput_tensor;
+        public delegate* unmanaged[Stdcall]<OrtKernelInfo*, nuint, int*, OrtValueHandle*, OrtStatusHandle> KernelInfoGetConstantInput_tensor;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtTypeInfo *, const OrtOptionalTypeInfo **) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtTypeInfo*, OrtOptionalTypeInfo**, OrtStatusHandle> CastTypeInfoToOptionalTypeInfo;
@@ -1353,7 +1358,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtOptionalTypeInfo*, OrtTypeInfo**, OrtStatusHandle> GetOptionalContainedTypeInfo;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtValue *, size_t, size_t, char **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, nuint, nuint, sbyte**, OrtStatusHandle> GetResizedStringTensorElementBuffer;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, nuint, nuint, sbyte**, OrtStatusHandle> GetResizedStringTensorElementBuffer;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelContext *, const OrtMemoryInfo *, OrtAllocator **) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtKernelContext*, OrtMemoryInfo*, OrtAllocator**, OrtStatusHandle> KernelContext_GetAllocator;
@@ -1377,7 +1382,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtEnv*, sbyte*, OrtMemoryInfo*, OrtArenaCfg*, sbyte**, sbyte**, nuint, OrtStatusHandle> CreateAndRegisterAllocatorV2;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSession *, const OrtRunOptions *, const char *const *, const OrtValue *const *, size_t, const char *const *, size_t, OrtValue **, RunAsyncCallbackFn, void *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtSession*, OrtRunOptions*, sbyte**, OrtValue**, nuint, sbyte**, nuint, OrtValue**, delegate* unmanaged[Cdecl]<void*, OrtValue**, nuint, void*, void>, void*, OrtStatusHandle> RunAsync;
+        public delegate* unmanaged[Stdcall]<OrtSession*, OrtRunOptions*, sbyte**, OrtValueHandle*, nuint, sbyte**, nuint, OrtValueHandle*, delegate* unmanaged[Cdecl]<void*, OrtValueHandle*, nuint, void*, void>, void*, OrtStatusHandle> RunAsync;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtTensorRTProviderOptionsV2 *, const char *, void *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtTensorRTProviderOptionsV2*, sbyte*, void*, OrtStatusHandle> UpdateTensorRTProviderOptionsWithValue;
@@ -1473,7 +1478,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtModelEditorApi*> GetModelEditorApi;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtAllocator *, void *, size_t, const int64_t *, size_t, ONNXTensorElementDataType, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtAllocator*, void*, nuint, long*, nuint, ONNXTensorElementDataType, OrtValue**, OrtStatusHandle> CreateTensorWithDataAndDeleterAsOrtValue;
+        public delegate* unmanaged[Stdcall]<OrtAllocator*, void*, nuint, long*, nuint, ONNXTensorElementDataType, OrtValueHandle*, OrtStatusHandle> CreateTensorWithDataAndDeleterAsOrtValue;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, _Bool) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtSessionOptions*, byte, OrtStatusHandle> SessionOptionsSetLoadCancellationFlag;
@@ -1551,7 +1556,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtEpApi*> GetEpApi;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, nuint*, OrtStatusHandle> GetTensorSizeInBytes;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, nuint*, OrtStatusHandle> GetTensorSizeInBytes;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtAllocator *, OrtKeyValuePairs **) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtAllocator*, OrtKeyValuePairs**, OrtStatusHandle> AllocatorGetStats;
@@ -1575,7 +1580,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtValueInfo*, OrtNode**, long*, nuint, OrtStatusHandle> ValueInfo_GetValueConsumers;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValueInfo *, const OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValueInfo*, OrtValue**, OrtStatusHandle> ValueInfo_GetInitializerValue;
+        public delegate* unmanaged[Stdcall]<OrtValueInfo*, OrtValueHandle*, OrtStatusHandle> ValueInfo_GetInitializerValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValueInfo *, OrtExternalInitializerInfo **) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtValueInfo*, OrtExternalInitializerInfo**, OrtStatusHandle> ValueInfo_GetExternalInitializerInfo;
@@ -1683,7 +1688,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtNode*, sbyte*, OrtOpAttr**, OrtStatusHandle> Node_GetAttributeByName;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtOpAttr *, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtOpAttr*, OrtValue**, OrtStatusHandle> OpAttr_GetTensorAttributeAsOrtValue;
+        public delegate* unmanaged[Stdcall]<OrtOpAttr*, OrtValueHandle*, OrtStatusHandle> OpAttr_GetTensorAttributeAsOrtValue;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtOpAttr *, OrtOpAttrType *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtOpAttr*, OrtOpAttrType*, OrtStatusHandle> OpAttr_GetType;
@@ -1731,7 +1736,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtEnv*, OrtEpDevice*, OrtDeviceMemoryType, OrtStatusHandle> ReleaseSharedAllocator;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, const void **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, void**, OrtStatusHandle> GetTensorData;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, void**, OrtStatusHandle> GetTensorData;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtSessionOptions *, OrtKeyValuePairs **) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtSessionOptions*, OrtKeyValuePairs**, OrtStatusHandle> GetSessionOptionsConfigEntries;
@@ -1755,7 +1760,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtSyncStream*, void> ReleaseSyncStream;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *, const OrtValue *const *, OrtValue *const *, OrtSyncStream *, size_t) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtValue**, OrtValue**, OrtSyncStream*, nuint, OrtStatusHandle> CopyTensors;
+        public delegate* unmanaged[Stdcall]<OrtEnv*, OrtValueHandle*, OrtValueHandle*, OrtSyncStream*, nuint, OrtStatusHandle> CopyTensors;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtGraph *, OrtModelMetadata **) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtGraph*, OrtModelMetadata**, OrtStatusHandle> Graph_GetModelMetadata;
@@ -1839,7 +1844,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtRunOptions*, OrtSyncStream*, void> RunOptionsSetSyncStream;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtValue *, ONNXTensorElementDataType *, const int64_t **, size_t *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtValue*, ONNXTensorElementDataType*, long**, nuint*, OrtStatusHandle> GetTensorElementTypeAndShapeDataReference;
+        public delegate* unmanaged[Stdcall]<OrtValueHandle, ONNXTensorElementDataType*, long**, nuint*, OrtStatusHandle> GetTensorElementTypeAndShapeDataReference;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtRunOptions *, const wchar_t *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtRunOptions*, ushort*, OrtStatusHandle> RunOptionsEnableProfiling;
@@ -1990,7 +1995,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtGraph*, OrtValueInfo**, nuint, OrtStatusHandle> SetGraphOutputs;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtGraph *, const char *, OrtValue *, _Bool) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtGraph*, sbyte*, OrtValue*, byte, OrtStatusHandle> AddInitializerToGraph;
+        public delegate* unmanaged[Stdcall]<OrtGraph*, sbyte*, OrtValueHandle, byte, OrtStatusHandle> AddInitializerToGraph;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtGraph *, OrtNode *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtGraph*, OrtNode*, OrtStatusHandle> AddNodeToGraph;
@@ -2069,7 +2074,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, delegate* unmanaged[Stdcall]<void*, void*, nuint, void*>, void*, OrtStatusHandle> ModelCompilationOptions_SetOutputModelWriteFunc;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtModelCompilationOptions *, OrtGetInitializerLocationFunc, void *) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, delegate* unmanaged[Stdcall]<void*, sbyte*, OrtValue*, OrtExternalInitializerInfo*, OrtExternalInitializerInfo**, void*>, void*, OrtStatusHandle> ModelCompilationOptions_SetOutputModelGetInitializerLocationFunc;
+        public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, delegate* unmanaged[Stdcall]<void*, sbyte*, OrtValueHandle, OrtExternalInitializerInfo*, OrtExternalInitializerInfo**, void*>, void*, OrtStatusHandle> ModelCompilationOptions_SetOutputModelGetInitializerLocationFunc;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtModelCompilationOptions *, const OrtModel *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtModelCompilationOptions*, OrtModel*, OrtStatusHandle> ModelCompilationOptions_SetInputModel;
@@ -2093,7 +2098,7 @@ public static unsafe partial class Ort
         public delegate* unmanaged[Stdcall]<OrtExternalMemoryHandle*, void> ReleaseExternalMemoryHandle;
 
         [NativeTypeName("OrtStatusPtr (*)(OrtExternalResourceImporter *, const OrtExternalMemoryHandle *, const OrtExternalTensorDescriptor *, OrtValue **) __attribute__((stdcall))")]
-        public delegate* unmanaged[Stdcall]<OrtExternalResourceImporter*, OrtExternalMemoryHandle*, OrtExternalTensorDescriptor*, OrtValue**, OrtStatusHandle> CreateTensorFromMemory;
+        public delegate* unmanaged[Stdcall]<OrtExternalResourceImporter*, OrtExternalMemoryHandle*, OrtExternalTensorDescriptor*, OrtValueHandle*, OrtStatusHandle> CreateTensorFromMemory;
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtExternalResourceImporter *, OrtExternalSemaphoreType, _Bool *) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtExternalResourceImporter*, OrtExternalSemaphoreType, bool*, OrtStatusHandle> CanImportSemaphore;

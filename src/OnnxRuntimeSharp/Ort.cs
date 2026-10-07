@@ -128,7 +128,7 @@ public static unsafe partial class Ort
     public static OrtStatusHandle CreateSessionFromArray(OrtEnv* env, void* model_data, nuint model_data_length, OrtSessionOptions* options, OrtSession** @out) => Api->CreateSessionFromArray(env, model_data, model_data_length, options, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle Run(OrtSession* session, OrtRunOptions* run_options, sbyte** input_names, OrtValue** inputs, nuint input_len, sbyte** output_names, nuint output_names_len, OrtValue** outputs) => Api->Run(session, run_options, input_names, inputs, input_len, output_names, output_names_len, outputs);
+    public static OrtStatusHandle Run(OrtSession* session, OrtRunOptions* run_options, sbyte** input_names, OrtValueHandle* inputs, nuint input_len, sbyte** output_names, nuint output_names_len, OrtValueHandle* outputs) => Api->Run(session, run_options, input_names, inputs, input_len, output_names, output_names_len, outputs);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle CreateSessionOptions(OrtSessionOptions** options) => Api->CreateSessionOptions(options);
@@ -245,25 +245,25 @@ public static unsafe partial class Ort
     public static OrtStatusHandle RunOptionsUnsetTerminate(OrtRunOptions* options) => Api->RunOptionsUnsetTerminate(options);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateTensorAsOrtValue(OrtAllocator* allocator, long* shape, nuint shape_len, ONNXTensorElementDataType type, OrtValue** @out) => Api->CreateTensorAsOrtValue(allocator, shape, shape_len, type, @out);
+    public static OrtStatusHandle CreateTensorAsOrtValue(OrtAllocator* allocator, long* shape, nuint shape_len, ONNXTensorElementDataType type, OrtValueHandle* @out) => Api->CreateTensorAsOrtValue(allocator, shape, shape_len, type, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateTensorWithDataAsOrtValue(OrtMemoryInfo* info, void* p_data, nuint p_data_len, long* shape, nuint shape_len, ONNXTensorElementDataType type, OrtValue** @out) => Api->CreateTensorWithDataAsOrtValue(info, p_data, p_data_len, shape, shape_len, type, @out);
+    public static OrtStatusHandle CreateTensorWithDataAsOrtValue(OrtMemoryInfo* info, void* p_data, nuint p_data_len, long* shape, nuint shape_len, ONNXTensorElementDataType type, OrtValueHandle* @out) => Api->CreateTensorWithDataAsOrtValue(info, p_data, p_data_len, shape, shape_len, type, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle IsTensor(OrtValue* value, int* @out) => Api->IsTensor(value, @out);
+    public static OrtStatusHandle IsTensor(OrtValueHandle value, int* @out) => Api->IsTensor(value, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetTensorMutableData(OrtValue* value, void** @out) => Api->GetTensorMutableData(value, @out);
+    public static OrtStatusHandle GetTensorMutableData(OrtValueHandle value, void** @out) => Api->GetTensorMutableData(value, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle FillStringTensor(OrtValue* value, sbyte** s, nuint s_len) => Api->FillStringTensor(value, s, s_len);
+    public static OrtStatusHandle FillStringTensor(OrtValueHandle value, sbyte** s, nuint s_len) => Api->FillStringTensor(value, s, s_len);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetStringTensorDataLength(OrtValue* value, nuint* len) => Api->GetStringTensorDataLength(value, len);
+    public static OrtStatusHandle GetStringTensorDataLength(OrtValueHandle value, nuint* len) => Api->GetStringTensorDataLength(value, len);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetStringTensorContent(OrtValue* value, void* s, nuint s_len, nuint* offsets, nuint offsets_len) => Api->GetStringTensorContent(value, s, s_len, offsets, offsets_len);
+    public static OrtStatusHandle GetStringTensorContent(OrtValueHandle value, void* s, nuint s_len, nuint* offsets, nuint offsets_len) => Api->GetStringTensorContent(value, s, s_len, offsets, offsets_len);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle CastTypeInfoToTensorInfo(OrtTypeInfo* type_info, OrtTensorTypeAndShapeInfo** @out) => Api->CastTypeInfoToTensorInfo(type_info, @out);
@@ -296,13 +296,13 @@ public static unsafe partial class Ort
     public static OrtStatusHandle GetTensorShapeElementCount(OrtTensorTypeAndShapeInfo* info, nuint* @out) => Api->GetTensorShapeElementCount(info, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetTensorTypeAndShape(OrtValue* value, OrtTensorTypeAndShapeInfo** @out) => Api->GetTensorTypeAndShape(value, @out);
+    public static OrtStatusHandle GetTensorTypeAndShape(OrtValueHandle value, OrtTensorTypeAndShapeInfo** @out) => Api->GetTensorTypeAndShape(value, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetTypeInfo(OrtValue* value, OrtTypeInfo** @out) => Api->GetTypeInfo(value, @out);
+    public static OrtStatusHandle GetTypeInfo(OrtValueHandle value, OrtTypeInfo** @out) => Api->GetTypeInfo(value, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetValueType(OrtValue* value, ONNXType* @out) => Api->GetValueType(value, @out);
+    public static OrtStatusHandle GetValueType(OrtValueHandle value, ONNXType* @out) => Api->GetValueType(value, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle CreateMemoryInfo(sbyte* name, OrtAllocatorType type, int id, OrtMemType mem_type, OrtMemoryInfo** @out) => Api->CreateMemoryInfo(name, type, id, mem_type, @out);
@@ -341,19 +341,19 @@ public static unsafe partial class Ort
     public static OrtStatusHandle AddFreeDimensionOverride(OrtSessionOptions* options, sbyte* dim_denotation, long dim_value) => Api->AddFreeDimensionOverride(options, dim_denotation, dim_value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetValue(OrtValue* value, int index, OrtAllocator* allocator, OrtValue** @out) => Api->GetValue(value, index, allocator, @out);
+    public static OrtStatusHandle GetValue(OrtValueHandle value, int index, OrtAllocator* allocator, OrtValueHandle* @out) => Api->GetValue(value, index, allocator, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetValueCount(OrtValue* value, nuint* @out) => Api->GetValueCount(value, @out);
+    public static OrtStatusHandle GetValueCount(OrtValueHandle value, nuint* @out) => Api->GetValueCount(value, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateValue(OrtValue** @in, nuint num_values, ONNXType value_type, OrtValue** @out) => Api->CreateValue(@in, num_values, value_type, @out);
+    public static OrtStatusHandle CreateValue(OrtValueHandle* @in, nuint num_values, ONNXType value_type, OrtValueHandle* @out) => Api->CreateValue(@in, num_values, value_type, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateOpaqueValue(sbyte* domain_name, sbyte* type_name, void* data_container, nuint data_container_size, OrtValue** @out) => Api->CreateOpaqueValue(domain_name, type_name, data_container, data_container_size, @out);
+    public static OrtStatusHandle CreateOpaqueValue(sbyte* domain_name, sbyte* type_name, void* data_container, nuint data_container_size, OrtValueHandle* @out) => Api->CreateOpaqueValue(domain_name, type_name, data_container, data_container_size, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetOpaqueValue(sbyte* domain_name, sbyte* type_name, OrtValue* @in, void* data_container, nuint data_container_size) => Api->GetOpaqueValue(domain_name, type_name, @in, data_container, data_container_size);
+    public static OrtStatusHandle GetOpaqueValue(sbyte* domain_name, sbyte* type_name, OrtValueHandle @in, void* data_container, nuint data_container_size) => Api->GetOpaqueValue(domain_name, type_name, @in, data_container, data_container_size);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle KernelInfoGetAttribute_float(OrtKernelInfo* info, sbyte* name, float* @out) => Api->KernelInfoGetAttribute_float(info, name, @out);
@@ -371,10 +371,10 @@ public static unsafe partial class Ort
     public static OrtStatusHandle KernelContext_GetOutputCount(OrtKernelContext* context, nuint* @out) => Api->KernelContext_GetOutputCount(context, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle KernelContext_GetInput(OrtKernelContext* context, nuint index, OrtValue** @out) => Api->KernelContext_GetInput(context, index, @out);
+    public static OrtStatusHandle KernelContext_GetInput(OrtKernelContext* context, nuint index, OrtValueHandle* @out) => Api->KernelContext_GetInput(context, index, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle KernelContext_GetOutput(OrtKernelContext* context, nuint index, long* dim_values, nuint dim_count, OrtValue** @out) => Api->KernelContext_GetOutput(context, index, dim_values, dim_count, @out);
+    public static OrtStatusHandle KernelContext_GetOutput(OrtKernelContext* context, nuint index, long* dim_values, nuint dim_count, OrtValueHandle* @out) => Api->KernelContext_GetOutput(context, index, dim_values, dim_count, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ReleaseEnv(OrtEnv* input) => Api->ReleaseEnv(input);
@@ -389,7 +389,7 @@ public static unsafe partial class Ort
     public static void ReleaseSession(OrtSession* input) => Api->ReleaseSession(input);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ReleaseValue(OrtValue* input) => Api->ReleaseValue(input);
+    public static void ReleaseValue(OrtValueHandle input) => Api->ReleaseValue(input);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ReleaseRunOptions(OrtRunOptions* input) => Api->ReleaseRunOptions(input);
@@ -482,13 +482,13 @@ public static unsafe partial class Ort
     public static OrtStatusHandle ReleaseAvailableProviders(sbyte** ptr, int providers_length) => Api->ReleaseAvailableProviders(ptr, providers_length);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetStringTensorElementLength(OrtValue* value, nuint index, nuint* @out) => Api->GetStringTensorElementLength(value, index, @out);
+    public static OrtStatusHandle GetStringTensorElementLength(OrtValueHandle value, nuint index, nuint* @out) => Api->GetStringTensorElementLength(value, index, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetStringTensorElement(OrtValue* value, nuint s_len, nuint index, void* s) => Api->GetStringTensorElement(value, s_len, index, s);
+    public static OrtStatusHandle GetStringTensorElement(OrtValueHandle value, nuint s_len, nuint index, void* s) => Api->GetStringTensorElement(value, s_len, index, s);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle FillStringTensorElement(OrtValue* value, sbyte* s, nuint index) => Api->FillStringTensorElement(value, s, index);
+    public static OrtStatusHandle FillStringTensorElement(OrtValueHandle value, sbyte* s, nuint index) => Api->FillStringTensorElement(value, s, index);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle AddSessionConfigEntry(OrtSessionOptions* options, sbyte* config_key, sbyte* config_value) => Api->AddSessionConfigEntry(options, config_key, config_value);
@@ -509,10 +509,10 @@ public static unsafe partial class Ort
     public static void ReleaseIoBinding(OrtIoBinding* input) => Api->ReleaseIoBinding(input);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle BindInput(OrtIoBinding* binding_ptr, sbyte* name, OrtValue* val_ptr) => Api->BindInput(binding_ptr, name, val_ptr);
+    public static OrtStatusHandle BindInput(OrtIoBinding* binding_ptr, sbyte* name, OrtValueHandle val_ptr) => Api->BindInput(binding_ptr, name, val_ptr);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle BindOutput(OrtIoBinding* binding_ptr, sbyte* name, OrtValue* val_ptr) => Api->BindOutput(binding_ptr, name, val_ptr);
+    public static OrtStatusHandle BindOutput(OrtIoBinding* binding_ptr, sbyte* name, OrtValueHandle val_ptr) => Api->BindOutput(binding_ptr, name, val_ptr);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle BindOutputToDevice(OrtIoBinding* binding_ptr, sbyte* name, OrtMemoryInfo* mem_info_ptr) => Api->BindOutputToDevice(binding_ptr, name, mem_info_ptr);
@@ -521,7 +521,7 @@ public static unsafe partial class Ort
     public static OrtStatusHandle GetBoundOutputNames(OrtIoBinding* binding_ptr, OrtAllocator* allocator, sbyte** buffer, nuint** lengths, nuint* count) => Api->GetBoundOutputNames(binding_ptr, allocator, buffer, lengths, count);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetBoundOutputValues(OrtIoBinding* binding_ptr, OrtAllocator* allocator, OrtValue*** output, nuint* output_count) => Api->GetBoundOutputValues(binding_ptr, allocator, output, output_count);
+    public static OrtStatusHandle GetBoundOutputValues(OrtIoBinding* binding_ptr, OrtAllocator* allocator, OrtValueHandle** output, nuint* output_count) => Api->GetBoundOutputValues(binding_ptr, allocator, output, output_count);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ClearBoundInputs(OrtIoBinding* binding_ptr) => Api->ClearBoundInputs(binding_ptr);
@@ -530,7 +530,7 @@ public static unsafe partial class Ort
     public static void ClearBoundOutputs(OrtIoBinding* binding_ptr) => Api->ClearBoundOutputs(binding_ptr);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle TensorAt(OrtValue* value, long* location_values, nuint location_values_count, void** @out) => Api->TensorAt(value, location_values, location_values_count, @out);
+    public static OrtStatusHandle TensorAt(OrtValueHandle value, long* location_values, nuint location_values_count, void** @out) => Api->TensorAt(value, location_values, location_values_count, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle CreateAndRegisterAllocator(OrtEnv* env, OrtMemoryInfo* mem_info, OrtArenaCfg* arena_cfg) => Api->CreateAndRegisterAllocator(env, mem_info, arena_cfg);
@@ -551,7 +551,7 @@ public static unsafe partial class Ort
     public static OrtStatusHandle SetGlobalSpinControl(OrtThreadingOptions* tp_options, int allow_spinning) => Api->SetGlobalSpinControl(tp_options, allow_spinning);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle AddInitializer(OrtSessionOptions* options, sbyte* name, OrtValue* val) => Api->AddInitializer(options, name, val);
+    public static OrtStatusHandle AddInitializer(OrtSessionOptions* options, sbyte* name, OrtValueHandle val) => Api->AddInitializer(options, name, val);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle CreateEnvWithCustomLoggerAndGlobalThreadPools(delegate* unmanaged[Stdcall]<void*, OrtLoggingLevel, sbyte*, sbyte*, sbyte*, sbyte*, void> logging_function, void* logger_param, OrtLoggingLevel log_severity_level, sbyte* logid, OrtThreadingOptions* tp_options, OrtEnv** @out) => Api->CreateEnvWithCustomLoggerAndGlobalThreadPools(logging_function, logger_param, log_severity_level, logid, tp_options, @out);
@@ -635,55 +635,55 @@ public static unsafe partial class Ort
     public static OrtStatusHandle UnregisterAllocator(OrtEnv* env, OrtMemoryInfo* mem_info) => Api->UnregisterAllocator(env, mem_info);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle IsSparseTensor(OrtValue* value, int* @out) => Api->IsSparseTensor(value, @out);
+    public static OrtStatusHandle IsSparseTensor(OrtValueHandle value, int* @out) => Api->IsSparseTensor(value, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateSparseTensorAsOrtValue(OrtAllocator* allocator, long* dense_shape, nuint dense_shape_len, ONNXTensorElementDataType type, OrtValue** @out) => Api->CreateSparseTensorAsOrtValue(allocator, dense_shape, dense_shape_len, type, @out);
+    public static OrtStatusHandle CreateSparseTensorAsOrtValue(OrtAllocator* allocator, long* dense_shape, nuint dense_shape_len, ONNXTensorElementDataType type, OrtValueHandle* @out) => Api->CreateSparseTensorAsOrtValue(allocator, dense_shape, dense_shape_len, type, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle FillSparseTensorCoo(OrtValue* ort_value, OrtMemoryInfo* data_mem_info, long* values_shape, nuint values_shape_len, void* values, long* indices_data, nuint indices_num) => Api->FillSparseTensorCoo(ort_value, data_mem_info, values_shape, values_shape_len, values, indices_data, indices_num);
+    public static OrtStatusHandle FillSparseTensorCoo(OrtValueHandle ort_value, OrtMemoryInfo* data_mem_info, long* values_shape, nuint values_shape_len, void* values, long* indices_data, nuint indices_num) => Api->FillSparseTensorCoo(ort_value, data_mem_info, values_shape, values_shape_len, values, indices_data, indices_num);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle FillSparseTensorCsr(OrtValue* ort_value, OrtMemoryInfo* data_mem_info, long* values_shape, nuint values_shape_len, void* values, long* inner_indices_data, nuint inner_indices_num, long* outer_indices_data, nuint outer_indices_num) => Api->FillSparseTensorCsr(ort_value, data_mem_info, values_shape, values_shape_len, values, inner_indices_data, inner_indices_num, outer_indices_data, outer_indices_num);
+    public static OrtStatusHandle FillSparseTensorCsr(OrtValueHandle ort_value, OrtMemoryInfo* data_mem_info, long* values_shape, nuint values_shape_len, void* values, long* inner_indices_data, nuint inner_indices_num, long* outer_indices_data, nuint outer_indices_num) => Api->FillSparseTensorCsr(ort_value, data_mem_info, values_shape, values_shape_len, values, inner_indices_data, inner_indices_num, outer_indices_data, outer_indices_num);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle FillSparseTensorBlockSparse(OrtValue* ort_value, OrtMemoryInfo* data_mem_info, long* values_shape, nuint values_shape_len, void* values, long* indices_shape_data, nuint indices_shape_len, int* indices_data) => Api->FillSparseTensorBlockSparse(ort_value, data_mem_info, values_shape, values_shape_len, values, indices_shape_data, indices_shape_len, indices_data);
+    public static OrtStatusHandle FillSparseTensorBlockSparse(OrtValueHandle ort_value, OrtMemoryInfo* data_mem_info, long* values_shape, nuint values_shape_len, void* values, long* indices_shape_data, nuint indices_shape_len, int* indices_data) => Api->FillSparseTensorBlockSparse(ort_value, data_mem_info, values_shape, values_shape_len, values, indices_shape_data, indices_shape_len, indices_data);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateSparseTensorWithValuesAsOrtValue(OrtMemoryInfo* info, void* p_data, long* dense_shape, nuint dense_shape_len, long* values_shape, nuint values_shape_len, ONNXTensorElementDataType type, OrtValue** @out) => Api->CreateSparseTensorWithValuesAsOrtValue(info, p_data, dense_shape, dense_shape_len, values_shape, values_shape_len, type, @out);
+    public static OrtStatusHandle CreateSparseTensorWithValuesAsOrtValue(OrtMemoryInfo* info, void* p_data, long* dense_shape, nuint dense_shape_len, long* values_shape, nuint values_shape_len, ONNXTensorElementDataType type, OrtValueHandle* @out) => Api->CreateSparseTensorWithValuesAsOrtValue(info, p_data, dense_shape, dense_shape_len, values_shape, values_shape_len, type, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle UseCooIndices(OrtValue* ort_value, long* indices_data, nuint indices_num) => Api->UseCooIndices(ort_value, indices_data, indices_num);
+    public static OrtStatusHandle UseCooIndices(OrtValueHandle ort_value, long* indices_data, nuint indices_num) => Api->UseCooIndices(ort_value, indices_data, indices_num);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle UseCsrIndices(OrtValue* ort_value, long* inner_data, nuint inner_num, long* outer_data, nuint outer_num) => Api->UseCsrIndices(ort_value, inner_data, inner_num, outer_data, outer_num);
+    public static OrtStatusHandle UseCsrIndices(OrtValueHandle ort_value, long* inner_data, nuint inner_num, long* outer_data, nuint outer_num) => Api->UseCsrIndices(ort_value, inner_data, inner_num, outer_data, outer_num);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle UseBlockSparseIndices(OrtValue* ort_value, long* indices_shape, nuint indices_shape_len, int* indices_data) => Api->UseBlockSparseIndices(ort_value, indices_shape, indices_shape_len, indices_data);
+    public static OrtStatusHandle UseBlockSparseIndices(OrtValueHandle ort_value, long* indices_shape, nuint indices_shape_len, int* indices_data) => Api->UseBlockSparseIndices(ort_value, indices_shape, indices_shape_len, indices_data);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetSparseTensorFormat(OrtValue* ort_value, OrtSparseFormat* @out) => Api->GetSparseTensorFormat(ort_value, @out);
+    public static OrtStatusHandle GetSparseTensorFormat(OrtValueHandle ort_value, OrtSparseFormat* @out) => Api->GetSparseTensorFormat(ort_value, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetSparseTensorValuesTypeAndShape(OrtValue* ort_value, OrtTensorTypeAndShapeInfo** @out) => Api->GetSparseTensorValuesTypeAndShape(ort_value, @out);
+    public static OrtStatusHandle GetSparseTensorValuesTypeAndShape(OrtValueHandle ort_value, OrtTensorTypeAndShapeInfo** @out) => Api->GetSparseTensorValuesTypeAndShape(ort_value, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetSparseTensorValues(OrtValue* ort_value, void** @out) => Api->GetSparseTensorValues(ort_value, @out);
+    public static OrtStatusHandle GetSparseTensorValues(OrtValueHandle ort_value, void** @out) => Api->GetSparseTensorValues(ort_value, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetSparseTensorIndicesTypeShape(OrtValue* ort_value, OrtSparseIndicesFormat indices_format, OrtTensorTypeAndShapeInfo** @out) => Api->GetSparseTensorIndicesTypeShape(ort_value, indices_format, @out);
+    public static OrtStatusHandle GetSparseTensorIndicesTypeShape(OrtValueHandle ort_value, OrtSparseIndicesFormat indices_format, OrtTensorTypeAndShapeInfo** @out) => Api->GetSparseTensorIndicesTypeShape(ort_value, indices_format, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetSparseTensorIndices(OrtValue* ort_value, OrtSparseIndicesFormat indices_format, nuint* num_indices, void** indices) => Api->GetSparseTensorIndices(ort_value, indices_format, num_indices, indices);
+    public static OrtStatusHandle GetSparseTensorIndices(OrtValueHandle ort_value, OrtSparseIndicesFormat indices_format, nuint* num_indices, void** indices) => Api->GetSparseTensorIndices(ort_value, indices_format, num_indices, indices);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle HasValue(OrtValue* value, int* @out) => Api->HasValue(value, @out);
+    public static OrtStatusHandle HasValue(OrtValueHandle value, int* @out) => Api->HasValue(value, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle KernelContext_GetGPUComputeStream(OrtKernelContext* context, void** @out) => Api->KernelContext_GetGPUComputeStream(context, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetTensorMemoryInfo(OrtValue* value, OrtMemoryInfo** mem_info) => Api->GetTensorMemoryInfo(value, mem_info);
+    public static OrtStatusHandle GetTensorMemoryInfo(OrtValueHandle value, OrtMemoryInfo** mem_info) => Api->GetTensorMemoryInfo(value, mem_info);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle GetExecutionProviderApi(sbyte* provider_name, uint version, void** provider_api) => Api->GetExecutionProviderApi(provider_name, version, provider_api);
@@ -731,7 +731,7 @@ public static unsafe partial class Ort
     public static OrtStatusHandle SessionOptionsAppendExecutionProvider_MIGraphX(OrtSessionOptions* options, OrtMIGraphXProviderOptions* migraphx_options) => Api->SessionOptionsAppendExecutionProvider_MIGraphX(options, migraphx_options);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle AddExternalInitializers(OrtSessionOptions* options, sbyte** initializer_names, OrtValue** initializers, nuint num_initializers) => Api->AddExternalInitializers(options, initializer_names, initializers, num_initializers);
+    public static OrtStatusHandle AddExternalInitializers(OrtSessionOptions* options, sbyte** initializer_names, OrtValueHandle* initializers, nuint num_initializers) => Api->AddExternalInitializers(options, initializer_names, initializers, num_initializers);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle CreateOpAttr(sbyte* name, void* data, int len, OrtOpAttrType type, OrtOpAttr** op_attr) => Api->CreateOpAttr(name, data, len, type, op_attr);
@@ -743,7 +743,7 @@ public static unsafe partial class Ort
     public static OrtStatusHandle CreateOp(OrtKernelInfo* info, sbyte* op_name, sbyte* domain, int version, sbyte** type_constraint_names, ONNXTensorElementDataType* type_constraint_values, int type_constraint_count, OrtOpAttr** attr_values, int attr_count, int input_count, int output_count, OrtOp** ort_op) => Api->CreateOp(info, op_name, domain, version, type_constraint_names, type_constraint_values, type_constraint_count, attr_values, attr_count, input_count, output_count, ort_op);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle InvokeOp(OrtKernelContext* context, OrtOp* ort_op, OrtValue** input_values, int input_count, OrtValue** output_values, int output_count) => Api->InvokeOp(context, ort_op, input_values, input_count, output_values, output_count);
+    public static OrtStatusHandle InvokeOp(OrtKernelContext* context, OrtOp* ort_op, OrtValueHandle* input_values, int input_count, OrtValueHandle* output_values, int output_count) => Api->InvokeOp(context, ort_op, input_values, input_count, output_values, output_count);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ReleaseOp(OrtOp* input) => Api->ReleaseOp(input);
@@ -809,7 +809,7 @@ public static unsafe partial class Ort
     public static OrtStatusHandle KernelInfo_GetOutputTypeInfo(OrtKernelInfo* info, nuint index, OrtTypeInfo** type_info) => Api->KernelInfo_GetOutputTypeInfo(info, index, type_info);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle KernelInfoGetAttribute_tensor(OrtKernelInfo* info, sbyte* name, OrtAllocator* allocator, OrtValue** @out) => Api->KernelInfoGetAttribute_tensor(info, name, allocator, @out);
+    public static OrtStatusHandle KernelInfoGetAttribute_tensor(OrtKernelInfo* info, sbyte* name, OrtAllocator* allocator, OrtValueHandle* @out) => Api->KernelInfoGetAttribute_tensor(info, name, allocator, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle HasSessionConfigEntry(OrtSessionOptions* options, sbyte* config_key, int* @out) => Api->HasSessionConfigEntry(options, config_key, @out);
@@ -848,7 +848,7 @@ public static unsafe partial class Ort
     public static OrtStatusHandle Logger_GetLoggingSeverityLevel(OrtLogger* logger, OrtLoggingLevel* @out) => Api->Logger_GetLoggingSeverityLevel(logger, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle KernelInfoGetConstantInput_tensor(OrtKernelInfo* info, nuint index, int* is_constant, OrtValue** @out) => Api->KernelInfoGetConstantInput_tensor(info, index, is_constant, @out);
+    public static OrtStatusHandle KernelInfoGetConstantInput_tensor(OrtKernelInfo* info, nuint index, int* is_constant, OrtValueHandle* @out) => Api->KernelInfoGetConstantInput_tensor(info, index, is_constant, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle CastTypeInfoToOptionalTypeInfo(OrtTypeInfo* type_info, OrtOptionalTypeInfo** @out) => Api->CastTypeInfoToOptionalTypeInfo(type_info, @out);
@@ -857,7 +857,7 @@ public static unsafe partial class Ort
     public static OrtStatusHandle GetOptionalContainedTypeInfo(OrtOptionalTypeInfo* optional_type_info, OrtTypeInfo** @out) => Api->GetOptionalContainedTypeInfo(optional_type_info, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetResizedStringTensorElementBuffer(OrtValue* value, nuint index, nuint length_in_bytes, sbyte** buffer) => Api->GetResizedStringTensorElementBuffer(value, index, length_in_bytes, buffer);
+    public static OrtStatusHandle GetResizedStringTensorElementBuffer(OrtValueHandle value, nuint index, nuint length_in_bytes, sbyte** buffer) => Api->GetResizedStringTensorElementBuffer(value, index, length_in_bytes, buffer);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle KernelContext_GetAllocator(OrtKernelContext* context, OrtMemoryInfo* mem_info, OrtAllocator** @out) => Api->KernelContext_GetAllocator(context, mem_info, @out);
@@ -881,7 +881,7 @@ public static unsafe partial class Ort
     public static OrtStatusHandle CreateAndRegisterAllocatorV2(OrtEnv* env, sbyte* provider_type, OrtMemoryInfo* mem_info, OrtArenaCfg* arena_cfg, sbyte** provider_options_keys, sbyte** provider_options_values, nuint num_keys) => Api->CreateAndRegisterAllocatorV2(env, provider_type, mem_info, arena_cfg, provider_options_keys, provider_options_values, num_keys);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle RunAsync(OrtSession* session, OrtRunOptions* run_options, sbyte** input_names, OrtValue** input, nuint input_len, sbyte** output_names, nuint output_names_len, OrtValue** output, delegate* unmanaged[Cdecl]<void*, OrtValue**, nuint, void*, void> run_async_callback, void* user_data) => Api->RunAsync(session, run_options, input_names, input, input_len, output_names, output_names_len, output, run_async_callback, user_data);
+    public static OrtStatusHandle RunAsync(OrtSession* session, OrtRunOptions* run_options, sbyte** input_names, OrtValueHandle* input, nuint input_len, sbyte** output_names, nuint output_names_len, OrtValueHandle* output, delegate* unmanaged[Cdecl]<void*, OrtValueHandle*, nuint, void*, void> run_async_callback, void* user_data) => Api->RunAsync(session, run_options, input_names, input, input_len, output_names, output_names_len, output, run_async_callback, user_data);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle UpdateTensorRTProviderOptionsWithValue(OrtTensorRTProviderOptionsV2* tensorrt_options, sbyte* key, void* value) => Api->UpdateTensorRTProviderOptionsWithValue(tensorrt_options, key, value);
@@ -977,7 +977,7 @@ public static unsafe partial class Ort
     public static OrtModelEditorApi* GetModelEditorApi() => Api->GetModelEditorApi();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateTensorWithDataAndDeleterAsOrtValue(OrtAllocator* deleter, void* p_data, nuint p_data_len, long* shape, nuint shape_len, ONNXTensorElementDataType type, OrtValue** @out) => Api->CreateTensorWithDataAndDeleterAsOrtValue(deleter, p_data, p_data_len, shape, shape_len, type, @out);
+    public static OrtStatusHandle CreateTensorWithDataAndDeleterAsOrtValue(OrtAllocator* deleter, void* p_data, nuint p_data_len, long* shape, nuint shape_len, ONNXTensorElementDataType type, OrtValueHandle* @out) => Api->CreateTensorWithDataAndDeleterAsOrtValue(deleter, p_data, p_data_len, shape, shape_len, type, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle SessionOptionsSetLoadCancellationFlag(OrtSessionOptions* options, byte cancel) => Api->SessionOptionsSetLoadCancellationFlag(options, cancel);
@@ -1055,7 +1055,7 @@ public static unsafe partial class Ort
     public static OrtEpApi* GetEpApi() => Api->GetEpApi();
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetTensorSizeInBytes(OrtValue* ort_value, nuint* size) => Api->GetTensorSizeInBytes(ort_value, size);
+    public static OrtStatusHandle GetTensorSizeInBytes(OrtValueHandle ort_value, nuint* size) => Api->GetTensorSizeInBytes(ort_value, size);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle AllocatorGetStats(OrtAllocator* ort_allocator, OrtKeyValuePairs** @out) => Api->AllocatorGetStats(ort_allocator, @out);
@@ -1079,7 +1079,7 @@ public static unsafe partial class Ort
     public static OrtStatusHandle ValueInfo_GetValueConsumers(OrtValueInfo* value_info, OrtNode** nodes, long* input_indices, nuint num_consumers) => Api->ValueInfo_GetValueConsumers(value_info, nodes, input_indices, num_consumers);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle ValueInfo_GetInitializerValue(OrtValueInfo* value_info, OrtValue** initializer_value) => Api->ValueInfo_GetInitializerValue(value_info, initializer_value);
+    public static OrtStatusHandle ValueInfo_GetInitializerValue(OrtValueInfo* value_info, OrtValueHandle* initializer_value) => Api->ValueInfo_GetInitializerValue(value_info, initializer_value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle ValueInfo_GetExternalInitializerInfo(OrtValueInfo* value_info, OrtExternalInitializerInfo** info) => Api->ValueInfo_GetExternalInitializerInfo(value_info, info);
@@ -1187,7 +1187,7 @@ public static unsafe partial class Ort
     public static OrtStatusHandle Node_GetAttributeByName(OrtNode* node, sbyte* attribute_name, OrtOpAttr** attribute) => Api->Node_GetAttributeByName(node, attribute_name, attribute);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle OpAttr_GetTensorAttributeAsOrtValue(OrtOpAttr* attribute, OrtValue** attr_tensor) => Api->OpAttr_GetTensorAttributeAsOrtValue(attribute, attr_tensor);
+    public static OrtStatusHandle OpAttr_GetTensorAttributeAsOrtValue(OrtOpAttr* attribute, OrtValueHandle* attr_tensor) => Api->OpAttr_GetTensorAttributeAsOrtValue(attribute, attr_tensor);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle OpAttr_GetType(OrtOpAttr* attribute, OrtOpAttrType* type) => Api->OpAttr_GetType(attribute, type);
@@ -1235,7 +1235,7 @@ public static unsafe partial class Ort
     public static OrtStatusHandle ReleaseSharedAllocator(OrtEnv* env, OrtEpDevice* ep_device, OrtDeviceMemoryType mem_type) => Api->ReleaseSharedAllocator(env, ep_device, mem_type);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetTensorData(OrtValue* value, void** @out) => Api->GetTensorData(value, @out);
+    public static OrtStatusHandle GetTensorData(OrtValueHandle value, void** @out) => Api->GetTensorData(value, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle GetSessionOptionsConfigEntries(OrtSessionOptions* options, OrtKeyValuePairs** @out) => Api->GetSessionOptionsConfigEntries(options, @out);
@@ -1259,7 +1259,7 @@ public static unsafe partial class Ort
     public static void ReleaseSyncStream(OrtSyncStream* input) => Api->ReleaseSyncStream(input);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CopyTensors(OrtEnv* env, OrtValue** src_tensors, OrtValue** dst_tensors, OrtSyncStream* stream, nuint num_tensors) => Api->CopyTensors(env, src_tensors, dst_tensors, stream, num_tensors);
+    public static OrtStatusHandle CopyTensors(OrtEnv* env, OrtValueHandle* src_tensors, OrtValueHandle* dst_tensors, OrtSyncStream* stream, nuint num_tensors) => Api->CopyTensors(env, src_tensors, dst_tensors, stream, num_tensors);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle Graph_GetModelMetadata(OrtGraph* graph, OrtModelMetadata** @out) => Api->Graph_GetModelMetadata(graph, @out);
@@ -1343,7 +1343,7 @@ public static unsafe partial class Ort
     public static void RunOptionsSetSyncStream(OrtRunOptions* options, OrtSyncStream* sync_stream) => Api->RunOptionsSetSyncStream(options, sync_stream);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetTensorElementTypeAndShapeDataReference(OrtValue* value, ONNXTensorElementDataType* elem_type, long** shape_data, nuint* shape_data_count) => Api->GetTensorElementTypeAndShapeDataReference(value, elem_type, shape_data, shape_data_count);
+    public static OrtStatusHandle GetTensorElementTypeAndShapeDataReference(OrtValueHandle value, ONNXTensorElementDataType* elem_type, long** shape_data, nuint* shape_data_count) => Api->GetTensorElementTypeAndShapeDataReference(value, elem_type, shape_data, shape_data_count);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle RunOptionsEnableProfiling(OrtRunOptions* options, ushort* profile_file_prefix) => Api->RunOptionsEnableProfiling(options, profile_file_prefix);
