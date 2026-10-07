@@ -12,7 +12,7 @@ public sealed unsafe class OrtEnvironment : SafeHandle
         Ort.OrtLoggingLevel loggingLevel = Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING)
         : base(IntPtr.Zero, ownsHandle: true)
     {
-        SetHandle((IntPtr)Ort.CreateEnvironment(logId, loggingLevel));
+        SetHandle(Ort.CreateEnvironment(logId, loggingLevel).Value);
     }
 
     public IReadOnlyList<OrtEpDevice> GetExecutionProviderDevices()
@@ -24,7 +24,7 @@ public sealed unsafe class OrtEnvironment : SafeHandle
             DangerousAddRef(ref referenceAdded);
             Ort.OrtEpDevice** devices;
             nuint deviceCount;
-            Ort.GetEpDevices(Pointer, &devices, &deviceCount).Ok();
+            Ort.GetEpDevices(Handle, &devices, &deviceCount).Ok();
             var result = new OrtEpDevice[checked((int)deviceCount)];
             for (var index = 0; index < result.Length; ++index)
             {
@@ -56,7 +56,7 @@ public sealed unsafe class OrtEnvironment : SafeHandle
                 fixed (char* pathPointer = libraryPath)
                 {
                     Ort.Ok(Ort.RegisterExecutionProviderLibrary(
-                        Pointer,
+                        Handle,
                         (sbyte*)utf8Name,
                         (ushort*)pathPointer));
                 }
@@ -67,7 +67,7 @@ public sealed unsafe class OrtEnvironment : SafeHandle
                 try
                 {
                     Ort.Ok(Ort.RegisterExecutionProviderLibrary(
-                        Pointer,
+                        Handle,
                         (sbyte*)utf8Name,
                         (ushort*)utf8Path));
                 }
@@ -96,7 +96,7 @@ public sealed unsafe class OrtEnvironment : SafeHandle
         try
         {
             DangerousAddRef(ref referenceAdded);
-            Ort.Ok(Ort.UnregisterExecutionProviderLibrary(Pointer, (sbyte*)utf8Name));
+            Ort.Ok(Ort.UnregisterExecutionProviderLibrary(Handle, (sbyte*)utf8Name));
         }
         finally
         {
@@ -111,16 +111,16 @@ public sealed unsafe class OrtEnvironment : SafeHandle
     public void SetLogLevel(Ort.OrtLoggingLevel loggingLevel)
     {
         ThrowIfDisposed();
-        Ort.Ok(Ort.UpdateEnvWithCustomLogLevel(Pointer, loggingLevel));
+        Ort.Ok(Ort.UpdateEnvWithCustomLogLevel(Handle, loggingLevel));
     }
 
     public override bool IsInvalid => handle == IntPtr.Zero;
 
-    internal Ort.OrtEnv* Pointer => (Ort.OrtEnv*)handle;
+    internal Ort.OrtEnvHandle Handle => new Ort.OrtEnvHandle(handle);
 
     protected override bool ReleaseHandle()
     {
-        Ort.ReleaseEnv(Pointer);
+        Ort.ReleaseEnv(Handle);
         return true;
     }
 

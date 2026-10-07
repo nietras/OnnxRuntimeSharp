@@ -8,6 +8,21 @@ namespace OnnxRuntimeSharp.Test;
 public class OrtEnvironmentTest
 {
     [TestMethod]
+    public unsafe void NativeEnvironmentHandleHasPointerSize()
+    {
+        Assert.AreEqual(IntPtr.Size, sizeof(Ort.OrtEnvHandle));
+    }
+
+    [TestMethod]
+    public void NativeEnvironmentHandlePreservesPointer()
+    {
+        var environment = new Ort.OrtEnvHandle(new IntPtr(42));
+        Assert.AreEqual(new IntPtr(42), environment.Value);
+        Assert.IsFalse(environment.IsNull);
+        Assert.IsTrue(default(Ort.OrtEnvHandle).IsNull);
+    }
+
+    [TestMethod]
     public void AvailableExecutionProvidersIncludeCpu()
     {
         CollectionAssert.Contains(TestData.AvailableExecutionProviders.ToList(), "CPUExecutionProvider");

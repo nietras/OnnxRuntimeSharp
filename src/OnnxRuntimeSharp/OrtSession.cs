@@ -35,7 +35,7 @@ public sealed unsafe class OrtSession : SafeHandle
             {
                 Ort.OrtSession* session;
                 Ort.Ok(Ort.CreateSessionFromArray(
-                    (Ort.OrtEnv*)environment.DangerousGetHandle(),
+                    environment.Handle,
                     modelPointer,
                     (nuint)model.Length,
                     (Ort.OrtSessionOptions*)options.DangerousGetHandle(),
@@ -87,7 +87,7 @@ public sealed unsafe class OrtSession : SafeHandle
                 fixed (char* pathPointer = modelPath)
                 {
                     Ort.Ok(Ort.CreateSession(
-                        environment.Pointer,
+                        environment.Handle,
                         (ushort*)pathPointer,
                         options.Pointer,
                         &session));
@@ -99,7 +99,7 @@ public sealed unsafe class OrtSession : SafeHandle
                 try
                 {
                     Ort.Ok(Ort.CreateSession(
-                        environment.Pointer,
+                        environment.Handle,
                         (ushort*)utf8Path,
                         options.Pointer,
                         &session));

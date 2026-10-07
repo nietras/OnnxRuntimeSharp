@@ -304,7 +304,7 @@ public sealed class OrtSessionOptions : SafeHandle
             }
             Ort.Ok(Ort.SessionOptionsAppendExecutionProvider_V2(
                 Pointer,
-                environment.Pointer,
+                environment.Handle,
                 nativeDevices,
                 (nuint)devices.Length,
                 keys,

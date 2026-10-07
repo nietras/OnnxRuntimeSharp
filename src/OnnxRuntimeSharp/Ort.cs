@@ -52,13 +52,13 @@ public static unsafe partial class Ort
         AllocatorFree(allocator, value).Ok();
     }
 
-    internal static OrtEnv* CreateEnvironment(string logId, OrtLoggingLevel loggingLevel)
+    internal static OrtEnvHandle CreateEnvironment(string logId, OrtLoggingLevel loggingLevel)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(logId);
         var utf8LogId = Utf8StringMarshaller.ConvertToUnmanaged(logId);
         try
         {
-            OrtEnv* environment;
+            OrtEnvHandle environment;
             CreateEnv(loggingLevel, (sbyte*)utf8LogId, &environment).Ok();
             try
             {
@@ -110,22 +110,22 @@ public static unsafe partial class Ort
     public static sbyte* GetErrorMessage(OrtStatusHandle status) => Api->GetErrorMessage(status);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateEnv(OrtLoggingLevel log_severity_level, sbyte* logid, OrtEnv** @out) => Api->CreateEnv(log_severity_level, logid, @out);
+    public static OrtStatusHandle CreateEnv(OrtLoggingLevel log_severity_level, sbyte* logid, OrtEnvHandle* @out) => Api->CreateEnv(log_severity_level, logid, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateEnvWithCustomLogger(delegate* unmanaged[Stdcall]<void*, OrtLoggingLevel, sbyte*, sbyte*, sbyte*, sbyte*, void> logging_function, void* logger_param, OrtLoggingLevel log_severity_level, sbyte* logid, OrtEnv** @out) => Api->CreateEnvWithCustomLogger(logging_function, logger_param, log_severity_level, logid, @out);
+    public static OrtStatusHandle CreateEnvWithCustomLogger(delegate* unmanaged[Stdcall]<void*, OrtLoggingLevel, sbyte*, sbyte*, sbyte*, sbyte*, void> logging_function, void* logger_param, OrtLoggingLevel log_severity_level, sbyte* logid, OrtEnvHandle* @out) => Api->CreateEnvWithCustomLogger(logging_function, logger_param, log_severity_level, logid, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle EnableTelemetryEvents(OrtEnv* env) => Api->EnableTelemetryEvents(env);
+    public static OrtStatusHandle EnableTelemetryEvents(OrtEnvHandle env) => Api->EnableTelemetryEvents(env);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle DisableTelemetryEvents(OrtEnv* env) => Api->DisableTelemetryEvents(env);
+    public static OrtStatusHandle DisableTelemetryEvents(OrtEnvHandle env) => Api->DisableTelemetryEvents(env);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateSession(OrtEnv* env, ushort* model_path, OrtSessionOptions* options, OrtSession** @out) => Api->CreateSession(env, model_path, options, @out);
+    public static OrtStatusHandle CreateSession(OrtEnvHandle env, ushort* model_path, OrtSessionOptions* options, OrtSession** @out) => Api->CreateSession(env, model_path, options, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateSessionFromArray(OrtEnv* env, void* model_data, nuint model_data_length, OrtSessionOptions* options, OrtSession** @out) => Api->CreateSessionFromArray(env, model_data, model_data_length, options, @out);
+    public static OrtStatusHandle CreateSessionFromArray(OrtEnvHandle env, void* model_data, nuint model_data_length, OrtSessionOptions* options, OrtSession** @out) => Api->CreateSessionFromArray(env, model_data, model_data_length, options, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle Run(OrtSession* session, OrtRunOptions* run_options, sbyte** input_names, OrtValueHandle* inputs, nuint input_len, sbyte** output_names, nuint output_names_len, OrtValueHandle* outputs) => Api->Run(session, run_options, input_names, inputs, input_len, output_names, output_names_len, outputs);
@@ -377,7 +377,7 @@ public static unsafe partial class Ort
     public static OrtStatusHandle KernelContext_GetOutput(OrtKernelContext* context, nuint index, long* dim_values, nuint dim_count, OrtValueHandle* @out) => Api->KernelContext_GetOutput(context, index, dim_values, dim_count, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void ReleaseEnv(OrtEnv* input) => Api->ReleaseEnv(input);
+    public static void ReleaseEnv(OrtEnvHandle input) => Api->ReleaseEnv(input);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ReleaseStatus(OrtStatusHandle input) => Api->ReleaseStatus(input);
@@ -458,7 +458,7 @@ public static unsafe partial class Ort
     public static void ReleaseModelMetadata(OrtModelMetadata* input) => Api->ReleaseModelMetadata(input);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateEnvWithGlobalThreadPools(OrtLoggingLevel log_severity_level, sbyte* logid, OrtThreadingOptions* tp_options, OrtEnv** @out) => Api->CreateEnvWithGlobalThreadPools(log_severity_level, logid, tp_options, @out);
+    public static OrtStatusHandle CreateEnvWithGlobalThreadPools(OrtLoggingLevel log_severity_level, sbyte* logid, OrtThreadingOptions* tp_options, OrtEnvHandle* @out) => Api->CreateEnvWithGlobalThreadPools(log_severity_level, logid, tp_options, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle DisablePerSessionThreads(OrtSessionOptions* options) => Api->DisablePerSessionThreads(options);
@@ -533,10 +533,10 @@ public static unsafe partial class Ort
     public static OrtStatusHandle TensorAt(OrtValueHandle value, long* location_values, nuint location_values_count, void** @out) => Api->TensorAt(value, location_values, location_values_count, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateAndRegisterAllocator(OrtEnv* env, OrtMemoryInfo* mem_info, OrtArenaCfg* arena_cfg) => Api->CreateAndRegisterAllocator(env, mem_info, arena_cfg);
+    public static OrtStatusHandle CreateAndRegisterAllocator(OrtEnvHandle env, OrtMemoryInfo* mem_info, OrtArenaCfg* arena_cfg) => Api->CreateAndRegisterAllocator(env, mem_info, arena_cfg);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle SetLanguageProjection(OrtEnv* ort_env, OrtLanguageProjection projection) => Api->SetLanguageProjection(ort_env, projection);
+    public static OrtStatusHandle SetLanguageProjection(OrtEnvHandle ort_env, OrtLanguageProjection projection) => Api->SetLanguageProjection(ort_env, projection);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle SessionGetProfilingStartTimeNs(OrtSession* session, ulong* @out) => Api->SessionGetProfilingStartTimeNs(session, @out);
@@ -554,7 +554,7 @@ public static unsafe partial class Ort
     public static OrtStatusHandle AddInitializer(OrtSessionOptions* options, sbyte* name, OrtValueHandle val) => Api->AddInitializer(options, name, val);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateEnvWithCustomLoggerAndGlobalThreadPools(delegate* unmanaged[Stdcall]<void*, OrtLoggingLevel, sbyte*, sbyte*, sbyte*, sbyte*, void> logging_function, void* logger_param, OrtLoggingLevel log_severity_level, sbyte* logid, OrtThreadingOptions* tp_options, OrtEnv** @out) => Api->CreateEnvWithCustomLoggerAndGlobalThreadPools(logging_function, logger_param, log_severity_level, logid, tp_options, @out);
+    public static OrtStatusHandle CreateEnvWithCustomLoggerAndGlobalThreadPools(delegate* unmanaged[Stdcall]<void*, OrtLoggingLevel, sbyte*, sbyte*, sbyte*, sbyte*, void> logging_function, void* logger_param, OrtLoggingLevel log_severity_level, sbyte* logid, OrtThreadingOptions* tp_options, OrtEnvHandle* @out) => Api->CreateEnvWithCustomLoggerAndGlobalThreadPools(logging_function, logger_param, log_severity_level, logid, tp_options, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle SessionOptionsAppendExecutionProvider_CUDA(OrtSessionOptions* options, OrtCUDAProviderOptions* cuda_options) => Api->SessionOptionsAppendExecutionProvider_CUDA(options, cuda_options);
@@ -605,10 +605,10 @@ public static unsafe partial class Ort
     public static void ReleasePrepackedWeightsContainer(OrtPrepackedWeightsContainer* input) => Api->ReleasePrepackedWeightsContainer(input);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateSessionWithPrepackedWeightsContainer(OrtEnv* env, ushort* model_path, OrtSessionOptions* options, OrtPrepackedWeightsContainer* prepacked_weights_container, OrtSession** @out) => Api->CreateSessionWithPrepackedWeightsContainer(env, model_path, options, prepacked_weights_container, @out);
+    public static OrtStatusHandle CreateSessionWithPrepackedWeightsContainer(OrtEnvHandle env, ushort* model_path, OrtSessionOptions* options, OrtPrepackedWeightsContainer* prepacked_weights_container, OrtSession** @out) => Api->CreateSessionWithPrepackedWeightsContainer(env, model_path, options, prepacked_weights_container, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateSessionFromArrayWithPrepackedWeightsContainer(OrtEnv* env, void* model_data, nuint model_data_length, OrtSessionOptions* options, OrtPrepackedWeightsContainer* prepacked_weights_container, OrtSession** @out) => Api->CreateSessionFromArrayWithPrepackedWeightsContainer(env, model_data, model_data_length, options, prepacked_weights_container, @out);
+    public static OrtStatusHandle CreateSessionFromArrayWithPrepackedWeightsContainer(OrtEnvHandle env, void* model_data, nuint model_data_length, OrtSessionOptions* options, OrtPrepackedWeightsContainer* prepacked_weights_container, OrtSession** @out) => Api->CreateSessionFromArrayWithPrepackedWeightsContainer(env, model_data, model_data_length, options, prepacked_weights_container, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle SessionOptionsAppendExecutionProvider_TensorRT_V2(OrtSessionOptions* options, OrtTensorRTProviderOptionsV2* tensorrt_options) => Api->SessionOptionsAppendExecutionProvider_TensorRT_V2(options, tensorrt_options);
@@ -629,10 +629,10 @@ public static unsafe partial class Ort
     public static OrtStatusHandle EnableOrtCustomOps(OrtSessionOptions* options) => Api->EnableOrtCustomOps(options);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle RegisterAllocator(OrtEnv* env, OrtAllocator* allocator) => Api->RegisterAllocator(env, allocator);
+    public static OrtStatusHandle RegisterAllocator(OrtEnvHandle env, OrtAllocator* allocator) => Api->RegisterAllocator(env, allocator);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle UnregisterAllocator(OrtEnv* env, OrtMemoryInfo* mem_info) => Api->UnregisterAllocator(env, mem_info);
+    public static OrtStatusHandle UnregisterAllocator(OrtEnvHandle env, OrtMemoryInfo* mem_info) => Api->UnregisterAllocator(env, mem_info);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle IsSparseTensor(OrtValueHandle value, int* @out) => Api->IsSparseTensor(value, @out);
@@ -779,7 +779,7 @@ public static unsafe partial class Ort
     public static void MemoryInfoGetDeviceType(OrtMemoryInfo* ptr, OrtMemoryInfoDeviceType* @out) => Api->MemoryInfoGetDeviceType(ptr, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle UpdateEnvWithCustomLogLevel(OrtEnv* ort_env, OrtLoggingLevel log_severity_level) => Api->UpdateEnvWithCustomLogLevel(ort_env, log_severity_level);
+    public static OrtStatusHandle UpdateEnvWithCustomLogLevel(OrtEnvHandle ort_env, OrtLoggingLevel log_severity_level) => Api->UpdateEnvWithCustomLogLevel(ort_env, log_severity_level);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle SetGlobalIntraOpThreadAffinity(OrtThreadingOptions* tp_options, sbyte* affinity_string) => Api->SetGlobalIntraOpThreadAffinity(tp_options, affinity_string);
@@ -878,7 +878,7 @@ public static unsafe partial class Ort
     public static void ReleaseROCMProviderOptions(OrtROCMProviderOptions* input) => Api->ReleaseROCMProviderOptions(input);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateAndRegisterAllocatorV2(OrtEnv* env, sbyte* provider_type, OrtMemoryInfo* mem_info, OrtArenaCfg* arena_cfg, sbyte** provider_options_keys, sbyte** provider_options_values, nuint num_keys) => Api->CreateAndRegisterAllocatorV2(env, provider_type, mem_info, arena_cfg, provider_options_keys, provider_options_values, num_keys);
+    public static OrtStatusHandle CreateAndRegisterAllocatorV2(OrtEnvHandle env, sbyte* provider_type, OrtMemoryInfo* mem_info, OrtArenaCfg* arena_cfg, sbyte** provider_options_keys, sbyte** provider_options_values, nuint num_keys) => Api->CreateAndRegisterAllocatorV2(env, provider_type, mem_info, arena_cfg, provider_options_keys, provider_options_values, num_keys);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle RunAsync(OrtSession* session, OrtRunOptions* run_options, sbyte** input_names, OrtValueHandle* input, nuint input_len, sbyte** output_names, nuint output_names_len, OrtValueHandle* output, delegate* unmanaged[Cdecl]<void*, OrtValueHandle*, nuint, void*, void> run_async_callback, void* user_data) => Api->RunAsync(session, run_options, input_names, input, input_len, output_names, output_names_len, output, run_async_callback, user_data);
@@ -1004,16 +1004,16 @@ public static unsafe partial class Ort
     public static void ReleaseKeyValuePairs(OrtKeyValuePairs* input) => Api->ReleaseKeyValuePairs(input);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle RegisterExecutionProviderLibrary(OrtEnv* env, sbyte* registration_name, ushort* path) => Api->RegisterExecutionProviderLibrary(env, registration_name, path);
+    public static OrtStatusHandle RegisterExecutionProviderLibrary(OrtEnvHandle env, sbyte* registration_name, ushort* path) => Api->RegisterExecutionProviderLibrary(env, registration_name, path);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle UnregisterExecutionProviderLibrary(OrtEnv* env, sbyte* registration_name) => Api->UnregisterExecutionProviderLibrary(env, registration_name);
+    public static OrtStatusHandle UnregisterExecutionProviderLibrary(OrtEnvHandle env, sbyte* registration_name) => Api->UnregisterExecutionProviderLibrary(env, registration_name);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetEpDevices(OrtEnv* env, OrtEpDevice*** ep_devices, nuint* num_ep_devices) => Api->GetEpDevices(env, ep_devices, num_ep_devices);
+    public static OrtStatusHandle GetEpDevices(OrtEnvHandle env, OrtEpDevice*** ep_devices, nuint* num_ep_devices) => Api->GetEpDevices(env, ep_devices, num_ep_devices);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle SessionOptionsAppendExecutionProvider_V2(OrtSessionOptions* session_options, OrtEnv* env, OrtEpDevice** ep_devices, nuint num_ep_devices, sbyte** ep_option_keys, sbyte** ep_option_vals, nuint num_ep_options) => Api->SessionOptionsAppendExecutionProvider_V2(session_options, env, ep_devices, num_ep_devices, ep_option_keys, ep_option_vals, num_ep_options);
+    public static OrtStatusHandle SessionOptionsAppendExecutionProvider_V2(OrtSessionOptions* session_options, OrtEnvHandle env, OrtEpDevice** ep_devices, nuint num_ep_devices, sbyte** ep_option_keys, sbyte** ep_option_vals, nuint num_ep_options) => Api->SessionOptionsAppendExecutionProvider_V2(session_options, env, ep_devices, num_ep_devices, ep_option_keys, ep_option_vals, num_ep_options);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle SessionOptionsSetEpSelectionPolicy(OrtSessionOptions* session_options, OrtExecutionProviderDevicePolicy policy) => Api->SessionOptionsSetEpSelectionPolicy(session_options, policy);
@@ -1226,13 +1226,13 @@ public static unsafe partial class Ort
     public static OrtMemoryInfo* EpDevice_MemoryInfo(OrtEpDevice* ep_device, OrtDeviceMemoryType memory_type) => Api->EpDevice_MemoryInfo(ep_device, memory_type);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateSharedAllocator(OrtEnv* env, OrtEpDevice* ep_device, OrtDeviceMemoryType mem_type, OrtAllocatorType allocator_type, OrtKeyValuePairs* allocator_options, OrtAllocator** allocator) => Api->CreateSharedAllocator(env, ep_device, mem_type, allocator_type, allocator_options, allocator);
+    public static OrtStatusHandle CreateSharedAllocator(OrtEnvHandle env, OrtEpDevice* ep_device, OrtDeviceMemoryType mem_type, OrtAllocatorType allocator_type, OrtKeyValuePairs* allocator_options, OrtAllocator** allocator) => Api->CreateSharedAllocator(env, ep_device, mem_type, allocator_type, allocator_options, allocator);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetSharedAllocator(OrtEnv* env, OrtMemoryInfo* mem_info, OrtAllocator** allocator) => Api->GetSharedAllocator(env, mem_info, allocator);
+    public static OrtStatusHandle GetSharedAllocator(OrtEnvHandle env, OrtMemoryInfo* mem_info, OrtAllocator** allocator) => Api->GetSharedAllocator(env, mem_info, allocator);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle ReleaseSharedAllocator(OrtEnv* env, OrtEpDevice* ep_device, OrtDeviceMemoryType mem_type) => Api->ReleaseSharedAllocator(env, ep_device, mem_type);
+    public static OrtStatusHandle ReleaseSharedAllocator(OrtEnvHandle env, OrtEpDevice* ep_device, OrtDeviceMemoryType mem_type) => Api->ReleaseSharedAllocator(env, ep_device, mem_type);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle GetTensorData(OrtValueHandle value, void** @out) => Api->GetTensorData(value, @out);
@@ -1259,7 +1259,7 @@ public static unsafe partial class Ort
     public static void ReleaseSyncStream(OrtSyncStream* input) => Api->ReleaseSyncStream(input);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CopyTensors(OrtEnv* env, OrtValueHandle* src_tensors, OrtValueHandle* dst_tensors, OrtSyncStream* stream, nuint num_tensors) => Api->CopyTensors(env, src_tensors, dst_tensors, stream, num_tensors);
+    public static OrtStatusHandle CopyTensors(OrtEnvHandle env, OrtValueHandle* src_tensors, OrtValueHandle* dst_tensors, OrtSyncStream* stream, nuint num_tensors) => Api->CopyTensors(env, src_tensors, dst_tensors, stream, num_tensors);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle Graph_GetModelMetadata(OrtGraph* graph, OrtModelMetadata** @out) => Api->Graph_GetModelMetadata(graph, @out);
@@ -1292,13 +1292,13 @@ public static unsafe partial class Ort
     public static OrtStatusHandle SessionGetEpDeviceForOutputs(OrtSession* session, OrtEpDevice** outputs_ep_devices, nuint num_outputs) => Api->SessionGetEpDeviceForOutputs(session, outputs_ep_devices, num_outputs);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetNumHardwareDevices(OrtEnv* env, nuint* num_devices) => Api->GetNumHardwareDevices(env, num_devices);
+    public static OrtStatusHandle GetNumHardwareDevices(OrtEnvHandle env, nuint* num_devices) => Api->GetNumHardwareDevices(env, num_devices);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetHardwareDevices(OrtEnv* env, OrtHardwareDevice** devices, nuint num_devices) => Api->GetHardwareDevices(env, devices, num_devices);
+    public static OrtStatusHandle GetHardwareDevices(OrtEnvHandle env, OrtHardwareDevice** devices, nuint num_devices) => Api->GetHardwareDevices(env, devices, num_devices);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle GetHardwareDeviceEpIncompatibilityDetails(OrtEnv* env, sbyte* ep_name, OrtHardwareDevice* hw, OrtDeviceEpIncompatibilityDetails** details) => Api->GetHardwareDeviceEpIncompatibilityDetails(env, ep_name, hw, details);
+    public static OrtStatusHandle GetHardwareDeviceEpIncompatibilityDetails(OrtEnvHandle env, sbyte* ep_name, OrtHardwareDevice* hw, OrtDeviceEpIncompatibilityDetails** details) => Api->GetHardwareDeviceEpIncompatibilityDetails(env, ep_name, hw, details);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle DeviceEpIncompatibilityDetails_GetReasonsBitmask(OrtDeviceEpIncompatibilityDetails* details, uint* reasons_bitmask) => Api->DeviceEpIncompatibilityDetails_GetReasonsBitmask(details, reasons_bitmask);
@@ -1319,7 +1319,7 @@ public static unsafe partial class Ort
     public static OrtStatusHandle GetCompatibilityInfoFromModelBytes(void* model_data, nuint model_data_length, sbyte* ep_type, OrtAllocator* allocator, sbyte** compatibility_info) => Api->GetCompatibilityInfoFromModelBytes(model_data, model_data_length, ep_type, allocator, compatibility_info);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle CreateEnvWithOptions(OrtEnvCreationOptions* options, OrtEnv** @out) => Api->CreateEnvWithOptions(options, @out);
+    public static OrtStatusHandle CreateEnvWithOptions(OrtEnvCreationOptions* options, OrtEnvHandle* @out) => Api->CreateEnvWithOptions(options, @out);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle Session_GetEpGraphAssignmentInfo(OrtSession* session, OrtEpAssignedSubgraph*** ep_subgraphs, nuint* num_ep_subgraphs) => Api->Session_GetEpGraphAssignmentInfo(session, ep_subgraphs, num_ep_subgraphs);
@@ -1355,7 +1355,7 @@ public static unsafe partial class Ort
     public static OrtStatusHandle KernelInfoGetAttributeArray_string(OrtKernelInfo* info, sbyte* name, OrtAllocator* allocator, sbyte*** @out, nuint* size) => Api->KernelInfoGetAttributeArray_string(info, name, allocator, @out, size);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static OrtStatusHandle SetPerSessionThreadPoolCallbacks(OrtEnv* env, OrtThreadPoolCallbacksConfig* config) => Api->SetPerSessionThreadPoolCallbacks(env, config);
+    public static OrtStatusHandle SetPerSessionThreadPoolCallbacks(OrtEnvHandle env, OrtThreadPoolCallbacksConfig* config) => Api->SetPerSessionThreadPoolCallbacks(env, config);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle GetMemPatternEnabled(OrtSessionOptions* options, int* @out) => Api->GetMemPatternEnabled(options, @out);
