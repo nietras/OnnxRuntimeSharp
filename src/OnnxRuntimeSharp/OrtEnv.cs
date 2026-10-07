@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 
 namespace OnnxRuntimeSharp;
 
-public sealed unsafe class OrtEnv : SafeHandle
+public sealed unsafe class OrtEnv : OrtSafeHandle<Ort.OrtEnvHandle>
 {
-    public OrtEnv(
-        string logId = "OnnxRuntimeSharp",
-        Ort.OrtLoggingLevel loggingLevel = Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING)
-        : base(IntPtr.Zero, ownsHandle: true)
+    public OrtEnv(string logId = "OnnxRuntimeSharp",
+                  Ort.OrtLoggingLevel loggingLevel = Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING)
     {
-        SetHandle(Ort.CreateEnvironment(logId, loggingLevel).Value);
+        var ortEnv = Ort.CreateEnvironment(logId, loggingLevel);
+        SetHandle(ortEnv.Value);
     }
 
     public IReadOnlyList<OrtEpDevice> GetExecutionProviderDevices()
@@ -113,10 +111,6 @@ public sealed unsafe class OrtEnv : SafeHandle
         ThrowIfDisposed();
         Ort.Ok(Ort.UpdateEnvWithCustomLogLevel(Handle, loggingLevel));
     }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    internal Ort.OrtEnvHandle Handle => new Ort.OrtEnvHandle(handle);
 
     protected override bool ReleaseHandle()
     {

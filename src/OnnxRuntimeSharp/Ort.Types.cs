@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 
 namespace OnnxRuntimeSharp;
 
@@ -121,24 +122,26 @@ public static unsafe partial class Ort
         ORT_OP_ATTR_TENSOR,
     }
 
-    public readonly struct OrtEnvHandle(IntPtr value)
+    public interface IOrtHandle
     {
-        internal readonly IntPtr Value = value;
-        internal readonly bool IsNull => Value == IntPtr.Zero;
+        public IntPtr Value { get; }
     }
-    public readonly struct OrtStatusHandle
+    extension<THandle>(THandle handle) where THandle : unmanaged, IOrtHandle
     {
-        internal readonly IntPtr Value;
-        internal readonly bool IsNull => Value == IntPtr.Zero;
+        public bool IsNull => handle.Value == IntPtr.Zero;
     }
+    public interface IOrtHandle<TSelf> : IOrtHandle where TSelf : unmanaged, IOrtHandle
+    {
+        internal static virtual TSelf Cast(IntPtr ptr) => Unsafe.As<IntPtr, TSelf>(ref ptr);
+    }
+
+    public readonly record struct OrtEnvHandle(IntPtr Value) : IOrtHandle<OrtEnvHandle>;
+    public readonly record struct OrtStatusHandle(IntPtr Value) : IOrtHandle<OrtStatusHandle>;
+    public readonly record struct OrtValueHandle(IntPtr Value) : IOrtHandle<OrtValueHandle>;
+
     public readonly struct OrtMemoryInfo;
     public readonly struct OrtIoBinding;
     public readonly struct OrtSession;
-    public readonly struct OrtValueHandle(IntPtr value)
-    {
-        internal readonly IntPtr Value = value;
-        internal readonly bool IsNull => Value == IntPtr.Zero;
-    }
     public readonly struct OrtRunOptions;
     public readonly struct OrtTypeInfo;
     public readonly struct OrtTensorTypeAndShapeInfo;
