@@ -6,6 +6,15 @@ namespace OnnxRuntimeSharp;
 
 public sealed unsafe class OrtEnv : OrtSafeHandle<Ort.OrtEnvHandle>
 {
+    static readonly Lazy<OrtEnv> _instance = new(() => new OrtEnv());
+
+    /// <summary>Returns the lazily created, shared environment with default settings.</summary>
+    /// <remarks>Do not dispose the shared instance. Use the constructor for an independently owned environment.</remarks>
+    public static OrtEnv Instance()
+    {
+        return _instance.Value;
+    }
+
     public OrtEnv(string logId = "OnnxRuntimeSharp",
                   Ort.OrtLoggingLevel loggingLevel = Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING)
     {

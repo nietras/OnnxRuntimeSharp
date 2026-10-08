@@ -64,6 +64,26 @@ terminate the process; callers must only use APIs supported by their runtime.
 Other versioned API tables and newer options or tensor types may have additional
 runtime requirements.
 
-## License
+## Execution providers
 
-This project is licensed under the [MIT license](LICENSE).
+`Ort.GetAvailableExecutionProviders()` reports providers enabled in the native
+build. `ExecutionProviders` checks runtime availability by running a small model
+and validating its outputs, with CPU fallback disabled for accelerators (API 16+).
+
+```csharp
+var environment = OrtEnv.Instance();
+var available = ExecutionProviders.FindAvailablePrioritizedExecutionProviders();
+// Default order: TensorRT, CUDA, DirectML, OpenVINO, CPU, None.
+
+using var options = new OrtSessionOptions();
+foreach (var provider in available)
+{
+    provider.Append(environment, options);
+}
+using var session = new OrtSession(environment, model, options);
+```
+
+Pass a candidate list to change priority; use `ProbeExecutionProviders` for
+per-provider diagnostics. Overloads without an environment use `OrtEnv.Instance()`;
+do not dispose this shared instance. A successful probe does not guarantee support
+for your model, and native crashes are not contained.

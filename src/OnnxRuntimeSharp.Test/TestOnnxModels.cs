@@ -7,6 +7,30 @@ namespace OnnxRuntimeSharp.Test;
 static class TestOnnxModels
 {
     public static byte[] TwoInputTwoOutput { get; } = CreateTwoInputTwoOutput();
+    public static byte[] Add { get; } = CreateAdd();
+
+    static byte[] CreateAdd()
+    {
+        var model = new ProtoWriter();
+        model.WriteInt64(1, 8);
+        model.WriteString(2, "OnnxRuntimeSharp.Test");
+        model.WriteMessage(7, graph =>
+        {
+            graph.WriteMessage(1, node =>
+            {
+                node.WriteString(1, "first");
+                node.WriteString(1, "second");
+                node.WriteString(2, "sum");
+                node.WriteString(4, "Add");
+            });
+            graph.WriteString(2, "Add");
+            graph.WriteMessage(11, value => WriteFloatValueInfo(value, "first"));
+            graph.WriteMessage(11, value => WriteFloatValueInfo(value, "second"));
+            graph.WriteMessage(12, value => WriteFloatValueInfo(value, "sum"));
+        });
+        model.WriteMessage(8, opset => opset.WriteInt64(2, 13));
+        return model.ToArray();
+    }
 
     static byte[] CreateTwoInputTwoOutput()
     {
