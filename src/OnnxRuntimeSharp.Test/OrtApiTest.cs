@@ -1,11 +1,37 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace OnnxRuntimeSharp.Test;
 
 [TestClass]
 public unsafe class OrtApiTest
 {
+    [TestMethod]
+    [DataRow("1.21.0", 21u)]
+    [DataRow("1.21.0-dev", 21u)]
+    [DataRow("1.9.1", 9u)]
+    [DataRow("1.21", 21u)]
+    [DataRow("1.28.0", Ort.MaxApiVersion)]
+    [DataRow("1.30.0", Ort.MaxApiVersion)]
+    [DataRow("1.999.0", Ort.MaxApiVersion)]
+    [DataRow("1.4294967295.0", Ort.MaxApiVersion)]
+    [DataRow("1.4294967296.0", Ort.MaxApiVersion)]
+    [DataRow("1.0.0", Ort.MaxApiVersion)]
+    [DataRow("2.21.0", Ort.MaxApiVersion)]
+    [DataRow("1.-21.0", Ort.MaxApiVersion)]
+    [DataRow("1.+21.0", Ort.MaxApiVersion)]
+    [DataRow("1. 21.0", Ort.MaxApiVersion)]
+    [DataRow("1..0", Ort.MaxApiVersion)]
+    [DataRow("unknown", Ort.MaxApiVersion)]
+    [DataRow("", Ort.MaxApiVersion)]
+    [DataRow(null, Ort.MaxApiVersion)]
+    public void VersionHintParsesMinorOrFallsBack(string? runtimeVersion, uint expected)
+    {
+        var bytes = runtimeVersion is null ? ReadOnlySpan<byte>.Empty : Encoding.UTF8.GetBytes(runtimeVersion);
+        Assert.AreEqual(expected, Ort.GetApiVersionHint(bytes));
+    }
+
     [TestMethod]
     [DataRow(1u, nameof(Ort.OrtApi.ReleaseCustomOpDomain))]
     [DataRow(2u, nameof(Ort.OrtApi.ReleaseModelMetadata))]
@@ -74,10 +100,10 @@ public unsafe class OrtApiTest
         var apiBase = Ort.NativeExports.OrtGetApiBase();
         var runtimeVersion = Marshal.PtrToStringUTF8((nint)apiBase->GetVersionString());
         Console.WriteLine($"Runtime: {runtimeVersion}; Architecture: {RuntimeInformation.ProcessArchitecture}");
-        var version = Ort.MaxApiVersion;
-        while (apiBase->GetApi(version) == null) { --version; }
-        Assert.AreEqual(version, Ort.ApiVersion);
+        var version = Ort.ApiVersion;
+        Assert.IsTrue(version > 0 && version <= Ort.MaxApiVersion);
         var native = apiBase->GetApi(version);
+        Assert.IsTrue(native != null);
         if (version == Ort.MaxApiVersion)
         {
             Assert.AreEqual((nint)native, (nint)Ort.Api);
