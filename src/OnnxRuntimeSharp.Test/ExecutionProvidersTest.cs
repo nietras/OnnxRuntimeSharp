@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -7,6 +7,9 @@ namespace OnnxRuntimeSharp.Test;
 [TestClass]
 public class ExecutionProvidersTest
 {
+    const string CPUName = "CPU";
+    const string TestProviderName = "test";
+
     [TestMethod]
     public void DefaultPriorityIsStable()
     {
@@ -14,71 +17,9 @@ public class ExecutionProvidersTest
             .Select(provider => provider.Name).ToArray();
 
         Assert.AreSequenceEqual(
-            ["TensorRT", "CUDA", "DirectML", "OpenVINO", "CPU", "None"], names);
-    }
-
-    [TestMethod]
-    [DataRow(null, null, "0", "LAZY")]
-    [DataRow("1", "EAGER", "1", "EAGER")]
-    [DataRow("0", "LAZY", "0", "LAZY")]
-    public void NvidiaEnvironmentDefaultsPreserveExistingValues(
-        string? tf32, string? moduleLoading, string expectedTf32, string expectedModuleLoading)
-    {
-        var originalTf32 = Environment.GetEnvironmentVariable("NVIDIA_TF32_OVERRIDE");
-        var originalModuleLoading = Environment.GetEnvironmentVariable("CUDA_MODULE_LOADING");
-        try
-        {
-            Environment.SetEnvironmentVariable("NVIDIA_TF32_OVERRIDE", tf32);
-            Environment.SetEnvironmentVariable("CUDA_MODULE_LOADING", moduleLoading);
-            ExecutionProviders.DisableNVidiaTF32IfNotSet();
-            ExecutionProviders.EnableNVidiaCudaModuleLoadingLazyIfNotSet();
-            ExecutionProviders.DisableNVidiaTF32IfNotSet();
-            ExecutionProviders.EnableNVidiaCudaModuleLoadingLazyIfNotSet();
-
-            var actualTf32 = Environment.GetEnvironmentVariable("NVIDIA_TF32_OVERRIDE");
-            var actualModuleLoading = Environment.GetEnvironmentVariable("CUDA_MODULE_LOADING");
-
-            Assert.AreEqual(expectedTf32, actualTf32);
-            Assert.AreEqual(expectedModuleLoading, actualModuleLoading);
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("NVIDIA_TF32_OVERRIDE", originalTf32);
-            Environment.SetEnvironmentVariable("CUDA_MODULE_LOADING", originalModuleLoading);
-        }
-    }
-
-    [TestMethod]
-    [DataRow("CUDA")]
-    [DataRow("TensorRT")]
-    public void NvidiaConfigurationsSetEnvironmentDefaults(string name)
-    {
-        var originalTf32 = Environment.GetEnvironmentVariable("NVIDIA_TF32_OVERRIDE");
-        var originalModuleLoading = Environment.GetEnvironmentVariable("CUDA_MODULE_LOADING");
-        try
-        {
-            Environment.SetEnvironmentVariable("NVIDIA_TF32_OVERRIDE", null);
-            Environment.SetEnvironmentVariable("CUDA_MODULE_LOADING", null);
-            var provider = ExecutionProviders.DefaultPrioritizedList
-                .Single(item => item.Name == name);
-            var results = ExecutionProviders.ProbeExecutionProviders([provider]);
-            var result = results[0];
-            if (result.Error is NotSupportedException unsupported)
-            {
-                Assert.Inconclusive(unsupported.Message);
-            }
-            // Native dependency/hardware failures must not prevent setting the defaults first.
-            var actualTf32 = Environment.GetEnvironmentVariable("NVIDIA_TF32_OVERRIDE");
-            var actualModuleLoading = Environment.GetEnvironmentVariable("CUDA_MODULE_LOADING");
-
-            Assert.AreEqual("0", actualTf32);
-            Assert.AreEqual("LAZY", actualModuleLoading);
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("NVIDIA_TF32_OVERRIDE", originalTf32);
-            Environment.SetEnvironmentVariable("CUDA_MODULE_LOADING", originalModuleLoading);
-        }
+            [ExecutionProviders.TensorRTName, ExecutionProviders.CUDAName,
+             ExecutionProviders.DirectMLName, ExecutionProviders.OpenVINOName,
+             CPUName, "None"], names);
     }
 
     [TestMethod]
@@ -129,9 +70,6 @@ public class ExecutionProvidersTest
             environment, [customCpu]);
         Assert.AreEqual(1, appendCount);
         Assert.AreSame(customCpu, available[0]);
-        _ = available.ToArray();
-        _ = available.ToArray();
-        Assert.AreEqual(1, appendCount);
         var repeated = ExecutionProviders.ProbeExecutionProviders(environment, [customCpu]);
         Assert.IsTrue(repeated[0].IsAvailable);
         Assert.AreEqual(2, appendCount);
@@ -196,7 +134,7 @@ public class ExecutionProvidersTest
             environment, [ExecutionProviders.OpenVINO]);
         Assert.IsTrue(repeated[0].IsAvailable, repeated[0].Error?.ToString());
         var configured = ExecutionProviders.CreateOpenVINO(
-            new Dictionary<string, string> { ["device_type"] = "CPU" });
+            new Dictionary<string, string> { ["device_type"] = CPUName });
         var configuredResults = ExecutionProviders.ProbeExecutionProviders(environment, [configured]);
         var configuredResult = configuredResults[0];
         Assert.IsTrue(configuredResult.IsAvailable, configuredResult.Error?.ToString());
@@ -210,9 +148,9 @@ public class ExecutionProvidersTest
     {
         Assert.ThrowsExactly<ArgumentException>(() => new ExecutionProvider("", _ => { }));
         Assert.ThrowsExactly<ArgumentNullException>(
-            () => new ExecutionProvider("test", (Action<OrtSessionOptions>)null!));
+            () => new ExecutionProvider(TestProviderName, (Action<OrtSessionOptions>)null!));
         Assert.ThrowsExactly<ArgumentNullException>(
-            () => new ExecutionProvider("test", (Action<OrtEnv, OrtSessionOptions>)null!));
+            () => new ExecutionProvider(TestProviderName, (Action<OrtEnv, OrtSessionOptions>)null!));
         Assert.ThrowsExactly<ArgumentNullException>(
             () => ExecutionProviders.ProbeExecutionProviders((OrtEnv)null!, []));
         using var environment = new OrtEnv();

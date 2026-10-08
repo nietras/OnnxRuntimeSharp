@@ -8,6 +8,16 @@ namespace OnnxRuntimeSharp;
 /// <summary>Execution-provider configurations and opt-in runtime availability checks.</summary>
 public static unsafe class ExecutionProviders
 {
+    internal const string TensorRTName = nameof(TensorRT);
+    internal const string CUDAName = nameof(CUDA);
+    internal const string DirectMLName = nameof(DirectML);
+    internal const string OpenVINOName = nameof(OpenVINO);
+
+    internal const string NVidiaTF32OverrideName = "NVIDIA_TF32_OVERRIDE";
+    internal const string NVidiaTF32OverrideDisable = "0";
+    internal const string CUDA_MODULE_LOADING = nameof(CUDA_MODULE_LOADING);
+    internal const string LAZY = nameof(LAZY);
+
     // ONNX IR 8 / opset 13: sum = Add(first, second), each a float tensor of shape [1].
     // Both inputs are runtime values, so the computation cannot be constant-folded.
     internal static ReadOnlySpan<byte> ProbeModelOnnxBytes =>
@@ -22,31 +32,31 @@ public static unsafe class ExecutionProviders
         0x0A, 0x02, 0x08, 0x01, 0x42, 0x02, 0x10, 0x0D,
     ];
 
-    public static ExecutionProvider TensorRT { get; } = new("TensorRT", options =>
+    public static ExecutionProvider TensorRT { get; } = new(TensorRTName, options =>
         {
             RequireFunctions(Ort.Api->CreateTensorRTProviderOptions != null &&
                 Ort.Api->UpdateTensorRTProviderOptions != null &&
                 Ort.Api->SessionOptionsAppendExecutionProvider_TensorRT_V2 != null &&
-                Ort.Api->ReleaseTensorRTProviderOptions != null, "TensorRT");
+                Ort.Api->ReleaseTensorRTProviderOptions != null, TensorRTName);
             DisableNVidiaTF32IfNotSet();
             EnableNVidiaCudaModuleLoadingLazyIfNotSet();
             options.AppendExecutionProvider_TensorRT();
         });
 
-    public static ExecutionProvider CUDA { get; } = new("CUDA", options =>
+    public static ExecutionProvider CUDA { get; } = new(CUDAName, options =>
         {
             RequireFunctions(Ort.Api->CreateCUDAProviderOptions != null &&
                 Ort.Api->UpdateCUDAProviderOptions != null &&
                 Ort.Api->SessionOptionsAppendExecutionProvider_CUDA_V2 != null &&
-                Ort.Api->ReleaseCUDAProviderOptions != null, "CUDA");
+                Ort.Api->ReleaseCUDAProviderOptions != null, CUDAName);
             DisableNVidiaTF32IfNotSet();
             EnableNVidiaCudaModuleLoadingLazyIfNotSet();
             options.AppendExecutionProvider_CUDA();
         });
 
-    public static ExecutionProvider DirectML { get; } = new("DirectML", (environment, options) =>
+    public static ExecutionProvider DirectML { get; } = new(DirectMLName, (environment, options) =>
         {
-            RequireDeviceFunctions("DirectML");
+            RequireDeviceFunctions(DirectMLName);
             options.SetMemoryPatternEnabled(false);
             options.SetExecutionMode(Ort.ExecutionMode.ORT_SEQUENTIAL);
             var device = environment.GetExecutionProviderDevices()
@@ -86,8 +96,6 @@ public static unsafe class ExecutionProviders
         // https://docs.nvidia.com/deeplearning/tensorrt/release-notes/tensorrt-7.html
         // Only the very expensive A100 GPU provides a significant speedup using TF32
         // https://blogs.nvidia.com/blog/2020/05/14/tensorfloat-32-precision-format/
-        const string NVidiaTF32OverrideName = "NVIDIA_TF32_OVERRIDE";
-        const string NVidiaTF32OverrideDisable = "0";
         var overrideText = Environment.GetEnvironmentVariable(NVidiaTF32OverrideName);
         if (overrideText == null)
         {
@@ -136,8 +144,6 @@ public static unsafe class ExecutionProviders
         //
         // Both of these optimizations are designed to be invisible to the user,
         // assuming CUDA Programming Model is followed.
-        const string CUDA_MODULE_LOADING = nameof(CUDA_MODULE_LOADING);
-        const string LAZY = nameof(LAZY);
         var value = Environment.GetEnvironmentVariable(CUDA_MODULE_LOADING);
         if (value == null)
         {
@@ -154,9 +160,9 @@ public static unsafe class ExecutionProviders
     /// <summary>Creates an OpenVINO configuration using the dedicated V2 append API.</summary>
     public static ExecutionProvider CreateOpenVINO(IReadOnlyDictionary<string, string>? providerOptions = null)
     {
-        return new ExecutionProvider("OpenVINO", options =>
+        return new ExecutionProvider(OpenVINOName, options =>
         {
-            RequireFunctions(Ort.Api->SessionOptionsAppendExecutionProvider_OpenVINO_V2 != null, "OpenVINO");
+            RequireFunctions(Ort.Api->SessionOptionsAppendExecutionProvider_OpenVINO_V2 != null, OpenVINOName);
             options.AppendExecutionProvider_OpenVINO(providerOptions);
         });
     }
