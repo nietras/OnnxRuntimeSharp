@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
@@ -29,7 +30,10 @@ public static unsafe partial class Ort
         {
             Throws.ThrowApiBaseUnavailable();
         }
-        for (var version = MaxApiVersion; version > 0; --version)
+        var runtimeVersion = MemoryMarshal.CreateReadOnlySpanFromNullTerminated(
+            (byte*)apiBase->GetVersionString());
+        var versionHint = GetApiVersionHint(runtimeVersion);
+        for (var version = versionHint; version > 0; --version)
         {
             var api = apiBase->GetApi(version);
             if (api is not null)
@@ -40,6 +44,22 @@ public static unsafe partial class Ort
         }
         Throws.ThrowApiVersionUnavailable(MaxApiVersion);
         return null;
+    }
+
+    internal static uint GetApiVersionHint(ReadOnlySpan<byte> runtimeVersion)
+    {
+        // The product minor version is only a hint; GetApi still validates it.
+        if (runtimeVersion.StartsWith("1."u8))
+        {
+            var minor = runtimeVersion[2..];
+            var separator = minor.IndexOf((byte)'.');
+            if (separator >= 0) { minor = minor[..separator]; }
+            if (uint.TryParse(minor, NumberStyles.None, provider: null, out var version) && version > 0)
+            {
+                return Math.Min(version, MaxApiVersion);
+            }
+        }
+        return MaxApiVersion;
     }
 
     internal static OrtApi* CopyApi(OrtApi* source, uint version)
