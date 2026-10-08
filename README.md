@@ -55,6 +55,15 @@ dotnet test
 dotnet run --project src\OnnxRuntimeSharp.Profiler
 ```
 
+## Bindings
+
+The bindings use ONNX Runtime C API 28 and negotiate older API versions when
+needed. One API table is used, with functions unavailable in the loaded runtime
+left as null pointers. Calling an unavailable function fails hard and may
+terminate the process; callers must only use APIs supported by their runtime.
+Other versioned API tables and newer options or tensor types may have additional
+runtime requirements.
+
 ## License
 
 This project is licensed under the [MIT license](LICENSE).

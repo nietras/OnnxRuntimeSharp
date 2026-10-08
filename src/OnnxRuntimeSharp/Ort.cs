@@ -5,26 +5,83 @@ using System.Runtime.InteropServices.Marshalling;
 
 namespace OnnxRuntimeSharp;
 
-/// <summary>Low-level bindings for ONNX Runtime C API version 28.</summary>
+/// <summary>Low-level bindings for ONNX Runtime C API versions 1 through 28.</summary>
 public static unsafe partial class Ort
 {
-    const uint ApiVersion = 28;
+    internal const uint MaxApiVersion = 28;
 
-    internal static readonly OrtApi* Api = GetApi();
+    /// <summary>The API version negotiated with the loaded runtime, capped at the version supported by these bindings.</summary>
+    public static uint ApiVersion { get; }
 
-    static OrtApi* GetApi()
+    internal static readonly OrtApi* Api;
+
+    static Ort()
     {
+        Api = GetApi(out var version);
+        ApiVersion = version;
+    }
+
+    static OrtApi* GetApi(out uint apiVersion)
+    {
+        apiVersion = 0;
         var apiBase = NativeExports.OrtGetApiBase();
         if (apiBase is null)
         {
             Throws.ThrowApiBaseUnavailable();
         }
-        var api = apiBase->GetApi(ApiVersion);
-        if (api is null)
+        for (var version = MaxApiVersion; version > 0; --version)
         {
-            Throws.ThrowApiVersionUnavailable(ApiVersion);
+            var api = apiBase->GetApi(version);
+            if (api is not null)
+            {
+                apiVersion = version;
+                return version == MaxApiVersion ? api : CopyApi(api, version);
+            }
         }
-        return api;
+        Throws.ThrowApiVersionUnavailable(MaxApiVersion);
+        return null;
+    }
+
+    internal static OrtApi* CopyApi(OrtApi* source, uint version)
+    {
+        // Slot counts from the version boundaries in ORT's onnxruntime_c_api.cc.
+        // Never read the missing tail of an older runtime's native table.
+        var pointerCount = version switch
+        {
+            1 => 102,
+            2 => 119,
+            3 => 125,
+            4 => 127,
+            5 => 150,
+            6 => 158,
+            7 => 162,
+            8 => 170,
+            9 => 192,
+            10 => 204,
+            11 => 210,
+            12 => 219,
+            13 => 225,
+            14 => 239,
+            15 => 255,
+            16 => 266,
+            17 => 276,
+            18 or 19 => 280,
+            20 or 21 => 285,
+            22 => 318,
+            23 => 390,
+            24 => 415,
+            25 or 26 => 419,
+            27 => 422,
+            MaxApiVersion => sizeof(OrtApi) / sizeof(nint),
+            _ => throw new ArgumentOutOfRangeException(nameof(version))
+        };
+
+        // Type-associated memory has a stable address and lives as long as Ort.
+        var copy = (OrtApi*)RuntimeHelpers.AllocateTypeAssociatedMemory(typeof(Ort), sizeof(OrtApi));
+        *copy = default;
+        NativeMemory.Copy(source, copy, (nuint)(pointerCount * sizeof(nint)));
+        // Unsupported functions intentionally remain null and fail hard if called.
+        return copy;
     }
 
     public static void Ok(this OrtStatusHandle status)

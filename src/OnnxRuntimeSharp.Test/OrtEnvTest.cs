@@ -31,6 +31,7 @@ public class OrtEnvTest
     [TestMethod]
     public void ExecutionProviderDevicesExposeValidMetadata()
     {
+        TestData.RequirePluginApi();
         using var environment = new OrtEnv(loggingLevel: Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_ERROR);
 
         var devices = environment.GetExecutionProviderDevices();
@@ -77,6 +78,7 @@ public class OrtEnvTest
     [TestMethod]
     public void MissingExecutionProviderLibraryReturnsStructuredError()
     {
+        TestData.RequirePluginApi();
         using var environment = new OrtEnv();
 
         var exception = Assert.ThrowsExactly<OrtException>(() =>
@@ -90,6 +92,7 @@ public class OrtEnvTest
     [TestMethod]
     public void MissingExecutionProviderRegistrationReturnsStructuredError()
     {
+        TestData.RequirePluginApi();
         using var environment = new OrtEnv();
 
         var exception = Assert.ThrowsExactly<OrtException>(() =>

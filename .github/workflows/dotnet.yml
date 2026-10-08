@@ -48,6 +48,15 @@ jobs:
         run: dotnet build -c ${{ matrix.configuration }} --no-restore
       - name: Test
         run: dotnet test -c ${{ matrix.configuration }} --no-build --verbosity normal --collect:"XPlat Code Coverage"
+      - name: Setup .NET x86 (global.json)
+        if: runner.os == 'Windows'
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          global-json-file: global.json
+          architecture: x86
+      - name: Test x86
+        if: runner.os == 'Windows'
+        run: dotnet test src/OnnxRuntimeSharp.Test/OnnxRuntimeSharp.Test.csproj -c ${{ matrix.configuration }} --arch x86 --verbosity normal --collect:"XPlat Code Coverage" -- RunConfiguration.TargetPlatform=x86
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:

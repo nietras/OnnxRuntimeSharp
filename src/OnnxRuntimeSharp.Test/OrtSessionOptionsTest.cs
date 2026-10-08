@@ -48,14 +48,15 @@ public class OrtSessionOptionsTest
     {
         using var options = new OrtSessionOptions();
 
-        options.AppendExecutionProvider(
+        AppendCpuProvider(() => options.AppendExecutionProvider(
             "CPUExecutionProvider",
-            new Dictionary<string, string>());
+            new Dictionary<string, string>()));
     }
 
     [TestMethod]
     public void EpSelectionPolicyCanBeConfigured()
     {
+        TestData.RequirePluginApi();
         using var options = new OrtSessionOptions();
 
         options.SetExecutionProviderSelectionPolicy(
@@ -92,13 +93,14 @@ public class OrtSessionOptionsTest
     {
         using var firstEnvironment = new OrtEnv();
         using var secondEnvironment = new OrtEnv();
-        var firstDevice = firstEnvironment.GetExecutionProviderDevices()[0];
         using var options = new OrtSessionOptions();
 
         Assert.ThrowsExactly<ArgumentException>(() =>
             options.AppendExecutionProvider(firstEnvironment, []));
         Assert.ThrowsExactly<ArgumentNullException>(() =>
             options.AppendExecutionProvider(firstEnvironment, [null!]));
+        TestData.RequirePluginApi();
+        var firstDevice = firstEnvironment.GetExecutionProviderDevices()[0];
         Assert.ThrowsExactly<ArgumentException>(() =>
             options.AppendExecutionProvider(secondEnvironment, [firstDevice]));
     }
@@ -108,7 +110,7 @@ public class OrtSessionOptionsTest
     {
         using var options = new OrtSessionOptions();
 
-        options.AppendExecutionProvider("CPUExecutionProvider");
+        AppendCpuProvider(() => options.AppendExecutionProvider("CPUExecutionProvider"));
     }
 
     [TestMethod]
@@ -116,14 +118,15 @@ public class OrtSessionOptionsTest
     {
         using var options = new OrtSessionOptions();
 
-        options.AppendExecutionProvider(
+        AppendCpuProvider(() => options.AppendExecutionProvider(
             "CPUExecutionProvider",
-            new Dictionary<string, string> { ["use_arena"] = "1" });
+            new Dictionary<string, string> { ["use_arena"] = "1" }));
     }
 
     [TestMethod]
     public void PluginProviderOptionsAreMarshalled()
     {
+        TestData.RequirePluginApi();
         using var environment = new OrtEnv();
         var cpuDevice = environment.GetExecutionProviderDevices()
             .First(device => device.ExecutionProviderName == "CPUExecutionProvider");
@@ -170,6 +173,18 @@ public class OrtSessionOptionsTest
 
         Assert.ThrowsExactly<ObjectDisposedException>(() =>
             options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL));
+    }
+
+    static void AppendCpuProvider(Action append)
+    {
+        if (!TestData.HasPluginApi)
+        {
+            // API 21's generic provider append does not recognize the CPU provider.
+            var exception = Assert.ThrowsExactly<OrtException>(append);
+            Assert.AreEqual(Ort.OrtErrorCode.ORT_INVALID_ARGUMENT, exception.ErrorCode);
+            return;
+        }
+        append();
     }
 
     static void ExerciseOptionalExecutionProvider(Action<OrtSessionOptions> append)

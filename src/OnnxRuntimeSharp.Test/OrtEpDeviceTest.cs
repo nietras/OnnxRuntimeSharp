@@ -9,6 +9,7 @@ public class OrtEpDeviceTest
     [TestMethod]
     public void DeviceCanBeAppendedThroughPluginApi()
     {
+        TestData.RequirePluginApi();
         using var environment = new OrtEnv();
         var device = environment.GetExecutionProviderDevices()
             .First(item => string.Equals(
@@ -26,6 +27,7 @@ public class OrtEpDeviceTest
     [TestMethod]
     public void HardwareDeviceInfoIsStableAcrossEnumeration()
     {
+        TestData.RequirePluginApi();
         using var environment = new OrtEnv();
         var first = environment.GetExecutionProviderDevices()[0].HardwareDevice;
         var second = environment.GetExecutionProviderDevices()[0].HardwareDevice;
