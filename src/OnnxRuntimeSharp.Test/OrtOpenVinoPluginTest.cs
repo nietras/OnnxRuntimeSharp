@@ -77,6 +77,8 @@ public class OrtOpenVinoPluginTest
     {
         using var environment = new OrtEnv();
         using var options = new OrtSessionOptions();
+        // Session creation is expected to fail; keep the exception without logging the error.
+        options.SetLogSeverityLevel(Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_FATAL);
         options.AddConfigEntry("session.disable_cpu_ep_fallback", "1");
         options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
 

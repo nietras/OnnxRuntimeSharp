@@ -39,7 +39,9 @@ public class ExecutionProvidersTest
     {
         var failure = new InvalidOperationException("test configuration failure");
         var broken = new ExecutionProvider("Broken", _ => throw failure);
-        var fallbackOnly = new ExecutionProvider("Not an accelerator", _ => { });
+        // Session creation is expected to fail; suppress its native error log, not the exception.
+        var fallbackOnly = new ExecutionProvider("Not an accelerator",
+            options => options.SetLogSeverityLevel(Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_FATAL));
         using var environment = new OrtEnv();
         var candidates = new[]
         {
