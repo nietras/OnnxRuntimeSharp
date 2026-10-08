@@ -13,6 +13,7 @@ public class OrtOpenVinoPluginTest
     [TestMethod]
     public void OpenVinoPluginCanRegisterAndRunWhenSupported()
     {
+        TestData.RequirePluginApi();
         var registrationName = OpenVINORegistrationName;
         var libraryPath = OpenVINOLibraryPath;
         var executionProviderName = OpenVINOExecutionProviderName;

@@ -7,6 +7,16 @@ namespace OnnxRuntimeSharp.Test;
 
 static class TestData
 {
+    public static unsafe bool HasPluginApi => Ort.Api->GetEpApi != null;
+
+    public static void RequirePluginApi()
+    {
+        if (!HasPluginApi)
+        {
+            Assert.Inconclusive("Execution provider plugins require ONNX Runtime API 22 or later.");
+        }
+    }
+
     public static string MnistModelPath => Path.Combine(AppContext.BaseDirectory, "mnist-8.onnx");
 
     public static byte[] ReadMnistModel() => File.ReadAllBytes(MnistModelPath);
