@@ -90,8 +90,8 @@ public class OrtSessionOptionsTest
     [TestMethod]
     public void ProviderDeviceArgumentsAreValidated()
     {
-        using var firstEnvironment = new OrtEnvironment();
-        using var secondEnvironment = new OrtEnvironment();
+        using var firstEnvironment = new OrtEnv();
+        using var secondEnvironment = new OrtEnv();
         var firstDevice = firstEnvironment.GetExecutionProviderDevices()[0];
         using var options = new OrtSessionOptions();
 
@@ -124,7 +124,7 @@ public class OrtSessionOptionsTest
     [TestMethod]
     public void PluginProviderOptionsAreMarshalled()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         var cpuDevice = environment.GetExecutionProviderDevices()
             .First(device => device.ExecutionProviderName == "CPUExecutionProvider");
         using var options = new OrtSessionOptions();

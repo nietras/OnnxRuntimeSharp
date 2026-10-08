@@ -11,18 +11,18 @@ static class TestData
 
     public static byte[] ReadMnistModel() => File.ReadAllBytes(MnistModelPath);
 
-    public static OrtSession CreateMnistSession(OrtEnvironment environment, OrtSessionOptions? options = null) =>
+    public static OrtSession CreateMnistSession(OrtEnv environment, OrtSessionOptions? options = null) =>
         new(environment, ReadMnistModel(), options);
 
     public static OrtSession CreateTwoInputSession(
-        OrtEnvironment environment,
+        OrtEnv environment,
         OrtSessionOptions? options = null) =>
         new(environment, TestOnnxModels.TwoInputTwoOutput, options);
 
-    public static OrtTensor<float> CreateMnistInput() =>
+    public static OrtValue<float> CreateMnistInput() =>
         new(new float[28 * 28], [1, 1, 28, 28]);
 
-    public static OrtTensor<float> CreateMnistOutput() =>
+    public static OrtValue<float> CreateMnistOutput() =>
         new(new float[10], [1, 10]);
 
     public static IReadOnlyList<string> AvailableExecutionProviders { get; } =

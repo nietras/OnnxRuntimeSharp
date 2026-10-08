@@ -1,25 +1,33 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 
 namespace OnnxRuntimeSharp;
 
-public sealed unsafe class OrtValue : SafeHandle
+public unsafe class OrtValue : OrtSafeHandle<Ort.OrtValueHandle>
 {
     readonly long[] _dimensions;
 
-    internal OrtValue(Ort.OrtValue* value)
-        : base(IntPtr.Zero, ownsHandle: true)
+    private protected OrtValue(
+        int elementCount,
+        ReadOnlySpan<long> dimensions,
+        Ort.ONNXTensorElementDataType elementType)
     {
-        if (value is null)
+        ElementCount = elementCount;
+        _dimensions = dimensions.ToArray();
+        ElementType = elementType;
+    }
+
+    internal OrtValue(Ort.OrtValueHandle value)
+    {
+        if (value.IsNull)
         {
             Throws.ThrowNativeValueNull();
         }
 
-        SetHandle((IntPtr)value);
+        SetHandle(value.Value);
         Ort.OrtTensorTypeAndShapeInfo* tensorInfo;
         try
         {
-            Ort.Ok(Ort.GetTensorTypeAndShape(value, &tensorInfo));
+            Ort.GetTensorTypeAndShape(value, &tensorInfo).Ok();
         }
         catch
         {
@@ -30,15 +38,16 @@ public sealed unsafe class OrtValue : SafeHandle
         try
         {
             Ort.ONNXTensorElementDataType elementType;
-            Ort.Ok(Ort.GetTensorElementType(tensorInfo, &elementType));
+            Ort.GetTensorElementType(tensorInfo, &elementType).Ok();
             ElementType = elementType;
             nuint dimensionCount;
-            Ort.Ok(Ort.GetDimensionsCount(tensorInfo, &dimensionCount));
+            Ort.GetDimensionsCount(tensorInfo, &dimensionCount).Ok();
             _dimensions = new long[checked((int)dimensionCount)];
             fixed (long* dimensionsPointer = _dimensions)
             {
-                Ort.Ok(Ort.GetDimensions(tensorInfo, dimensionsPointer, dimensionCount));
+                Ort.GetDimensions(tensorInfo, dimensionsPointer, dimensionCount).Ok();
             }
+            ElementCount = GetElementCount(_dimensions);
         }
         catch
         {
@@ -55,32 +64,48 @@ public sealed unsafe class OrtValue : SafeHandle
 
     public ReadOnlyMemory<long> Dimensions => _dimensions;
 
+    private protected int ElementCount { get; }
+
     public Span<T> GetTensorData<T>() where T : unmanaged
     {
-        ObjectDisposedException.ThrowIf(IsClosed || IsInvalid, this);
+        ThrowIfDisposed();
         var expectedType = OrtTensorElementType.Get<T>();
         if (ElementType != expectedType)
         {
             Throws.ThrowTensorElementTypeMismatch(ElementType, expectedType);
         }
 
-        nuint elementCount = 1;
-        foreach (var dimension in _dimensions)
+        Ort.OrtMemoryInfoHandle memoryInfo;
+        Ort.GetTensorMemoryInfo(Handle, &memoryInfo).Ok();
+        Ort.OrtMemoryInfoDeviceType deviceType;
+        Ort.MemoryInfoGetDeviceType(memoryInfo, &deviceType);
+        if (deviceType != Ort.OrtMemoryInfoDeviceType.OrtMemoryInfoDeviceType_CPU)
         {
-            elementCount = checked(elementCount * (nuint)dimension);
+            Throws.ThrowTensorDataNotCpuAccessible();
         }
+
         void* data;
-        Ort.Ok(Ort.GetTensorMutableData((Ort.OrtValue*)handle, &data));
-        return new Span<T>(data, checked((int)elementCount));
+        Ort.GetTensorMutableData(Handle, &data).Ok();
+        return new Span<T>(data, ElementCount);
     }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    internal Ort.OrtValue* Pointer => (Ort.OrtValue*)handle;
 
     protected override bool ReleaseHandle()
     {
-        Ort.ReleaseValue(Pointer);
+        Ort.ReleaseValue(Handle);
         return true;
+    }
+
+    private protected static int GetElementCount(ReadOnlySpan<long> dimensions)
+    {
+        long count = 1;
+        foreach (var dimension in dimensions)
+        {
+            if (dimension < 0)
+            {
+                Throws.ThrowNegativeTensorDimension();
+            }
+            count = checked(count * dimension);
+        }
+        return checked((int)count);
     }
 }

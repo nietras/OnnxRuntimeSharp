@@ -3,13 +3,13 @@
 namespace OnnxRuntimeSharp.Test;
 
 [TestClass]
-public class OrtTensorTest
+public class OrtValueOfTTest
 {
     [TestMethod]
     public void ManagedTensorExposesPinnedData()
     {
         var data = new float[6];
-        using var tensor = new OrtTensor<float>(data, [1, 2, 3]);
+        using var tensor = new OrtValue<float>(data, [1, 2, 3]);
 
         tensor.Data[1] = 42;
 
@@ -18,26 +18,83 @@ public class OrtTensorTest
     }
 
     [TestMethod]
+    public void TypedAndUntypedViewsShareDataAndLifetime()
+    {
+        var data = new float[2];
+        using var typed = new OrtValue<float>(data, [2]);
+        OrtValue untyped = typed;
+
+        Assert.AreSame(typed, untyped);
+        untyped.GetTensorData<float>()[1] = 42;
+        Assert.AreEqual(42f, typed.Data[1]);
+        Assert.AreEqual(42f, typed.GetTensorData()[1]);
+        Assert.ThrowsExactly<InvalidOperationException>(() => { _ = untyped.GetTensorData<int>(); });
+
+        untyped.Dispose();
+        Assert.IsTrue(typed.IsClosed);
+        Assert.ThrowsExactly<ObjectDisposedException>(() => { _ = typed.GetTensorData(); });
+        Assert.ThrowsExactly<ObjectDisposedException>(() => { _ = untyped.GetTensorData<float>(); });
+    }
+
+    [TestMethod]
+    public void TensorMetadataIsAnOwnedSnapshot()
+    {
+        long[] dimensions = [2, 3];
+        using var value = new OrtValue<float>(new float[6], dimensions);
+        dimensions[0] = 6;
+
+        CollectionAssert.AreEqual(new long[] { 2, 3 }, value.Dimensions.ToArray());
+        Assert.AreEqual(6, value.GetTensorData().Length);
+    }
+
+    [TestMethod]
+    public unsafe void ExternalCpuMemoryCanBeAccessedAfterMemoryInfoDisposal()
+    {
+        using var memoryInfo = OrtMemoryInfo.CreateCpu();
+        var data = stackalloc float[2];
+        using var value = new OrtValue<float>(data, 2, [2], memoryInfo);
+        memoryInfo.Dispose();
+
+        value.GetTensorData()[1] = 42;
+        Assert.AreEqual(42f, data[1]);
+        OrtValue untyped = value;
+        Assert.AreEqual(42f, untyped.GetTensorData<float>()[1]);
+    }
+
+    [TestMethod]
+    public unsafe void DeviceMemoryCannotBeExposedAsManagedSpan()
+    {
+        using var memoryInfo = new OrtMemoryInfo(
+            "Cuda", Ort.OrtAllocatorType.OrtDeviceAllocator, 0, Ort.OrtMemType.OrtMemTypeDefault);
+        var data = stackalloc float[1];
+        using var value = new OrtValue<float>(data, 1, [1], memoryInfo);
+
+        Assert.ThrowsExactly<InvalidOperationException>(() => { _ = value.GetTensorData(); });
+        OrtValue untyped = value;
+        Assert.ThrowsExactly<InvalidOperationException>(() => { _ = untyped.GetTensorData<float>(); });
+    }
+
+    [TestMethod]
     [DataRow(1, 2)]
     [DataRow(2, 1)]
     public void MismatchedDimensionsAreRejected(int firstDimension, int secondDimension)
     {
         Assert.ThrowsExactly<ArgumentException>(() =>
-            new OrtTensor<float>(new float[3], [firstDimension, secondDimension]));
+            new OrtValue<float>(new float[3], [firstDimension, secondDimension]));
     }
 
     [TestMethod]
     public void NegativeDimensionsAreRejected()
     {
         Assert.ThrowsExactly<ArgumentOutOfRangeException>(() =>
-            new OrtTensor<float>(new float[1], [-1]));
+            new OrtValue<float>(new float[1], [-1]));
     }
 
     [TestMethod]
     public void UnsignedIntegerTypesAreSupported()
     {
-        using var uintTensor = new OrtTensor<uint>(new uint[1], [1]);
-        using var ulongTensor = new OrtTensor<ulong>(new ulong[1], [1]);
+        using var uintTensor = new OrtValue<uint>(new uint[1], [1]);
+        using var ulongTensor = new OrtValue<ulong>(new ulong[1], [1]);
 
         Assert.AreEqual(Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT32, uintTensor.ElementType);
         Assert.AreEqual(Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_UINT64, ulongTensor.ElementType);
@@ -48,7 +105,7 @@ public class OrtTensorTest
     {
         using var memoryInfo = OrtMemoryInfo.CreateCpu();
         var data = stackalloc float[4];
-        using var tensor = new OrtTensor<float>(data, 4, [1, 4], memoryInfo);
+        using var tensor = new OrtValue<float>(data, 4, [1, 4], memoryInfo);
 
         Assert.AreEqual(Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT, tensor.ElementType);
         Assert.ThrowsExactly<InvalidOperationException>(() => _ = tensor.Data);
@@ -57,7 +114,7 @@ public class OrtTensorTest
     [TestMethod]
     public void DisposedTensorRejectsManagedDataAccess()
     {
-        var tensor = new OrtTensor<float>(new float[1], [1]);
+        var tensor = new OrtValue<float>(new float[1], [1]);
         tensor.Dispose();
 
         Assert.ThrowsExactly<ObjectDisposedException>(() => _ = tensor.Data);
@@ -66,7 +123,7 @@ public class OrtTensorTest
     [TestMethod]
     public void ScalarTensorIsSupported()
     {
-        using var tensor = new OrtTensor<float>(new float[1], []);
+        using var tensor = new OrtValue<float>(new float[1], []);
 
         Assert.HasCount(1, tensor.Data);
     }
@@ -75,11 +132,11 @@ public class OrtTensorTest
     public void ManagedTensorArgumentsAreValidated()
     {
         Assert.ThrowsExactly<ArgumentNullException>(() =>
-            new OrtTensor<float>(null!, [1]));
+            new OrtValue<float>(null!, [1]));
         Assert.ThrowsExactly<ArgumentException>(() =>
-            new OrtTensor<float>([], [0]));
+            new OrtValue<float>([], [0]));
         Assert.ThrowsExactly<OverflowException>(() =>
-            new OrtTensor<float>(new float[1], [long.MaxValue, 2]));
+            new OrtValue<float>(new float[1], [long.MaxValue, 2]));
     }
 
     [TestMethod]
@@ -89,13 +146,13 @@ public class OrtTensorTest
         var data = stackalloc float[4];
 
         Assert.ThrowsExactly<ArgumentNullException>(() =>
-            new OrtTensor<float>(null, 4, [4], memoryInfo));
+            new OrtValue<float>(null, 4, [4], memoryInfo));
         Assert.ThrowsExactly<ArgumentOutOfRangeException>(() =>
-            new OrtTensor<float>(data, 0, [0], memoryInfo));
+            new OrtValue<float>(data, 0, [0], memoryInfo));
         Assert.ThrowsExactly<ArgumentNullException>(() =>
-            new OrtTensor<float>(data, 4, [4], null!));
+            new OrtValue<float>(data, 4, [4], null!));
         Assert.ThrowsExactly<ArgumentException>(() =>
-            new OrtTensor<float>(data, 4, [5], memoryInfo));
+            new OrtValue<float>(data, 4, [5], memoryInfo));
     }
 
     [TestMethod]

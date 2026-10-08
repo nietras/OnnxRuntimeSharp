@@ -5,8 +5,23 @@ using System.Linq;
 namespace OnnxRuntimeSharp.Test;
 
 [TestClass]
-public class OrtEnvironmentTest
+public class OrtEnvTest
 {
+    [TestMethod]
+    public unsafe void NativeEnvironmentHandleHasPointerSize()
+    {
+        Assert.AreEqual(IntPtr.Size, sizeof(Ort.OrtEnvHandle));
+    }
+
+    [TestMethod]
+    public void NativeEnvironmentHandlePreservesPointer()
+    {
+        var environment = new Ort.OrtEnvHandle(new IntPtr(42));
+        Assert.AreEqual(new IntPtr(42), environment.Value);
+        Assert.IsFalse(environment.IsNull);
+        Assert.IsTrue(default(Ort.OrtEnvHandle).IsNull);
+    }
+
     [TestMethod]
     public void AvailableExecutionProvidersIncludeCpu()
     {
@@ -16,7 +31,7 @@ public class OrtEnvironmentTest
     [TestMethod]
     public void ExecutionProviderDevicesExposeValidMetadata()
     {
-        using var environment = new OrtEnvironment(loggingLevel: Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_ERROR);
+        using var environment = new OrtEnv(loggingLevel: Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_ERROR);
 
         var devices = environment.GetExecutionProviderDevices();
 
@@ -32,7 +47,7 @@ public class OrtEnvironmentTest
     [TestMethod]
     public void LogLevelCanBeChanged()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
 
         environment.SetLogLevel(Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_ERROR);
     }
@@ -40,7 +55,7 @@ public class OrtEnvironmentTest
     [TestMethod]
     public void DisposedEnvironmentRejectsOperations()
     {
-        var environment = new OrtEnvironment();
+        var environment = new OrtEnv();
         environment.Dispose();
 
         Assert.ThrowsExactly<ObjectDisposedException>(() => environment.GetExecutionProviderDevices());
@@ -49,7 +64,7 @@ public class OrtEnvironmentTest
     [TestMethod]
     public void ExecutionProviderLibraryArgumentsAreValidated()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
 
         Assert.ThrowsExactly<ArgumentException>(() =>
             environment.RegisterExecutionProviderLibrary("", "provider.dll"));
@@ -62,7 +77,7 @@ public class OrtEnvironmentTest
     [TestMethod]
     public void MissingExecutionProviderLibraryReturnsStructuredError()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
 
         var exception = Assert.ThrowsExactly<OrtException>(() =>
             environment.RegisterExecutionProviderLibrary(
@@ -75,7 +90,7 @@ public class OrtEnvironmentTest
     [TestMethod]
     public void MissingExecutionProviderRegistrationReturnsStructuredError()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
 
         var exception = Assert.ThrowsExactly<OrtException>(() =>
             environment.UnregisterExecutionProviderLibrary($"missing-{Guid.NewGuid():N}"));
@@ -86,7 +101,7 @@ public class OrtEnvironmentTest
     [TestMethod]
     public void DisposedEnvironmentRejectsLogLevelChanges()
     {
-        var environment = new OrtEnvironment();
+        var environment = new OrtEnv();
         environment.Dispose();
 
         Assert.ThrowsExactly<ObjectDisposedException>(() =>

@@ -4,27 +4,26 @@ using System.Runtime.InteropServices.Marshalling;
 
 namespace OnnxRuntimeSharp;
 
-public sealed unsafe class OrtMemoryInfo : SafeHandle
+public sealed unsafe class OrtMemoryInfo : OrtSafeHandle<Ort.OrtMemoryInfoHandle>
 {
     public OrtMemoryInfo(
         string allocatorName,
         Ort.OrtAllocatorType allocatorType,
         int deviceId,
         Ort.OrtMemType memoryType)
-        : base(IntPtr.Zero, ownsHandle: true)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(allocatorName);
         var utf8Name = Utf8StringMarshaller.ConvertToUnmanaged(allocatorName);
         try
         {
-            Ort.OrtMemoryInfo* info;
-            Ort.Ok(Ort.CreateMemoryInfo(
+            Ort.OrtMemoryInfoHandle info;
+            Ort.CreateMemoryInfo(
                 (sbyte*)utf8Name,
                 allocatorType,
                 deviceId,
                 memoryType,
-                &info));
-            SetHandle((IntPtr)info);
+                &info).Ok();
+            SetHandle(info.Value);
         }
         finally
         {
@@ -36,68 +35,48 @@ public sealed unsafe class OrtMemoryInfo : SafeHandle
         Ort.OrtAllocatorType allocatorType = Ort.OrtAllocatorType.OrtArenaAllocator,
         Ort.OrtMemType memoryType = Ort.OrtMemType.OrtMemTypeDefault)
     {
-        Ort.OrtMemoryInfo* info;
-        Ort.Ok(Ort.CreateCpuMemoryInfo(allocatorType, memoryType, &info));
+        Ort.OrtMemoryInfoHandle info;
+        Ort.CreateCpuMemoryInfo(allocatorType, memoryType, &info).Ok();
         return new OrtMemoryInfo(info);
     }
 
-    OrtMemoryInfo(Ort.OrtMemoryInfo* info)
-        : base(IntPtr.Zero, ownsHandle: true) =>
-        SetHandle((IntPtr)info);
+    OrtMemoryInfo(Ort.OrtMemoryInfoHandle info) => SetHandle(info.Value);
 
-    public string Name
+    public string GetName()
     {
-        get
-        {
-            ThrowIfDisposed();
-            sbyte* value;
-            Ort.Ok(Ort.MemoryInfoGetName(Pointer, &value));
-            return Marshal.PtrToStringUTF8((IntPtr)value) ?? string.Empty;
-        }
+        ThrowIfDisposed();
+        sbyte* value;
+        Ort.MemoryInfoGetName(Handle, &value).Ok();
+        return Marshal.PtrToStringUTF8((IntPtr)value) ?? string.Empty;
     }
 
-    public int DeviceId
+    public int GetDeviceId()
     {
-        get
-        {
-            ThrowIfDisposed();
-            int value;
-            Ort.Ok(Ort.MemoryInfoGetId(Pointer, &value));
-            return value;
-        }
+        ThrowIfDisposed();
+        int value;
+        Ort.MemoryInfoGetId(Handle, &value).Ok();
+        return value;
     }
 
-    public Ort.OrtMemType MemoryType
+    public Ort.OrtMemType GetMemoryType()
     {
-        get
-        {
-            ThrowIfDisposed();
-            Ort.OrtMemType value;
-            Ort.Ok(Ort.MemoryInfoGetMemType(Pointer, &value));
-            return value;
-        }
+        ThrowIfDisposed();
+        Ort.OrtMemType value;
+        Ort.MemoryInfoGetMemType(Handle, &value).Ok();
+        return value;
     }
 
-    public Ort.OrtAllocatorType AllocatorType
+    public Ort.OrtAllocatorType GetAllocatorType()
     {
-        get
-        {
-            ThrowIfDisposed();
-            Ort.OrtAllocatorType value;
-            Ort.Ok(Ort.MemoryInfoGetType(Pointer, &value));
-            return value;
-        }
+        ThrowIfDisposed();
+        Ort.OrtAllocatorType value;
+        Ort.MemoryInfoGetType(Handle, &value).Ok();
+        return value;
     }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    internal Ort.OrtMemoryInfo* Pointer => (Ort.OrtMemoryInfo*)handle;
 
     protected override bool ReleaseHandle()
     {
-        Ort.ReleaseMemoryInfo(Pointer);
+        Ort.ReleaseMemoryInfo(Handle);
         return true;
     }
-
-    void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(IsClosed || IsInvalid, this);
 }

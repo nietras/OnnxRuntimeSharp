@@ -166,7 +166,7 @@ static NodeProfileReport RunModel(
     bool enableProfiling)
 {
     var model = File.ReadAllBytes(modelPath);
-    using var environment = new OrtEnvironment();
+    using var environment = new OrtEnv();
     var profilePrefix = enableProfiling
         ? Path.Combine(
             Path.GetDirectoryName(modelPath)!,
@@ -238,7 +238,7 @@ static void RunModelConcurrent(
 {
     var model = File.ReadAllBytes(modelPath);
 
-    using var environment = new OrtEnvironment();
+    using var environment = new OrtEnv();
     using var options = CreateSessionOptions(configureSessionOptions, null);
     using var session = new OrtSession(environment, model, options);
 
@@ -428,7 +428,7 @@ static void WriteNodeProfileSummary(
     log("```");
 }
 
-static OrtTensor<float> CreateFloatTensor(ReadOnlySpan<long> dimensions) =>
+static OrtValue<float> CreateFloatTensor(ReadOnlySpan<long> dimensions) =>
     new(new float[GetTensorElementCount(dimensions)], dimensions);
 
 static TensorBindings CreateInputBindings(OrtSession session) =>
@@ -439,9 +439,9 @@ static TensorBindings CreateOutputBindings(OrtSession session) =>
 
 static TensorBindings CreateBindings(
     IReadOnlyList<OrtTensorInfo> infos,
-    Func<int, OrtTensor<float>, OrtValueBinding> createBinding)
+    Func<int, OrtValue<float>, OrtValueBinding> createBinding)
 {
-    var tensors = new OrtTensor<float>[infos.Count];
+    var tensors = new OrtValue<float>[infos.Count];
     var values = new OrtValueBinding[infos.Count];
     try
     {
@@ -521,9 +521,9 @@ static void AddNativeRuntimeDirectoryToPath()
 
 sealed record NodeProfileReport(string? TracePath, IReadOnlyList<NodeProfile> Profiles);
 
-sealed class TensorBindings(OrtTensor<float>[] tensors, OrtValueBinding[] values) : IDisposable
+sealed class TensorBindings(OrtValue<float>[] tensors, OrtValueBinding[] values) : IDisposable
 {
-    public OrtTensor<float>[] Tensors { get; } = tensors;
+    public OrtValue<float>[] Tensors { get; } = tensors;
     public OrtValueBinding[] Values { get; } = values;
 
     public void Dispose()

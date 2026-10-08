@@ -16,7 +16,7 @@ public class OrtOpenVinoPluginTest
         var registrationName = OpenVINORegistrationName;
         var libraryPath = OpenVINOLibraryPath;
         var executionProviderName = OpenVINOExecutionProviderName;
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         try
         {
             environment.RegisterExecutionProviderLibrary(registrationName, libraryPath);

@@ -1,18 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.Marshalling;
 
 namespace OnnxRuntimeSharp;
 
-public sealed unsafe class OrtEnvironment : SafeHandle
+public sealed unsafe class OrtEnv : OrtSafeHandle<Ort.OrtEnvHandle>
 {
-    public OrtEnvironment(
-        string logId = "OnnxRuntimeSharp",
-        Ort.OrtLoggingLevel loggingLevel = Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING)
-        : base(IntPtr.Zero, ownsHandle: true)
+    public OrtEnv(string logId = "OnnxRuntimeSharp",
+                  Ort.OrtLoggingLevel loggingLevel = Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING)
     {
-        SetHandle((IntPtr)Ort.CreateEnvironment(logId, loggingLevel));
+        var ortEnv = Ort.CreateEnvironment(logId, loggingLevel);
+        SetHandle(ortEnv.Value);
     }
 
     public IReadOnlyList<OrtEpDevice> GetExecutionProviderDevices()
@@ -24,7 +22,7 @@ public sealed unsafe class OrtEnvironment : SafeHandle
             DangerousAddRef(ref referenceAdded);
             Ort.OrtEpDevice** devices;
             nuint deviceCount;
-            Ort.GetEpDevices(Pointer, &devices, &deviceCount).Ok();
+            Ort.GetEpDevices(Handle, &devices, &deviceCount).Ok();
             var result = new OrtEpDevice[checked((int)deviceCount)];
             for (var index = 0; index < result.Length; ++index)
             {
@@ -51,30 +49,13 @@ public sealed unsafe class OrtEnvironment : SafeHandle
         try
         {
             DangerousAddRef(ref referenceAdded);
-            if (OperatingSystem.IsWindows())
+            fixed (char* pathPointer = libraryPath)
             {
-                fixed (char* pathPointer = libraryPath)
-                {
-                    Ort.Ok(Ort.RegisterExecutionProviderLibrary(
-                        Pointer,
-                        (sbyte*)utf8Name,
-                        (ushort*)pathPointer));
-                }
-            }
-            else
-            {
-                var utf8Path = Utf8StringMarshaller.ConvertToUnmanaged(libraryPath);
-                try
-                {
-                    Ort.Ok(Ort.RegisterExecutionProviderLibrary(
-                        Pointer,
-                        (sbyte*)utf8Name,
-                        (ushort*)utf8Path));
-                }
-                finally
-                {
-                    Utf8StringMarshaller.Free(utf8Path);
-                }
+                using var nativePath = new OrtNativePath(libraryPath, pathPointer);
+                Ort.RegisterExecutionProviderLibrary(
+                    Handle,
+                    (sbyte*)utf8Name,
+                    nativePath.Pointer).Ok();
             }
         }
         finally
@@ -96,7 +77,7 @@ public sealed unsafe class OrtEnvironment : SafeHandle
         try
         {
             DangerousAddRef(ref referenceAdded);
-            Ort.Ok(Ort.UnregisterExecutionProviderLibrary(Pointer, (sbyte*)utf8Name));
+            Ort.UnregisterExecutionProviderLibrary(Handle, (sbyte*)utf8Name).Ok();
         }
         finally
         {
@@ -111,18 +92,12 @@ public sealed unsafe class OrtEnvironment : SafeHandle
     public void SetLogLevel(Ort.OrtLoggingLevel loggingLevel)
     {
         ThrowIfDisposed();
-        Ort.Ok(Ort.UpdateEnvWithCustomLogLevel(Pointer, loggingLevel));
+        Ort.UpdateEnvWithCustomLogLevel(Handle, loggingLevel).Ok();
     }
-
-    public override bool IsInvalid => handle == IntPtr.Zero;
-
-    internal Ort.OrtEnv* Pointer => (Ort.OrtEnv*)handle;
 
     protected override bool ReleaseHandle()
     {
-        Ort.ReleaseEnv(Pointer);
+        Ort.ReleaseEnv(Handle);
         return true;
     }
-
-    void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(IsClosed || IsInvalid, this);
 }

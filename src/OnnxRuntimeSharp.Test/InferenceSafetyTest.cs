@@ -10,7 +10,7 @@ public class InferenceSafetyTest
     [TestMethod]
     public void CachedBindingsRunWithoutManagedAllocations()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
@@ -34,7 +34,7 @@ public class InferenceSafetyTest
     [TestMethod]
     public void BindingCreationDoesNotAllocate()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
@@ -54,9 +54,146 @@ public class InferenceSafetyTest
     }
 
     [TestMethod]
+    public void TypedValuesRunDirectlyWithoutManagedAllocations()
+    {
+        using var environment = new OrtEnv();
+        using var session = TestData.CreateMnistSession(environment);
+        using var input = TestData.CreateMnistInput();
+        using var output = TestData.CreateMnistOutput();
+        for (var warmup = 0; warmup < 3; ++warmup)
+        {
+            session.Run(input, output);
+        }
+
+        var allocatedBytesBefore = GC.GetAllocatedBytesForCurrentThread();
+        for (var iteration = 0; iteration < 1_000; ++iteration)
+        {
+            session.Run(input, output);
+        }
+        Assert.AreEqual(0, GC.GetAllocatedBytesForCurrentThread() - allocatedBytesBefore);
+    }
+
+    [TestMethod]
+    public void TypedAndUntypedDataAccessDoesNotAllocate()
+    {
+        using var typed = new OrtValue<float>(new float[1], [1]);
+        OrtValue untyped = typed;
+        for (var warmup = 0; warmup < 3; ++warmup)
+        {
+            _ = typed.Data[0];
+            _ = typed.GetTensorData()[0];
+            _ = untyped.GetTensorData<float>()[0];
+        }
+
+        var allocatedBytesBefore = GC.GetAllocatedBytesForCurrentThread();
+        for (var iteration = 0; iteration < 1_000; ++iteration)
+        {
+            typed.Data[0] = iteration;
+            _ = typed.GetTensorData()[0];
+            _ = untyped.GetTensorData<float>()[0];
+            _ = typed.Dimensions;
+            _ = untyped.ElementType;
+        }
+
+        Assert.AreEqual(0, GC.GetAllocatedBytesForCurrentThread() - allocatedBytesBefore);
+    }
+
+    [TestMethod]
+    public unsafe void TypedValueConstructionAvoidsBackingWrapperAllocations()
+    {
+        var data = new float[1];
+        var nativeData = stackalloc float[1];
+        long[] dimensions = [1];
+        using var memoryInfo = OrtMemoryInfo.CreateCpu();
+        _ = MeasureManaged(data, dimensions);
+        _ = MeasureManaged(data, []);
+        _ = MeasureExternal(nativeData, dimensions, memoryInfo);
+
+        var managedBytes = MeasureManaged(data, dimensions);
+        var externalBytes = MeasureExternal(nativeData, dimensions, memoryInfo);
+        var scalarBytes = MeasureManaged(data, []);
+        var allocatedBytesBefore = GC.GetAllocatedBytesForCurrentThread();
+        var shapeSnapshot = new long[1];
+        var shapeBytes = GC.GetAllocatedBytesForCurrentThread() - allocatedBytesBefore;
+        GC.KeepAlive(shapeSnapshot);
+
+        Assert.AreEqual(externalBytes, managedBytes);
+        Assert.AreEqual(100 * shapeBytes, managedBytes - scalarBytes);
+
+        static long MeasureManaged(float[] data, ReadOnlySpan<long> dimensions)
+        {
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            for (var iteration = 0; iteration < 100; ++iteration)
+            {
+                using var value = new OrtValue<float>(data, dimensions);
+            }
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+
+        static long MeasureExternal(float* data, ReadOnlySpan<long> dimensions, OrtMemoryInfo memoryInfo)
+        {
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            for (var iteration = 0; iteration < 100; ++iteration)
+            {
+                using var value = new OrtValue<float>(data, 1, dimensions, memoryInfo);
+            }
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        }
+    }
+
+    [TestMethod]
+    public void CachedPropertiesDoNotAllocate()
+    {
+        using var environment = new OrtEnv();
+        using var session = TestData.CreateMnistSession(environment);
+        using var input = TestData.CreateMnistInput();
+        var device = environment.GetExecutionProviderDevices()[0];
+
+        for (var warmup = 0; warmup < 3; ++warmup)
+        {
+            ReadProperties();
+        }
+
+        var allocatedBytesBefore = GC.GetAllocatedBytesForCurrentThread();
+        for (var iteration = 0; iteration < 3; ++iteration)
+        {
+            ReadProperties();
+        }
+
+        Assert.AreEqual(0, GC.GetAllocatedBytesForCurrentThread() - allocatedBytesBefore);
+
+        void ReadProperties()
+        {
+            _ = session.Inputs;
+            _ = session.Outputs;
+            _ = session.OverridableInitializers;
+            _ = session.InputName;
+            _ = session.OutputName;
+            _ = session.InputDimensions;
+            _ = session.OutputDimensions;
+            _ = session.Inputs[0].Name;
+            _ = session.Inputs[0].SymbolicDimensions;
+            _ = session.ModelMetadata.ProducerName;
+            _ = session.ModelMetadata.GraphName;
+            _ = session.ModelMetadata.GraphDescription;
+            _ = session.ModelMetadata.Domain;
+            _ = session.ModelMetadata.Description;
+            _ = session.ModelMetadata.CustomMetadata;
+            _ = device.ExecutionProviderName;
+            _ = device.ExecutionProviderVendor;
+            _ = device.ExecutionProviderMetadata;
+            _ = device.ExecutionProviderOptions;
+            _ = device.HardwareDevice.Vendor;
+            _ = device.HardwareDevice.Metadata;
+            _ = input.Data;
+            _ = input.ElementType;
+        }
+    }
+
+    [TestMethod]
     public void ConcurrentRunsOnSharedSessionComplete()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         Exception? failure = null;
         var threads = Enumerable.Range(0, 4).Select(_ => new Thread(() =>
@@ -91,7 +228,7 @@ public class InferenceSafetyTest
     [TestMethod]
     public void DisposedSessionRejectsInference()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         var session = TestData.CreateMnistSession(environment);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
@@ -103,7 +240,7 @@ public class InferenceSafetyTest
     [TestMethod]
     public void SessionRetainsEnvironmentUntilSessionDisposal()
     {
-        var environment = new OrtEnvironment();
+        var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         environment.Dispose();
         using var input = TestData.CreateMnistInput();
@@ -115,7 +252,7 @@ public class InferenceSafetyTest
     [TestMethod]
     public void IoBindingCanBeDisposedAfterSession()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         var session = TestData.CreateMnistSession(environment);
         var binding = session.CreateIoBinding();
 

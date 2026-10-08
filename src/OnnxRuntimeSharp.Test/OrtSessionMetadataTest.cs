@@ -9,7 +9,7 @@ public class OrtSessionMetadataTest
     [TestMethod]
     public void MnistMetadataIsAvailable()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
 
         Assert.HasCount(1, session.Inputs);
@@ -34,7 +34,7 @@ public class OrtSessionMetadataTest
     [TestMethod]
     public void SessionCanLoadModelDirectlyFromPath()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = new OrtSession(environment, TestData.MnistModelPath);
 
         Assert.HasCount(1, session.Inputs);
@@ -44,7 +44,7 @@ public class OrtSessionMetadataTest
     [TestMethod]
     public void TensorInfoDisposalIsIdempotent()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
         var info = session.Inputs[0];
 
@@ -55,7 +55,7 @@ public class OrtSessionMetadataTest
     [TestMethod]
     public void GeneratedModelMetadataAndMultipleValuesAreAvailable()
     {
-        using var environment = new OrtEnvironment();
+        using var environment = new OrtEnv();
         using var session = TestData.CreateTwoInputSession(environment);
 
         Assert.HasCount(2, session.Inputs);
