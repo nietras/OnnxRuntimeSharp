@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -6,21 +7,19 @@ using System.Runtime.InteropServices.Marshalling;
 
 namespace OnnxRuntimeSharp;
 
-/// <summary>Low-level bindings for ONNX Runtime C API versions 1 through 28.</summary>
+/// <summary>Low-level bindings for ONNX Runtime C API.</summary>
 public static unsafe partial class Ort
 {
     internal const uint MaxApiVersion = 28;
 
-    /// <summary>The API version negotiated with the loaded runtime, capped at the version supported by these bindings.</summary>
-    public static uint ApiVersion { get; }
+    internal static readonly uint _apiVersion;
+    internal static readonly OrtApi* Api = GetApi(out _apiVersion);
 
-    internal static readonly OrtApi* Api;
-
-    static Ort()
-    {
-        Api = GetApi(out var version);
-        ApiVersion = version;
-    }
+    /// <summary>
+    /// API version negotiated with the loaded runtime, capped at the version
+    /// supported by these bindings.
+    /// </summary>
+    public static uint ApiVersion => _apiVersion;
 
     static OrtApi* GetApi(out uint apiVersion)
     {
@@ -64,38 +63,18 @@ public static unsafe partial class Ort
 
     internal static OrtApi* CopyApi(OrtApi* source, uint version)
     {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(version);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(version, MaxApiVersion);
         // Slot counts from the version boundaries in ORT's onnxruntime_c_api.cc.
+        ReadOnlySpan<int> ApiPointerCounts =
+        [
+            102, 119, 125, 127, 150, 158, 162, 170, 192, 204, // Version 01-10
+            210, 219, 225, 239, 255, 266, 276, 280, 280, 285, // Version 11-20
+            285, 318, 390, 415, 419, 419, 422, 424            // Version 21-28
+        ];
+        Debug.Assert(ApiPointerCounts[^1] == sizeof(OrtApi) / sizeof(nint));
         // Never read the missing tail of an older runtime's native table.
-        var pointerCount = version switch
-        {
-            1 => 102,
-            2 => 119,
-            3 => 125,
-            4 => 127,
-            5 => 150,
-            6 => 158,
-            7 => 162,
-            8 => 170,
-            9 => 192,
-            10 => 204,
-            11 => 210,
-            12 => 219,
-            13 => 225,
-            14 => 239,
-            15 => 255,
-            16 => 266,
-            17 => 276,
-            18 or 19 => 280,
-            20 or 21 => 285,
-            22 => 318,
-            23 => 390,
-            24 => 415,
-            25 or 26 => 419,
-            27 => 422,
-            MaxApiVersion => sizeof(OrtApi) / sizeof(nint),
-            _ => throw new ArgumentOutOfRangeException(nameof(version))
-        };
-
+        var pointerCount = ApiPointerCounts[(int)version - 1];
         // Type-associated memory has a stable address and lives as long as Ort.
         var copy = (OrtApi*)RuntimeHelpers.AllocateTypeAssociatedMemory(typeof(Ort), sizeof(OrtApi));
         *copy = default;
