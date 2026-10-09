@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -86,8 +86,77 @@ public static unsafe class OrtEpConfigs
     public static IReadOnlyList<OrtEpConfig> DefaultPrioritizedList { get; } =
         Array.AsReadOnly([TensorRT, CUDA, DirectML, OpenVINO, CPU, None]);
 
+    public static OrtEpConfig CreateOpenVINO(IReadOnlyDictionary<string, string>? providerOptions = null)
+    {
+        return new OrtEpConfig(OpenVINOName, options =>
+        {
+            RequireFunctions(Ort.Api->SessionOptionsAppendExecutionProvider_OpenVINO_V2 != null, OpenVINOName);
+            options.AppendExecutionProvider_OpenVINO(providerOptions);
+        });
+    }
+
+    public static IReadOnlyList<OrtEpConfig> FindAvailablePrioritizedExecutionProviders(
+        IReadOnlyList<OrtEpConfig>? prioritizedExecutionProvidersToTry = null)
+    {
+        var environment = OrtEnv.Instance();
+        return FindAvailablePrioritizedExecutionProviders(environment, prioritizedExecutionProvidersToTry);
+    }
+
+    public static IReadOnlyList<OrtEpProbeResult> ProbeExecutionProviders(
+        IReadOnlyList<OrtEpConfig>? prioritizedExecutionProvidersToTry = null)
+    {
+        var environment = OrtEnv.Instance();
+        return ProbeExecutionProviders(environment, prioritizedExecutionProvidersToTry);
+    }
+
+    /// <summary>Executes the smoke test eagerly and returns successful configurations in input order.</summary>
+    public static IReadOnlyList<OrtEpConfig> FindAvailablePrioritizedExecutionProviders(
+        OrtEnv environment, IReadOnlyList<OrtEpConfig>? prioritizedExecutionProvidersToTry = null)
+        => ProbeExecutionProviders(environment, prioritizedExecutionProvidersToTry)
+            .Where(result => result.IsAvailable).Select(result => result.Provider).ToArray();
+
+    /// <summary>Tests each configuration with real inference and preserves failures for diagnostics.</summary>
+    /// <remarks>
+    /// Success applies only to this small float Add model, device and configuration, not every model.
+    /// Non-CPU configurations are tested without CPU fallback. Native crashes cannot be caught.
+    /// Custom append delegates must only call APIs supported by the loaded runtime.
+    /// </remarks>
+    public static IReadOnlyList<OrtEpProbeResult> ProbeExecutionProviders(
+        OrtEnv environment, IReadOnlyList<OrtEpConfig>? prioritizedExecutionProvidersToTry = null)
+    {
+        ArgumentNullException.ThrowIfNull(environment);
+        ObjectDisposedException.ThrowIf(environment.IsClosed || environment.IsInvalid, environment);
+        // Older runtimes accept unknown config keys but do not enforce CPU-fallback disabling.
+        RequireApiVersion(16);
+        var providers = prioritizedExecutionProvidersToTry ?? DefaultPrioritizedList;
+        var results = new List<OrtEpProbeResult>(providers.Count);
+        foreach (var provider in providers)
+        {
+            try
+            {
+                using var options = new OrtSessionOptions();
+                options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
+                options.SetIntraOpThreadCount(1);
+                options.SetInterOpThreadCount(1);
+                if (!provider.AllowsCpuFallback)
+                {
+                    options.AddConfigEntry("session.disable_cpu_ep_fallback", "1");
+                }
+                provider.Append(environment, options);
+                using var session = new OrtSession(environment, ProbeModelOnnxBytes, options);
+                RunProbe(session);
+                results.Add(new(provider, null));
+            }
+            catch (Exception exception) when (exception is not OutOfMemoryException)
+            {
+                results.Add(new(provider, exception));
+            }
+        }
+        return results.AsReadOnly();
+    }
+
     /// <summary>Sets the process NVIDIA_TF32_OVERRIDE to 0 only when unset.</summary>
-    public static void DisableNVidiaTF32IfNotSet()
+    static void DisableNVidiaTF32IfNotSet()
     {
         // Disable TF32 mode by setting an environment variable.
         // By default CUDA will use TF32 when available.
@@ -110,7 +179,7 @@ public static unsafe class OrtEpConfigs
     }
 
     /// <summary>Sets the process CUDA_MODULE_LOADING to LAZY only when unset.</summary>
-    public static void EnableNVidiaCudaModuleLoadingLazyIfNotSet()
+    static void EnableNVidiaCudaModuleLoadingLazyIfNotSet()
     {
         // https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#lazy-loading
         // Lazy Loading delays loading of CUDA modules and kernels from program
@@ -155,76 +224,6 @@ public static unsafe class OrtEpConfigs
         {
             Trace.WriteLine($"{CUDA_MODULE_LOADING} already set to '{value}'");
         }
-    }
-
-    /// <summary>Creates an OpenVINO configuration using the dedicated V2 append API.</summary>
-    public static OrtEpConfig CreateOpenVINO(IReadOnlyDictionary<string, string>? providerOptions = null)
-    {
-        return new OrtEpConfig(OpenVINOName, options =>
-        {
-            RequireFunctions(Ort.Api->SessionOptionsAppendExecutionProvider_OpenVINO_V2 != null, OpenVINOName);
-            options.AppendExecutionProvider_OpenVINO(providerOptions);
-        });
-    }
-
-    public static IReadOnlyList<OrtEpConfig> FindAvailablePrioritizedExecutionProviders(
-        IReadOnlyList<OrtEpConfig>? prioritizedExecutionProvidersToTry = null)
-    {
-        var environment = OrtEnv.Instance();
-        return FindAvailablePrioritizedExecutionProviders(environment, prioritizedExecutionProvidersToTry);
-    }
-
-    /// <summary>Executes the smoke test eagerly and returns successful configurations in input order.</summary>
-    public static IReadOnlyList<OrtEpConfig> FindAvailablePrioritizedExecutionProviders(
-        OrtEnv environment, IReadOnlyList<OrtEpConfig>? prioritizedExecutionProvidersToTry = null)
-        => ProbeExecutionProviders(environment, prioritizedExecutionProvidersToTry)
-            .Where(result => result.IsAvailable).Select(result => result.Provider).ToArray();
-
-    public static IReadOnlyList<OrtEpProbeResult> ProbeExecutionProviders(
-        IReadOnlyList<OrtEpConfig>? prioritizedExecutionProvidersToTry = null)
-    {
-        var environment = OrtEnv.Instance();
-        return ProbeExecutionProviders(environment, prioritizedExecutionProvidersToTry);
-    }
-
-    /// <summary>Tests each configuration with real inference and preserves failures for diagnostics.</summary>
-    /// <remarks>
-    /// Success applies only to this small float Add model, device and configuration, not every model.
-    /// Non-CPU configurations are tested without CPU fallback. Native crashes cannot be caught.
-    /// Custom append delegates must only call APIs supported by the loaded runtime.
-    /// </remarks>
-    public static IReadOnlyList<OrtEpProbeResult> ProbeExecutionProviders(
-        OrtEnv environment, IReadOnlyList<OrtEpConfig>? prioritizedExecutionProvidersToTry = null)
-    {
-        ArgumentNullException.ThrowIfNull(environment);
-        ObjectDisposedException.ThrowIf(environment.IsClosed || environment.IsInvalid, environment);
-        // Older runtimes accept unknown config keys but do not enforce CPU-fallback disabling.
-        RequireApiVersion(16);
-        var providers = prioritizedExecutionProvidersToTry ?? DefaultPrioritizedList;
-        var results = new List<OrtEpProbeResult>(providers.Count);
-        foreach (var provider in providers)
-        {
-            try
-            {
-                using var options = new OrtSessionOptions();
-                options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
-                options.SetIntraOpThreadCount(1);
-                options.SetInterOpThreadCount(1);
-                if (!provider.AllowsCpuFallback)
-                {
-                    options.AddConfigEntry("session.disable_cpu_ep_fallback", "1");
-                }
-                provider.Append(environment, options);
-                using var session = new OrtSession(environment, ProbeModelOnnxBytes, options);
-                RunProbe(session);
-                results.Add(new(provider, null));
-            }
-            catch (Exception exception) when (exception is not OutOfMemoryException)
-            {
-                results.Add(new(provider, exception));
-            }
-        }
-        return results.AsReadOnly();
     }
 
     static void RunProbe(OrtSession session)
@@ -278,7 +277,7 @@ public static unsafe class OrtEpConfigs
         {
             throw new NotSupportedException(
                 $"The loaded ONNX Runtime API {Ort.ApiVersion} does not expose " +
-                $"the functions required by {providerName}.");
+                $"the functions required by '{providerName}'.");
         }
     }
 }
