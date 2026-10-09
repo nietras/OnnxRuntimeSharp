@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace OnnxRuntimeSharp;
 
@@ -7,8 +7,7 @@ public sealed class OrtEpConfig
 {
     public OrtEpConfig(string name, Action<OrtSessionOptions> append, bool allowsCpuFallback = false)
         : this(name, Adapt(append), allowsCpuFallback)
-    {
-    }
+    { }
 
     public OrtEpConfig(string name, Action<OrtEnv, OrtSessionOptions> append, bool allowsCpuFallback = false)
     {
@@ -30,9 +29,4 @@ public sealed class OrtEpConfig
         ArgumentNullException.ThrowIfNull(append);
         return (_, options) => append(options);
     }
-}
-
-public readonly record struct OrtEpProbeResult(OrtEpConfig Provider, Exception? Error)
-{
-    public bool IsAvailable => Error is null;
 }
