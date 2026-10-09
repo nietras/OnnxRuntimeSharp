@@ -135,7 +135,7 @@ public class OrtEpConfigsTest
         var repeated = OrtEpConfigs.ProbeExecutionProviders(
             environment, [OrtEpConfigs.OpenVINO]);
         Assert.IsTrue(repeated[0].IsAvailable, repeated[0].Error?.ToString());
-        var configured = OrtEpConfigs.CreateOpenVINO(
+        var configured = OrtEpConfigs.CreateOpenVINO("OpenVINO CPU",
             new Dictionary<string, string> { ["device_type"] = CPUName });
         var configuredResults = OrtEpConfigs.ProbeExecutionProviders(environment, [configured]);
         var configuredResult = configuredResults[0];

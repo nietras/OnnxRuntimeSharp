@@ -69,12 +69,21 @@ public static unsafe class OrtEpConfigs
             options.AppendExecutionProvider(environment, [device]);
         });
 
-    public static OrtEpConfig OpenVINO { get; } = CreateOpenVINO();
+    public static OrtEpConfig OpenVINO { get; } = CreateOpenVINO(OpenVINOName);
+
+    public static OrtEpConfig OpenVINOCPUSingleThread { get; } = CreateOpenVINO(
+        $"{OpenVINOName} CPU 1×Thread 1×Stream",
+        new Dictionary<string, string>
+        {
+            { "device_type", "CPU" },
+            { "num_of_threads", "1" },
+            { "num_streams", "1" },
+        });
 
     public static OrtEpConfig CPU { get; } = new("CPU", options =>
         options.SetCpuMemoryArenaEnabled(true), allowsCpuFallback: true);
 
-    public static OrtEpConfig CPUSingleThread { get; } = new("CPU(1*InterThread-1*IntraThread)", options =>
+    public static OrtEpConfig CPUSingleThread { get; } = new("CPU 1×InterThread 1×IntraThread", options =>
         {
             options.SetInterOpThreadCount(1);
             options.SetIntraOpThreadCount(1);
@@ -86,11 +95,14 @@ public static unsafe class OrtEpConfigs
     public static IReadOnlyList<OrtEpConfig> DefaultPrioritizedList { get; } =
         Array.AsReadOnly([TensorRT, CUDA, DirectML, OpenVINO, CPU, None]);
 
-    public static OrtEpConfig CreateOpenVINO(IReadOnlyDictionary<string, string>? providerOptions = null)
+    public static OrtEpConfig CreateOpenVINO(string name,
+        IReadOnlyDictionary<string, string>? providerOptions = null)
     {
-        return new OrtEpConfig(OpenVINOName, options =>
+        return new OrtEpConfig(name, options =>
         {
-            RequireFunctions(Ort.Api->SessionOptionsAppendExecutionProvider_OpenVINO_V2 != null, OpenVINOName);
+            RequireFunctions(Ort.Api->SessionOptionsAppendExecutionProvider_OpenVINO_V2 != null, name);
+            // Do not use ORT built-in optimizations, let OpenVINO handle all that.
+            options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
             options.AppendExecutionProvider_OpenVINO(providerOptions);
         });
     }
