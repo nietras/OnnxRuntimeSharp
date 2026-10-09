@@ -74,7 +74,7 @@ public static unsafe class OrtEpConfigs
     public static OrtEpConfig CPU { get; } = new("CPU", options =>
         options.SetCpuMemoryArenaEnabled(true), allowsCpuFallback: true);
 
-    public static OrtEpConfig CPUSingleThread { get; } = new("CPU(1*InterThread-1*IntraThread)", options =>
+    public static OrtEpConfig CPUSingleThread { get; } = new("CPU 1×InterThread 1×IntraThread", options =>
         {
             options.SetInterOpThreadCount(1);
             options.SetIntraOpThreadCount(1);

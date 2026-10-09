@@ -17,64 +17,51 @@ const double TargetRunDurationMilliseconds = 1_000;
 const int EPAlign = -36;
 var concurrentTestDuration = TimeSpan.FromSeconds(1);
 int[] concurrentThreadCountsToTest = [1, 2, 4, 8, 16];
-var configurations = new Dictionary<string, Action<OrtSessionOptions>>
-{
+OrtEpConfig[] configurations =
+[
 #if ENABLE_GPU_PROVIDERS
-    ["TensorRT"] = options =>
-    {
-        options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
-        options.AppendExecutionProvider_TensorRT();
-    },
-    ["CUDA"] = options =>
-    {
-        options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
-        options.AppendExecutionProvider_CUDA();
-    },
+    OrtEpConfigs.TensorRT,
+    OrtEpConfigs.CUDA,
 #endif
-    //["OpenVINO"] = options =>
+    //new(OrtEpConfigs.OpenVINO.Name, (environment, options) =>
     //{
     //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
-    //    options.AppendExecutionProvider_OpenVINO();
-    //},
-    //["OpenVINO 1×Threads 1×Streams"] = options =>
+    //    OrtEpConfigs.OpenVINO.Append(environment, options);
+    //}),
+    //new("OpenVINO 1×Threads 1×Streams", (environment, options) =>
     //{
     //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
-    //    options.AppendExecutionProvider_OpenVINO(new Dictionary<string, string>
+    //    OrtEpConfigs.CreateOpenVINO(new Dictionary<string, string>
     //    {
     //        { "device_type", "CPU" },
     //        { "num_of_threads", "1" },
     //        { "num_streams", "1" },
-    //    });
-    //},
-    ["OpenVINO 16×Threads 8×Streams"] = options =>
+    //    }).Append(environment, options);
+    //}),
+    new("OpenVINO 16×Threads 8×Streams", (environment, options) =>
     {
         options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
-        options.AppendExecutionProvider_OpenVINO(new Dictionary<string, string>
+        OrtEpConfigs.CreateOpenVINO(new Dictionary<string, string>
         {
             { "device_type", "CPU" },
             { "num_of_threads", "16" },
             { "num_streams", "8" },
-        });
-    },
-    ["OpenVINO bf16 16×Threads 8×Streams"] = options =>
+        }).Append(environment, options);
+    }),
+    new("OpenVINO 16×Threads 8×Streams bf16", (environment, options) =>
     {
         options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
-        options.AppendExecutionProvider_OpenVINO(new Dictionary<string, string>
+        OrtEpConfigs.CreateOpenVINO(new Dictionary<string, string>
         {
             { "device_type", "CPU" },
             { "num_of_threads", "16" },
             { "num_streams", "8" },
             { "load_config", "{\"CPU\":{\"INFERENCE_PRECISION_HINT\":\"bf16\"}}" },
-        });
-    },
-    ["CPU"] = options => options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL),
-    ["CPU 1×Intra 1×Inter"] = options =>
-    {
-        options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
-        options.SetIntraOpThreadCount(1);
-        options.SetInterOpThreadCount(1);
-    },
-};
+        }).Append(environment, options);
+    }),
+    OrtEpConfigs.CPU,
+    OrtEpConfigs.CPUSingleThread,
+];
 
 Action<string> log = message =>
 {
@@ -86,12 +73,19 @@ var workingDirectory = Environment.CurrentDirectory;
 var modelPaths = Directory.GetFiles(workingDirectory, SearchPattern, SearchOption.TopDirectoryOnly);
 Array.Sort(modelPaths, StringComparer.Ordinal);
 AddNativeRuntimeDirectoryToPath();
-var availableExecutionProviders = Ort.GetAvailableExecutionProviders();
+var probeResults = OrtEpConfigs.ProbeExecutionProviders(configurations);
+var availableConfigurations = probeResults.Where(result => result.IsAvailable)
+    .Select(result => result.Provider).ToArray();
 
 log($"Current directory: '{workingDirectory}'");
 log($"Found {modelPaths.Length} files for '{SearchPattern}': " +
     $"{string.Join(", ", modelPaths.Select(path => $"'{path}'"))}");
-log($"Available execution providers (excl. plugins): {string.Join(", ", availableExecutionProviders)}");
+var availableConfigurationNames = availableConfigurations.Select(configuration => configuration.Name);
+log($"Available configurations: {string.Join(", ", availableConfigurationNames)}");
+foreach (var result in probeResults.Where(result => !result.IsAvailable))
+{
+    log($"{result.Provider.Name,EPAlign};Unavailable: {result.Error?.Message}");
+}
 
 foreach (var modelPath in modelPaths)
 {
@@ -112,16 +106,16 @@ foreach (var modelPath in modelPaths)
     report("```");
     report($"{"Execution Provider",EPAlign};BatchSize;Create [ms];First [ms];Iterations;Mean/b [ms];Mean/s [ms]");
     var configurationToProfilingInfo = new List<(string Name, NodeProfileReport Report)>();
-    foreach (var (configurationName, configureSessionOptions) in configurations)
+    foreach (var configuration in availableConfigurations)
     {
         try
         {
-            var profileReport = RunModel(modelPath, configurationName, configureSessionOptions, report, EnableProfiling);
-            configurationToProfilingInfo.Add((configurationName, profileReport));
+            var profileReport = RunModel(modelPath, configuration, report, EnableProfiling);
+            configurationToProfilingInfo.Add((configuration.Name, profileReport));
         }
         catch (OrtException exception)
         {
-            report($"{configurationName,EPAlign};Unavailable: {exception.Message}");
+            report($"{configuration.Name,EPAlign};Unavailable: {exception.Message}");
         }
     }
     report("```");
@@ -130,15 +124,15 @@ foreach (var modelPath in modelPaths)
     report("## Concurrent app-thread scaling (single shared session)");
     report("```");
     report($"{"Execution Provider",EPAlign};Threads;Iterations;Throughput [calls/s];Min Mean/call [ms];Avg Mean/call [ms];Max Mean/call [ms]");
-    foreach (var (configurationName, configureSessionOptions) in configurations)
+    foreach (var configuration in availableConfigurations)
     {
         try
         {
-            RunModelConcurrent(modelPath, configurationName, configureSessionOptions, concurrentThreadCountsToTest, concurrentTestDuration, report);
+            RunModelConcurrent(modelPath, configuration, concurrentThreadCountsToTest, concurrentTestDuration, report);
         }
         catch (OrtException exception)
         {
-            report($"{configurationName,EPAlign};Unavailable: {exception.Message}");
+            report($"{configuration.Name,EPAlign};Unavailable: {exception.Message}");
         }
     }
     report("```");
@@ -160,19 +154,19 @@ if (modelPaths.Length == 0)
 
 static NodeProfileReport RunModel(
     string modelPath,
-    string configurationName,
-    Action<OrtSessionOptions> configureSessionOptions,
+    OrtEpConfig configuration,
     Action<string> log,
     bool enableProfiling)
 {
     var model = File.ReadAllBytes(modelPath);
     using var environment = new OrtEnv();
+    var configurationName = configuration.Name;
     var profilePrefix = enableProfiling
         ? Path.Combine(
             Path.GetDirectoryName(modelPath)!,
             $"{Path.GetFileNameWithoutExtension(modelPath)}-onnxruntime-profile-{SanitizeFileName(configurationName)}")
         : null;
-    using var options = CreateSessionOptions(configureSessionOptions, profilePrefix);
+    using var options = CreateSessionOptions(environment, configuration, profilePrefix);
     var beforeCreate = Stopwatch.GetTimestamp();
     using var session = new OrtSession(environment, model, options);
     var createMilliseconds = ElapsedMilliseconds(beforeCreate);
@@ -230,8 +224,7 @@ static NodeProfileReport RunModel(
 
 static void RunModelConcurrent(
     string modelPath,
-    string configurationName,
-    Action<OrtSessionOptions> configureSessionOptions,
+    OrtEpConfig configuration,
     int[] threadCounts,
     TimeSpan duration,
     Action<string> log)
@@ -239,7 +232,8 @@ static void RunModelConcurrent(
     var model = File.ReadAllBytes(modelPath);
 
     using var environment = new OrtEnv();
-    using var options = CreateSessionOptions(configureSessionOptions, null);
+    var configurationName = configuration.Name;
+    using var options = CreateSessionOptions(environment, configuration, null);
     using var session = new OrtSession(environment, model, options);
 
     foreach (var threadCount in threadCounts)
@@ -342,11 +336,14 @@ static void RunModelConcurrent(
 }
 
 static OrtSessionOptions CreateSessionOptions(
-    Action<OrtSessionOptions> configureSessionOptions,
+    OrtEnv environment,
+    OrtEpConfig configuration,
     string? profilePrefix)
 {
     var options = new OrtSessionOptions();
-    configureSessionOptions(options);
+    // Preserve profiler optimization defaults; OpenVINO configurations override this.
+    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
+    configuration.Append(environment, options);
     if (profilePrefix is not null)
     {
         options.EnableProfiling(profilePrefix ?? throw new ArgumentNullException(nameof(profilePrefix)));
