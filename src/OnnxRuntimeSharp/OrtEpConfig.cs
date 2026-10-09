@@ -1,16 +1,16 @@
-﻿using System;
+using System;
 
 namespace OnnxRuntimeSharp;
 
 /// <summary>A named execution-provider configuration that can be applied to a session.</summary>
-public sealed class ExecutionProvider
+public sealed class OrtEpConfig
 {
-    public ExecutionProvider(string name, Action<OrtSessionOptions> append, bool allowsCpuFallback = false)
+    public OrtEpConfig(string name, Action<OrtSessionOptions> append, bool allowsCpuFallback = false)
         : this(name, Adapt(append), allowsCpuFallback)
     {
     }
 
-    public ExecutionProvider(string name, Action<OrtEnv, OrtSessionOptions> append, bool allowsCpuFallback = false)
+    public OrtEpConfig(string name, Action<OrtEnv, OrtSessionOptions> append, bool allowsCpuFallback = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentNullException.ThrowIfNull(append);
@@ -32,7 +32,7 @@ public sealed class ExecutionProvider
     }
 }
 
-public readonly record struct ExecutionProviderProbeResult(ExecutionProvider Provider, Exception? Error)
+public readonly record struct OrtEpProbeResult(OrtEpConfig Provider, Exception? Error)
 {
     public bool IsAvailable => Error is null;
 }

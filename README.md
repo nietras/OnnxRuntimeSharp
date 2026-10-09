@@ -67,12 +67,12 @@ runtime requirements.
 ## Execution providers
 
 `Ort.GetAvailableExecutionProviders()` reports providers enabled in the native
-build. `ExecutionProviders` checks runtime availability by running a small model
+build. `OrtEpConfigs` checks runtime availability by running a small model
 and validating its outputs, with CPU fallback disabled for accelerators (API 16+).
 
 ```csharp
 var environment = OrtEnv.Instance();
-var available = ExecutionProviders.FindAvailablePrioritizedExecutionProviders();
+var available = OrtEpConfigs.FindAvailablePrioritizedExecutionProviders();
 // Default order: TensorRT, CUDA, DirectML, OpenVINO, CPU, None.
 
 using var options = new OrtSessionOptions();

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Linq;
 namespace OnnxRuntimeSharp;
 
 /// <summary>Execution-provider configurations and opt-in runtime availability checks.</summary>
-public static unsafe class ExecutionProviders
+public static unsafe class OrtEpConfigs
 {
     internal const string TensorRTName = nameof(TensorRT);
     internal const string CUDAName = nameof(CUDA);
@@ -32,7 +32,7 @@ public static unsafe class ExecutionProviders
         0x0A, 0x02, 0x08, 0x01, 0x42, 0x02, 0x10, 0x0D,
     ];
 
-    public static ExecutionProvider TensorRT { get; } = new(TensorRTName, options =>
+    public static OrtEpConfig TensorRT { get; } = new(TensorRTName, options =>
         {
             RequireFunctions(Ort.Api->CreateTensorRTProviderOptions != null &&
                 Ort.Api->UpdateTensorRTProviderOptions != null &&
@@ -43,7 +43,7 @@ public static unsafe class ExecutionProviders
             options.AppendExecutionProvider_TensorRT();
         });
 
-    public static ExecutionProvider CUDA { get; } = new(CUDAName, options =>
+    public static OrtEpConfig CUDA { get; } = new(CUDAName, options =>
         {
             RequireFunctions(Ort.Api->CreateCUDAProviderOptions != null &&
                 Ort.Api->UpdateCUDAProviderOptions != null &&
@@ -54,7 +54,7 @@ public static unsafe class ExecutionProviders
             options.AppendExecutionProvider_CUDA();
         });
 
-    public static ExecutionProvider DirectML { get; } = new(DirectMLName, (environment, options) =>
+    public static OrtEpConfig DirectML { get; } = new(DirectMLName, (environment, options) =>
         {
             RequireDeviceFunctions(DirectMLName);
             options.SetMemoryPatternEnabled(false);
@@ -69,21 +69,21 @@ public static unsafe class ExecutionProviders
             options.AppendExecutionProvider(environment, [device]);
         });
 
-    public static ExecutionProvider OpenVINO { get; } = CreateOpenVINO();
+    public static OrtEpConfig OpenVINO { get; } = CreateOpenVINO();
 
-    public static ExecutionProvider CPU { get; } = new("CPU", options =>
+    public static OrtEpConfig CPU { get; } = new("CPU", options =>
         options.SetCpuMemoryArenaEnabled(true), allowsCpuFallback: true);
 
-    public static ExecutionProvider CPUSingleThread { get; } = new("CPU(1*InterThread-1*IntraThread)", options =>
+    public static OrtEpConfig CPUSingleThread { get; } = new("CPU(1*InterThread-1*IntraThread)", options =>
         {
             options.SetInterOpThreadCount(1);
             options.SetIntraOpThreadCount(1);
         }, allowsCpuFallback: true);
 
     /// <summary>No explicit provider configuration; ONNX Runtime uses its default CPU provider.</summary>
-    public static ExecutionProvider None { get; } = new("None", _ => { }, allowsCpuFallback: true);
+    public static OrtEpConfig None { get; } = new("None", _ => { }, allowsCpuFallback: true);
 
-    public static IReadOnlyList<ExecutionProvider> DefaultPrioritizedList { get; } =
+    public static IReadOnlyList<OrtEpConfig> DefaultPrioritizedList { get; } =
         Array.AsReadOnly([TensorRT, CUDA, DirectML, OpenVINO, CPU, None]);
 
     /// <summary>Sets the process NVIDIA_TF32_OVERRIDE to 0 only when unset.</summary>
@@ -158,30 +158,30 @@ public static unsafe class ExecutionProviders
     }
 
     /// <summary>Creates an OpenVINO configuration using the dedicated V2 append API.</summary>
-    public static ExecutionProvider CreateOpenVINO(IReadOnlyDictionary<string, string>? providerOptions = null)
+    public static OrtEpConfig CreateOpenVINO(IReadOnlyDictionary<string, string>? providerOptions = null)
     {
-        return new ExecutionProvider(OpenVINOName, options =>
+        return new OrtEpConfig(OpenVINOName, options =>
         {
             RequireFunctions(Ort.Api->SessionOptionsAppendExecutionProvider_OpenVINO_V2 != null, OpenVINOName);
             options.AppendExecutionProvider_OpenVINO(providerOptions);
         });
     }
 
-    public static IReadOnlyList<ExecutionProvider> FindAvailablePrioritizedExecutionProviders(
-        IReadOnlyList<ExecutionProvider>? prioritizedExecutionProvidersToTry = null)
+    public static IReadOnlyList<OrtEpConfig> FindAvailablePrioritizedExecutionProviders(
+        IReadOnlyList<OrtEpConfig>? prioritizedExecutionProvidersToTry = null)
     {
         var environment = OrtEnv.Instance();
         return FindAvailablePrioritizedExecutionProviders(environment, prioritizedExecutionProvidersToTry);
     }
 
     /// <summary>Executes the smoke test eagerly and returns successful configurations in input order.</summary>
-    public static IReadOnlyList<ExecutionProvider> FindAvailablePrioritizedExecutionProviders(
-        OrtEnv environment, IReadOnlyList<ExecutionProvider>? prioritizedExecutionProvidersToTry = null)
+    public static IReadOnlyList<OrtEpConfig> FindAvailablePrioritizedExecutionProviders(
+        OrtEnv environment, IReadOnlyList<OrtEpConfig>? prioritizedExecutionProvidersToTry = null)
         => ProbeExecutionProviders(environment, prioritizedExecutionProvidersToTry)
             .Where(result => result.IsAvailable).Select(result => result.Provider).ToArray();
 
-    public static IReadOnlyList<ExecutionProviderProbeResult> ProbeExecutionProviders(
-        IReadOnlyList<ExecutionProvider>? prioritizedExecutionProvidersToTry = null)
+    public static IReadOnlyList<OrtEpProbeResult> ProbeExecutionProviders(
+        IReadOnlyList<OrtEpConfig>? prioritizedExecutionProvidersToTry = null)
     {
         var environment = OrtEnv.Instance();
         return ProbeExecutionProviders(environment, prioritizedExecutionProvidersToTry);
@@ -193,15 +193,15 @@ public static unsafe class ExecutionProviders
     /// Non-CPU configurations are tested without CPU fallback. Native crashes cannot be caught.
     /// Custom append delegates must only call APIs supported by the loaded runtime.
     /// </remarks>
-    public static IReadOnlyList<ExecutionProviderProbeResult> ProbeExecutionProviders(
-        OrtEnv environment, IReadOnlyList<ExecutionProvider>? prioritizedExecutionProvidersToTry = null)
+    public static IReadOnlyList<OrtEpProbeResult> ProbeExecutionProviders(
+        OrtEnv environment, IReadOnlyList<OrtEpConfig>? prioritizedExecutionProvidersToTry = null)
     {
         ArgumentNullException.ThrowIfNull(environment);
         ObjectDisposedException.ThrowIf(environment.IsClosed || environment.IsInvalid, environment);
         // Older runtimes accept unknown config keys but do not enforce CPU-fallback disabling.
         RequireApiVersion(16);
         var providers = prioritizedExecutionProvidersToTry ?? DefaultPrioritizedList;
-        var results = new List<ExecutionProviderProbeResult>(providers.Count);
+        var results = new List<OrtEpProbeResult>(providers.Count);
         foreach (var provider in providers)
         {
             try

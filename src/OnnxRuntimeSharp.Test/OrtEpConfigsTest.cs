@@ -5,7 +5,7 @@ using System.Linq;
 namespace OnnxRuntimeSharp.Test;
 
 [TestClass]
-public class ExecutionProvidersTest
+public class OrtEpConfigsTest
 {
     const string CPUName = "CPU";
     const string TestProviderName = "test";
@@ -13,12 +13,12 @@ public class ExecutionProvidersTest
     [TestMethod]
     public void DefaultPriorityIsStable()
     {
-        var names = ExecutionProviders.DefaultPrioritizedList
+        var names = OrtEpConfigs.DefaultPrioritizedList
             .Select(provider => provider.Name).ToArray();
 
         Assert.AreSequenceEqual(
-            [ExecutionProviders.TensorRTName, ExecutionProviders.CUDAName,
-             ExecutionProviders.DirectMLName, ExecutionProviders.OpenVINOName,
+            [OrtEpConfigs.TensorRTName, OrtEpConfigs.CUDAName,
+             OrtEpConfigs.DirectMLName, OrtEpConfigs.OpenVINOName,
              CPUName, "None"], names);
     }
 
@@ -27,9 +27,9 @@ public class ExecutionProvidersTest
     {
         var candidates = new[]
         {
-            ExecutionProviders.CPUSingleThread, ExecutionProviders.CPU, ExecutionProviders.None
+            OrtEpConfigs.CPUSingleThread, OrtEpConfigs.CPU, OrtEpConfigs.None
         };
-        var available = ExecutionProviders.FindAvailablePrioritizedExecutionProviders(candidates);
+        var available = OrtEpConfigs.FindAvailablePrioritizedExecutionProviders(candidates);
 
         Assert.AreSequenceEqual(candidates, available);
     }
@@ -38,17 +38,17 @@ public class ExecutionProvidersTest
     public void FailedConfigurationDoesNotHideOtherProviders()
     {
         var failure = new InvalidOperationException("test configuration failure");
-        var broken = new ExecutionProvider("Broken", _ => throw failure);
+        var broken = new OrtEpConfig("Broken", _ => throw failure);
         // Session creation is expected to fail; suppress its native error log, not the exception.
-        var fallbackOnly = new ExecutionProvider("Not an accelerator",
+        var fallbackOnly = new OrtEpConfig("Not an accelerator",
             options => options.SetLogSeverityLevel(Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_FATAL));
         using var environment = new OrtEnv();
         var candidates = new[]
         {
-            broken, ExecutionProviders.CPU, fallbackOnly, ExecutionProviders.CPUSingleThread
+            broken, OrtEpConfigs.CPU, fallbackOnly, OrtEpConfigs.CPUSingleThread
         };
-        var results = ExecutionProviders.ProbeExecutionProviders(environment, candidates);
-        var availableProviders = ExecutionProviders.FindAvailablePrioritizedExecutionProviders(
+        var results = OrtEpConfigs.ProbeExecutionProviders(environment, candidates);
+        var availableProviders = OrtEpConfigs.FindAvailablePrioritizedExecutionProviders(
             environment, candidates);
 
         Assert.HasCount(4, results);
@@ -59,23 +59,23 @@ public class ExecutionProvidersTest
         Assert.IsFalse(results[2].IsAvailable);
         Assert.IsTrue(results[3].IsAvailable);
         Assert.AreSequenceEqual(
-            [ExecutionProviders.CPU, ExecutionProviders.CPUSingleThread], availableProviders);
+            [OrtEpConfigs.CPU, OrtEpConfigs.CPUSingleThread], availableProviders);
     }
 
     [TestMethod]
     public void QueriesAreEagerAndCanBeRepeated()
     {
         var appendCount = 0;
-        var customCpu = new ExecutionProvider("Custom CPU", _ => ++appendCount, allowsCpuFallback: true);
+        var customCpu = new OrtEpConfig("Custom CPU", _ => ++appendCount, allowsCpuFallback: true);
         using var environment = new OrtEnv();
-        var available = ExecutionProviders.FindAvailablePrioritizedExecutionProviders(
+        var available = OrtEpConfigs.FindAvailablePrioritizedExecutionProviders(
             environment, [customCpu]);
         Assert.AreEqual(1, appendCount);
         Assert.AreSame(customCpu, available[0]);
-        var repeated = ExecutionProviders.ProbeExecutionProviders(environment, [customCpu]);
+        var repeated = OrtEpConfigs.ProbeExecutionProviders(environment, [customCpu]);
         Assert.IsTrue(repeated[0].IsAvailable);
         Assert.AreEqual(2, appendCount);
-        var empty = ExecutionProviders.ProbeExecutionProviders(environment, []);
+        var empty = OrtEpConfigs.ProbeExecutionProviders(environment, []);
         Assert.IsEmpty(empty);
     }
 
@@ -84,11 +84,11 @@ public class ExecutionProvidersTest
     {
         var environment = OrtEnv.Instance();
         var observedEnvironments = new List<OrtEnv>();
-        var customCpu = new ExecutionProvider("Shared CPU",
+        var customCpu = new OrtEpConfig("Shared CPU",
             (env, _) => observedEnvironments.Add(env), allowsCpuFallback: true);
 
-        var available = ExecutionProviders.FindAvailablePrioritizedExecutionProviders([customCpu]);
-        var results = ExecutionProviders.ProbeExecutionProviders([customCpu]);
+        var available = OrtEpConfigs.FindAvailablePrioritizedExecutionProviders([customCpu]);
+        var results = OrtEpConfigs.ProbeExecutionProviders([customCpu]);
 
         Assert.AreSequenceEqual([customCpu], available);
         Assert.IsTrue(results[0].IsAvailable);
@@ -101,16 +101,16 @@ public class ExecutionProvidersTest
     [TestMethod]
     public unsafe void DefaultQueryIncludesCpuAndHandlesMissingProviders()
     {
-        var results = ExecutionProviders.ProbeExecutionProviders();
-        var cpu = results.Single(result => result.Provider == ExecutionProviders.CPU);
-        var none = results.Single(result => result.Provider == ExecutionProviders.None);
+        var results = OrtEpConfigs.ProbeExecutionProviders();
+        var cpu = results.Single(result => result.Provider == OrtEpConfigs.CPU);
+        var none = results.Single(result => result.Provider == OrtEpConfigs.None);
 
-        Assert.HasCount(ExecutionProviders.DefaultPrioritizedList.Count, results);
+        Assert.HasCount(OrtEpConfigs.DefaultPrioritizedList.Count, results);
         Assert.IsTrue(cpu.IsAvailable);
         Assert.IsTrue(none.IsAvailable);
         if (Ort.Api->SessionOptionsAppendExecutionProvider_OpenVINO_V2 == null)
         {
-            var openVino = results.Single(result => result.Provider == ExecutionProviders.OpenVINO);
+            var openVino = results.Single(result => result.Provider == OrtEpConfigs.OpenVINO);
             Assert.IsInstanceOfType<NotSupportedException>(openVino.Error);
         }
     }
@@ -119,8 +119,8 @@ public class ExecutionProvidersTest
     public void OpenVinoProbeCanRunRepeatedlyWhenSupported()
     {
         using var environment = new OrtEnv();
-        var results = ExecutionProviders.ProbeExecutionProviders(
-            environment, [ExecutionProviders.OpenVINO]);
+        var results = OrtEpConfigs.ProbeExecutionProviders(
+            environment, [OrtEpConfigs.OpenVINO]);
         var result = results[0];
         if (result.Error is OrtException error &&
             (error.Message.Contains("Failed to load") || error.Message.Contains("LoadLibrary failed")))
@@ -132,36 +132,36 @@ public class ExecutionProvidersTest
             Assert.Inconclusive(unavailable.Message);
         }
         Assert.IsTrue(result.IsAvailable, result.Error?.ToString());
-        var repeated = ExecutionProviders.ProbeExecutionProviders(
-            environment, [ExecutionProviders.OpenVINO]);
+        var repeated = OrtEpConfigs.ProbeExecutionProviders(
+            environment, [OrtEpConfigs.OpenVINO]);
         Assert.IsTrue(repeated[0].IsAvailable, repeated[0].Error?.ToString());
-        var configured = ExecutionProviders.CreateOpenVINO(
+        var configured = OrtEpConfigs.CreateOpenVINO(
             new Dictionary<string, string> { ["device_type"] = CPUName });
-        var configuredResults = ExecutionProviders.ProbeExecutionProviders(environment, [configured]);
+        var configuredResults = OrtEpConfigs.ProbeExecutionProviders(environment, [configured]);
         var configuredResult = configuredResults[0];
         Assert.IsTrue(configuredResult.IsAvailable, configuredResult.Error?.ToString());
-        var available = ExecutionProviders.FindAvailablePrioritizedExecutionProviders(
-            environment, [ExecutionProviders.OpenVINO]);
-        Assert.AreSequenceEqual([ExecutionProviders.OpenVINO], available);
+        var available = OrtEpConfigs.FindAvailablePrioritizedExecutionProviders(
+            environment, [OrtEpConfigs.OpenVINO]);
+        Assert.AreSequenceEqual([OrtEpConfigs.OpenVINO], available);
     }
 
     [TestMethod]
     public void ArgumentsAreValidated()
     {
-        Assert.ThrowsExactly<ArgumentException>(() => new ExecutionProvider("", _ => { }));
+        Assert.ThrowsExactly<ArgumentException>(() => new OrtEpConfig("", _ => { }));
         Assert.ThrowsExactly<ArgumentNullException>(
-            () => new ExecutionProvider(TestProviderName, (Action<OrtSessionOptions>)null!));
+            () => new OrtEpConfig(TestProviderName, (Action<OrtSessionOptions>)null!));
         Assert.ThrowsExactly<ArgumentNullException>(
-            () => new ExecutionProvider(TestProviderName, (Action<OrtEnv, OrtSessionOptions>)null!));
+            () => new OrtEpConfig(TestProviderName, (Action<OrtEnv, OrtSessionOptions>)null!));
         Assert.ThrowsExactly<ArgumentNullException>(
-            () => ExecutionProviders.ProbeExecutionProviders((OrtEnv)null!, []));
+            () => OrtEpConfigs.ProbeExecutionProviders(null!, []));
         using var environment = new OrtEnv();
-        var results = ExecutionProviders.ProbeExecutionProviders(environment, [null!]);
+        var results = OrtEpConfigs.ProbeExecutionProviders(environment, [null!]);
         var invalidCandidate = results[0];
         Assert.IsFalse(invalidCandidate.IsAvailable);
         Assert.IsNotNull(invalidCandidate.Error);
         environment.Dispose();
         Assert.ThrowsExactly<ObjectDisposedException>(
-            () => ExecutionProviders.ProbeExecutionProviders(environment));
+            () => OrtEpConfigs.ProbeExecutionProviders(environment));
     }
 }
