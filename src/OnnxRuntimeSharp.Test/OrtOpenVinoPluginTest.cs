@@ -43,8 +43,7 @@ public class OrtOpenVinoPluginTest
                 Assert.Inconclusive(
                     "OpenVINO is unavailable on this machine. " +
                     $"Registered '{executionProviderName}', " +
-                    $"but available providers were: {availableProviders}. " +
-                    "OpenVINO requires a supported Intel device; x64 alone is not sufficient.");
+                    $"but available providers were: {availableProviders}. ");
             }
 
             var device = devices.FirstOrDefault(item =>
