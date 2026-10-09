@@ -14,7 +14,7 @@ const int MinimumIterations = 10;
 const int ProfilingSamples = 10;
 const bool EnableProfiling = false;
 const double TargetRunDurationMilliseconds = 1_000;
-const int EPAlign = -36;
+const int EPAlign = -38;
 var concurrentTestDuration = TimeSpan.FromSeconds(1);
 int[] concurrentThreadCountsToTest = [1, 2, 4, 8, 16];
 OrtEpConfig[] configurations =
@@ -23,42 +23,21 @@ OrtEpConfig[] configurations =
     OrtEpConfigs.TensorRT,
     OrtEpConfigs.CUDA,
 #endif
-    //new(OrtEpConfigs.OpenVINO.Name, (environment, options) =>
-    //{
-    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
-    //    OrtEpConfigs.OpenVINO.Append(environment, options);
-    //}),
-    //new("OpenVINO 1×Threads 1×Streams", (environment, options) =>
-    //{
-    //    options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
-    //    OrtEpConfigs.CreateOpenVINO(new Dictionary<string, string>
-    //    {
-    //        { "device_type", "CPU" },
-    //        { "num_of_threads", "1" },
-    //        { "num_streams", "1" },
-    //    }).Append(environment, options);
-    //}),
-    new("OpenVINO 16×Threads 8×Streams", (environment, options) =>
-    {
-        options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
-        OrtEpConfigs.CreateOpenVINO(new Dictionary<string, string>
+    OrtEpConfigs.OpenVINO,
+    OrtEpConfigs.OpenVINOCPUSingleThread,
+    OrtEpConfigs.CreateOpenVINO("OpenVINO CPU 16×Threads 8×Streams", new Dictionary<string, string>
         {
             { "device_type", "CPU" },
             { "num_of_threads", "16" },
             { "num_streams", "8" },
-        }).Append(environment, options);
-    }),
-    new("OpenVINO 16×Threads 8×Streams bf16", (environment, options) =>
-    {
-        options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
-        OrtEpConfigs.CreateOpenVINO(new Dictionary<string, string>
+        }),
+    OrtEpConfigs.CreateOpenVINO("OpenVINO CPU 16×Threads 8×Streams bf16", new Dictionary<string, string>
         {
             { "device_type", "CPU" },
             { "num_of_threads", "16" },
             { "num_streams", "8" },
             { "load_config", "{\"CPU\":{\"INFERENCE_PRECISION_HINT\":\"bf16\"}}" },
-        }).Append(environment, options);
-    }),
+        }),
     OrtEpConfigs.CPU,
     OrtEpConfigs.CPUSingleThread,
 ];
@@ -159,7 +138,7 @@ static NodeProfileReport RunModel(
     bool enableProfiling)
 {
     var model = File.ReadAllBytes(modelPath);
-    using var environment = new OrtEnv();
+    var environment = OrtEnv.Instance();
     var configurationName = configuration.Name;
     var profilePrefix = enableProfiling
         ? Path.Combine(
