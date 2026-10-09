@@ -8,6 +8,34 @@ namespace OnnxRuntimeSharp.Test;
 public class OrtEnvTest
 {
     [TestMethod]
+    public void InstanceReturnsSameEnvironment()
+    {
+        var environment = OrtEnv.Instance();
+        var repeated = OrtEnv.Instance();
+
+        Assert.AreSame(environment, repeated);
+        Assert.IsFalse(environment.IsClosed);
+        Assert.IsFalse(environment.IsInvalid);
+    }
+
+    [TestMethod]
+    public void DisposingExplicitEnvironmentDoesNotCloseInstance()
+    {
+        var environment = OrtEnv.Instance();
+        using (var explicitEnvironment = new OrtEnv())
+        {
+            Assert.AreNotSame(environment, explicitEnvironment);
+        }
+        var repeated = OrtEnv.Instance();
+        using var session = new OrtSession(environment, TestOnnxModels.Add);
+
+        Assert.AreSame(environment, repeated);
+        Assert.IsFalse(environment.IsClosed);
+        Assert.HasCount(2, session.Inputs);
+        Assert.HasCount(1, session.Outputs);
+    }
+
+    [TestMethod]
     public unsafe void NativeEnvironmentHandleHasPointerSize()
     {
         Assert.AreEqual(IntPtr.Size, sizeof(Ort.OrtEnvHandle));

@@ -24,7 +24,8 @@ public class OrtOpenVinoPluginTest
         }
         catch (OrtException ex) when (ex.Message.Contains("Failed to load"))
         {
-            Assert.Inconclusive($"OpenVINO is unavailable on this machine. Could not load '{libraryPath}'.");
+            Assert.Inconclusive(
+                $"OpenVINO is unavailable on this machine. Could not load '{libraryPath}'.");
         }
         try
         {
@@ -37,31 +38,71 @@ public class OrtOpenVinoPluginTest
                 .ToArray();
             if (devices.Length == 0)
             {
+                var providerNames = allDevices.Select(device => device.ExecutionProviderName);
+                var availableProviders = string.Join(", ", providerNames);
                 Assert.Inconclusive(
-                    $"OpenVINO is unavailable on this machine. Registered '{executionProviderName}', " +
-                    $"but available providers were: {string.Join(", ", allDevices.Select(device => device.ExecutionProviderName))}. " +
-                    "OpenVINO requires a supported Intel device; x64 alone is not sufficient.");
+                    "OpenVINO is unavailable on this machine. " +
+                    $"Registered '{executionProviderName}', " +
+                    $"but available providers were: {availableProviders}. ");
             }
 
             var device = devices.FirstOrDefault(item =>
                 item.HardwareDevice.Type == Ort.OrtHardwareDeviceType.OrtHardwareDeviceType_CPU) ??
                 devices[0];
             using var options = new OrtSessionOptions();
+            // A successful run must execute Add on OpenVINO, not silently fall back to CPU.
+            options.AddConfigEntry("session.disable_cpu_ep_fallback", "1");
+            options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
             options.AppendExecutionProvider(environment, [device]);
-            using var session = TestData.CreateMnistSession(environment, options);
-            using var input = TestData.CreateMnistInput();
-            using var output = TestData.CreateMnistOutput();
-
-            session.Run(input, output);
-
-            foreach (var value in output.Data)
-            {
-                Assert.IsTrue(float.IsFinite(value));
-            }
+            using var session = new OrtSession(environment, TestOnnxModels.Add, options);
+            AssertAddOutputs(session);
         }
         finally
         {
             environment.UnregisterExecutionProviderLibrary(OpenVINORegistrationName);
         }
+    }
+
+    [TestMethod]
+    public void AddProbeModelProducesExpectedOutputsOnCpu()
+    {
+        using var environment = new OrtEnv();
+        using var session = new OrtSession(environment, TestOnnxModels.Add);
+        AssertAddOutputs(session);
+    }
+
+    [TestMethod]
+    public void AddProbeModelRejectsCpuFallbackWhenNoProviderIsAppended()
+    {
+        using var environment = new OrtEnv();
+        using var options = new OrtSessionOptions();
+        // Session creation is expected to fail; keep the exception without logging the error.
+        options.SetLogSeverityLevel(Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_FATAL);
+        options.AddConfigEntry("session.disable_cpu_ep_fallback", "1");
+        options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
+
+        Assert.ThrowsExactly<OrtException>(() =>
+        {
+            using var session = new OrtSession(environment, TestOnnxModels.Add, options);
+        });
+    }
+
+    static void AssertAddOutputs(OrtSession session)
+    {
+        using var first = new OrtValue<float>(new float[] { 2 }, [1]);
+        using var second = new OrtValue<float>(new float[] { 3 }, [1]);
+        using var output = new OrtValue<float>(new float[1], [1]);
+        var inputs = new[]
+        {
+            session.CreateInputBinding(0, first), session.CreateInputBinding(1, second)
+        };
+        var outputs = new[] { session.CreateOutputBinding(0, output) };
+
+        session.Run(inputs, outputs);
+        Assert.AreEqual(5f, output.Data[0]);
+
+        first.Data[0] = -4;
+        session.Run(inputs, outputs);
+        Assert.AreEqual(-1f, output.Data[0]);
     }
 }
