@@ -64,12 +64,21 @@ public class OrtSessionOptionsTest
     }
 
     [TestMethod]
-    public void InvalidThreadCountsAreRejected()
+    public void ZeroThreadCountsUseRuntimeDefaults()
     {
         using var options = new OrtSessionOptions();
 
-        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => options.SetIntraOpThreadCount(0));
-        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => options.SetInterOpThreadCount(0));
+        options.SetIntraOpThreadCount(0);
+        options.SetInterOpThreadCount(0);
+    }
+
+    [TestMethod]
+    public void NegativeThreadCountsAreRejected()
+    {
+        using var options = new OrtSessionOptions();
+
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => options.SetIntraOpThreadCount(-1));
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => options.SetInterOpThreadCount(-1));
     }
 
     [TestMethod]
