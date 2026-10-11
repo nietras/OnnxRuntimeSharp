@@ -10,7 +10,7 @@ namespace OnnxRuntimeSharp;
 /// <summary>Low-level bindings for ONNX Runtime C API.</summary>
 public static unsafe partial class Ort
 {
-    internal const uint MaxApiVersion = 28;
+    internal const uint MaxApiVersion = 31;
 
     internal static readonly uint _apiVersion;
     internal static readonly OrtApi* Api = GetApi(out _apiVersion);
@@ -70,7 +70,8 @@ public static unsafe partial class Ort
         [
             102, 119, 125, 127, 150, 158, 162, 170, 192, 204, // Version 01-10
             210, 219, 225, 239, 255, 266, 276, 280, 280, 285, // Version 11-20
-            285, 318, 390, 415, 419, 419, 422, 424            // Version 21-28
+            285, 318, 390, 415, 419, 419, 422, 424, 425, 426, // Version 21-30
+            428 // Version 31 adds two slots
         ];
         Debug.Assert(ApiPointerCounts[^1] == sizeof(OrtApi) / sizeof(nint));
         // Never read the missing tail of an older runtime's native table.

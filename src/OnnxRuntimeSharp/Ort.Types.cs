@@ -22,6 +22,9 @@ public static unsafe partial class Ort
     public readonly struct OrtEpApi;
     public readonly struct OrtExternalMemoryHandle;
     public readonly struct OrtExternalSemaphoreHandle;
+    public readonly struct OrtModelPackageOptions;
+    public readonly struct OrtModelPackageContext;
+    public readonly struct OrtModelPackageComponentContext;
 
     public enum OrtErrorCode
     {
@@ -1881,6 +1884,69 @@ public static unsafe partial class Ort
 
         [NativeTypeName("OrtStatusPtr (*)(const OrtKernelContext *, OrtSyncStream **) __attribute__((stdcall))")]
         public delegate* unmanaged[Stdcall]<OrtKernelContext*, OrtSyncStream**, OrtStatusHandle> KernelContext_GetSyncStream;
+
+        [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, const void *, size_t) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtSessionOptionsHandle, void*, nuint, OrtStatusHandle> SessionOptionsSetWeightlessSourceModelBuffer;
+
+        [NativeTypeName("OrtStatusPtr (*)(const OrtKernelContext *, size_t, OrtValue **) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtKernelContext*, nuint, OrtValueHandle*, OrtStatusHandle> KernelContext_GetPreallocatedOutput;
+
+        [NativeTypeName("OrtStatusPtr (*)(OrtSessionOptions *, OrtReadNamedBufferFunc, void *) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtSessionOptionsHandle, delegate* unmanaged[Stdcall]<void*, sbyte*, OrtAllocator*, void**, nuint*, OrtStatusHandle>, void*, OrtStatusHandle> SessionOptionsSetEpContextDataReadFunc;
+
+        [NativeTypeName("const OrtModelPackageApi *(*)(void) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtModelPackageApi*> GetModelPackageApi;
+    }
+
+    public unsafe partial struct OrtModelPackageApi
+    {
+        [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *, const OrtSessionOptions *, OrtModelPackageOptions **) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtEnvHandle, OrtSessionOptionsHandle, OrtModelPackageOptions**, OrtStatusHandle> CreateModelPackageOptionsFromSessionOptions;
+
+        [NativeTypeName("void (*)(OrtModelPackageOptions *) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtModelPackageOptions*, void> ReleaseModelPackageOptions;
+
+        [NativeTypeName("OrtStatusPtr (*)(const ORTCHAR_T *, OrtModelPackageContext **) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<ushort*, OrtModelPackageContext**, OrtStatusHandle> CreateModelPackageContext;
+
+        [NativeTypeName("void (*)(OrtModelPackageContext *) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtModelPackageContext*, void> ReleaseModelPackageContext;
+
+        [NativeTypeName("OrtStatusPtr (*)(const OrtModelPackageContext *, int64_t *) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtModelPackageContext*, long*, OrtStatusHandle> ModelPackage_GetSchemaVersion;
+
+        [NativeTypeName("OrtStatusPtr (*)(const OrtModelPackageContext *, size_t *) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtModelPackageContext*, nuint*, OrtStatusHandle> ModelPackage_GetComponentCount;
+
+        [NativeTypeName("OrtStatusPtr (*)(const OrtModelPackageContext *, const char *const **, size_t *) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtModelPackageContext*, sbyte***, nuint*, OrtStatusHandle> ModelPackage_GetComponentNames;
+
+        [NativeTypeName("OrtStatusPtr (*)(const OrtModelPackageContext *, const char *, size_t *) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtModelPackageContext*, sbyte*, nuint*, OrtStatusHandle> ModelPackage_GetVariantCount;
+
+        [NativeTypeName("OrtStatusPtr (*)(const OrtModelPackageContext *, const char *, const char *const **, size_t *) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtModelPackageContext*, sbyte*, sbyte***, nuint*, OrtStatusHandle> ModelPackage_GetVariantNames;
+
+        [NativeTypeName("OrtStatusPtr (*)(const OrtModelPackageContext *, const char *, const char *, const char **) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtModelPackageContext*, sbyte*, sbyte*, sbyte**, OrtStatusHandle> ModelPackage_GetVariantEpName;
+
+        [NativeTypeName("OrtStatusPtr (*)(const OrtModelPackageContext *, const char *, const char *, int, const char **) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtModelPackageContext*, sbyte*, sbyte*, int, sbyte**, OrtStatusHandle> ModelPackage_ResolveStringRef;
+
+        [NativeTypeName("OrtStatusPtr (*)(const OrtModelPackageContext *, const char *, const OrtModelPackageOptions *, OrtModelPackageComponentContext **) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtModelPackageContext*, sbyte*, OrtModelPackageOptions*, OrtModelPackageComponentContext**, OrtStatusHandle> SelectComponent;
+
+        [NativeTypeName("void (*)(OrtModelPackageComponentContext *) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtModelPackageComponentContext*, void> ReleaseModelPackageComponentContext;
+
+        [NativeTypeName("OrtStatusPtr (*)(const OrtModelPackageComponentContext *, const char **) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtModelPackageComponentContext*, sbyte**, OrtStatusHandle> ModelPackageComponent_GetSelectedVariantName;
+
+        [NativeTypeName("OrtStatusPtr (*)(const OrtModelPackageComponentContext *, const ORTCHAR_T **) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtModelPackageComponentContext*, ushort**, OrtStatusHandle> ModelPackageComponent_GetSelectedVariantFolderPath;
+
+        [NativeTypeName("OrtStatusPtr (*)(const OrtEnv *, OrtModelPackageComponentContext *, const OrtSessionOptions *, OrtSession **) __attribute__((stdcall))")]
+        public delegate* unmanaged[Stdcall]<OrtEnvHandle, OrtModelPackageComponentContext*, OrtSessionOptionsHandle, OrtSessionHandle*, OrtStatusHandle> CreateSession;
     }
 
     public enum OrtCustomOpInputOutputCharacteristic
