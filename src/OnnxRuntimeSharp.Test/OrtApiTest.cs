@@ -12,8 +12,12 @@ public unsafe class OrtApiTest
     [DataRow("1.21.0-dev", 21u)]
     [DataRow("1.9.1", 9u)]
     [DataRow("1.21", 21u)]
-    [DataRow("1.28.0", Ort.MaxApiVersion)]
-    [DataRow("1.30.0", Ort.MaxApiVersion)]
+    [DataRow("1.28.0", 28u)]
+    [DataRow("1.29.0", 29u)]
+    [DataRow("1.30.0", 30u)]
+    [DataRow("1.31.0", 31u)]
+    [DataRow("1.32.0", 31u)]
+    [DataRow("1.33.0", 31u)]
     [DataRow("1.999.0", Ort.MaxApiVersion)]
     [DataRow("1.4294967295.0", Ort.MaxApiVersion)]
     [DataRow("1.4294967296.0", Ort.MaxApiVersion)]
@@ -60,7 +64,10 @@ public unsafe class OrtApiTest
     [DataRow(25u, nameof(Ort.OrtApi.SetPerSessionThreadPoolCallbacks))]
     [DataRow(26u, nameof(Ort.OrtApi.SetPerSessionThreadPoolCallbacks))]
     [DataRow(27u, nameof(Ort.OrtApi.SessionReleaseCapturedGraph))]
-    [DataRow(Ort.MaxApiVersion, nameof(Ort.OrtApi.KernelContext_GetSyncStream))]
+    [DataRow(28u, nameof(Ort.OrtApi.KernelContext_GetSyncStream))]
+    [DataRow(29u, nameof(Ort.OrtApi.SessionOptionsSetWeightlessSourceModelBuffer))]
+    [DataRow(30u, nameof(Ort.OrtApi.KernelContext_GetPreallocatedOutput))]
+    [DataRow(31u, nameof(Ort.OrtApi.GetModelPackageApi))]
     public void CopyPreservesSupportedPrefixAndZerosTail(uint version, string lastField)
     {
         var pointerCount = PointerCountThrough(lastField);
@@ -80,9 +87,17 @@ public unsafe class OrtApiTest
     }
 
     [TestMethod]
-    public void LayoutMatchesApi28()
+    public void LayoutMatchesApi31()
     {
-        Assert.AreEqual(sizeof(Ort.OrtApi), PointerCountThrough(nameof(Ort.OrtApi.KernelContext_GetSyncStream)) * sizeof(nint));
+        Assert.AreEqual(428 * sizeof(nint), sizeof(Ort.OrtApi));
+        Assert.AreEqual(sizeof(Ort.OrtApi), PointerCountThrough(nameof(Ort.OrtApi.GetModelPackageApi)) * sizeof(nint));
+    }
+
+    [TestMethod]
+    public void ModelPackageApiLayoutMatchesNativeTable()
+    {
+        Assert.AreEqual(16 * sizeof(nint), sizeof(Ort.OrtModelPackageApi));
+        Assert.AreEqual(sizeof(Ort.OrtModelPackageApi), PointerCountThrough<Ort.OrtModelPackageApi>(nameof(Ort.OrtModelPackageApi.CreateSession)) * sizeof(nint));
     }
 
     [TestMethod]
@@ -131,4 +146,7 @@ public unsafe class OrtApiTest
 
     static int PointerCountThrough(string fieldName) =>
         (int)Marshal.OffsetOf<Ort.OrtApi>(fieldName) / sizeof(nint) + 1;
+
+    static int PointerCountThrough<T>(string fieldName) where T : struct =>
+        (int)Marshal.OffsetOf<T>(fieldName) / sizeof(nint) + 1;
 }
