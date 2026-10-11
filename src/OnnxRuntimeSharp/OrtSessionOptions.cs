@@ -37,14 +37,14 @@ public sealed class OrtSessionOptions : OrtSafeHandle<Ort.OrtSessionOptionsHandl
     public unsafe void SetIntraOpThreadCount(int threadCount)
     {
         ThrowIfDisposed();
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(threadCount);
+        ArgumentOutOfRangeException.ThrowIfNegative(threadCount);
         Ort.SetIntraOpNumThreads(Handle, threadCount).Ok();
     }
 
     public unsafe void SetInterOpThreadCount(int threadCount)
     {
         ThrowIfDisposed();
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(threadCount);
+        ArgumentOutOfRangeException.ThrowIfNegative(threadCount);
         Ort.SetInterOpNumThreads(Handle, threadCount).Ok();
     }
 
