@@ -4,6 +4,7 @@
     <IsTestProject>true</IsTestProject>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+  
   <ItemGroup>
     <ProjectReference Include="../OnnxRuntimeSharp/OnnxRuntimeSharp.csproj" />
 
@@ -20,7 +21,7 @@
     <PackageReference Include="NtvLibs.oneTBB.tbb12.runtime.win-x64" Version="2023.1.0.1" />
     <!--<PackageReference Include="Intel.ML.OnnxRuntime.EP.OpenVINO" Version="1.7.0" />-->
 
-    <PackageReference Include="MSTest" Version="4.4.1" />
+    <PackageReference Include="MSTest" Version="4.5.1" />
     <PackageReference Include="coverlet.collector" Version="10.1.0" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
