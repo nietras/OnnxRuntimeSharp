@@ -6,9 +6,11 @@ namespace OnnxRuntimeSharp;
 public static class OrtSessionFactory
 {
     static readonly IReadOnlyList<OrtEpConfig> CPUSingleThreadList = [OrtEpConfigs.CPUSingleThread];
-    static readonly Lazy<bool> IsFastOrtEpConfigAvailableCache =
+    static readonly Lazy<bool> IsFastGpuExecutionProviderAvailableCache =
         new(() => OrtEpConfigs.ProbeExecutionProvider(OrtEnv.Instance(),
                     OrtEpConfigs.TensorRT).IsAvailable);
+
+    public static bool IsFastGpuExecutionProviderAvailable() => IsFastGpuExecutionProviderAvailableCache.Value;
 
     public static OrtSession CreateOnCPUSingleThread(ReadOnlySpan<byte> model,
         int warmupRuns = 1, int warmupBatchSize = 1) =>
@@ -19,6 +21,7 @@ public static class OrtSessionFactory
         int warmupRuns = 1, int warmupBatchSize = 1)
     {
         var env = OrtEnv.Instance();
+
         using var options = new OrtSessionOptions();
         // IMPORTANT: This must be ALL to ensure model executes fast enough
         options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
@@ -49,6 +52,4 @@ public static class OrtSessionFactory
             throw;
         }
     }
-
-    public static bool IsFastOrtEpConfigAvailable() => IsFastOrtEpConfigAvailableCache.Value;
 }
