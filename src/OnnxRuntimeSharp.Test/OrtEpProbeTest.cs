@@ -8,24 +8,24 @@ public class OrtEpProbeTest
     [TestMethod]
     public void SingleProviderProbeReturnsSuccessfulConfiguration()
     {
-        using var environment = new OrtEnv();
+        using var env = new OrtEnv();
 
-        var result = OrtEpConfigs.ProbeExecutionProvider(environment, OrtEpConfigs.CPUSingleThread);
+        var result = OrtEpConfigs.ProbeExecutionProvider(env, OrtEpConfigs.CPUSingleThread);
 
         Assert.AreSame(OrtEpConfigs.CPUSingleThread, result.Provider);
         Assert.IsTrue(result.IsAvailable);
         Assert.IsNull(result.Error);
-        Assert.IsFalse(environment.IsClosed);
+        Assert.IsFalse(env.IsClosed);
     }
 
     [TestMethod]
     public void SingleProviderProbePreservesAppendFailure()
     {
-        using var environment = new OrtEnv();
+        using var env = new OrtEnv();
         var failure = new InvalidOperationException("Test provider failure.");
         var provider = new OrtEpConfig("Broken", _ => throw failure);
 
-        var result = OrtEpConfigs.ProbeExecutionProvider(environment, provider);
+        var result = OrtEpConfigs.ProbeExecutionProvider(env, provider);
 
         Assert.AreSame(provider, result.Provider);
         Assert.IsFalse(result.IsAvailable);

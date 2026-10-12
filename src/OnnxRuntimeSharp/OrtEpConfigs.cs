@@ -54,19 +54,19 @@ public static unsafe class OrtEpConfigs
             options.AppendExecutionProvider_CUDA();
         });
 
-    public static OrtEpConfig DirectML { get; } = new(DirectMLName, (environment, options) =>
+    public static OrtEpConfig DirectML { get; } = new(DirectMLName, (env, options) =>
         {
             RequireDeviceFunctions(DirectMLName);
             options.SetMemoryPatternEnabled(false);
             options.SetExecutionMode(Ort.ExecutionMode.ORT_SEQUENTIAL);
-            var device = environment.GetExecutionProviderDevices()
+            var device = env.GetExecutionProviderDevices()
                 .FirstOrDefault(item => item.ExecutionProviderName == "DmlExecutionProvider");
             if (device is null)
             {
                 throw new NotSupportedException(
-                    "DirectML has no supported device in this environment.");
+                    "DirectML has no supported device in this env.");
             }
-            options.AppendExecutionProvider(environment, [device]);
+            options.AppendExecutionProvider(env, [device]);
         });
 
     public static OrtEpConfig OpenVINO { get; } = CreateOpenVINO(OpenVINOName);
@@ -110,21 +110,21 @@ public static unsafe class OrtEpConfigs
     public static IReadOnlyList<OrtEpConfig> FindAvailablePrioritizedExecutionProviders(
         IReadOnlyList<OrtEpConfig>? prioritizedExecutionProvidersToTry = null)
     {
-        var environment = OrtEnv.Instance();
-        return FindAvailablePrioritizedExecutionProviders(environment, prioritizedExecutionProvidersToTry);
+        var env = OrtEnv.Instance();
+        return FindAvailablePrioritizedExecutionProviders(env, prioritizedExecutionProvidersToTry);
     }
 
     public static IReadOnlyList<OrtEpProbeResult> ProbeExecutionProviders(
         IReadOnlyList<OrtEpConfig>? prioritizedExecutionProvidersToTry = null)
     {
-        var environment = OrtEnv.Instance();
-        return ProbeExecutionProviders(environment, prioritizedExecutionProvidersToTry);
+        var env = OrtEnv.Instance();
+        return ProbeExecutionProviders(env, prioritizedExecutionProvidersToTry);
     }
 
     /// <summary>Executes the smoke test eagerly and returns successful configurations in input order.</summary>
     public static IReadOnlyList<OrtEpConfig> FindAvailablePrioritizedExecutionProviders(
-        OrtEnv environment, IReadOnlyList<OrtEpConfig>? prioritizedExecutionProvidersToTry = null)
-        => ProbeExecutionProviders(environment, prioritizedExecutionProvidersToTry)
+        OrtEnv env, IReadOnlyList<OrtEpConfig>? prioritizedExecutionProvidersToTry = null)
+        => ProbeExecutionProviders(env, prioritizedExecutionProvidersToTry)
             .Where(result => result.IsAvailable).Select(result => result.Provider).ToArray();
 
     /// <summary>Tests each configuration with real inference and preserves failures for diagnostics.</summary>

@@ -12,8 +12,8 @@ public class OrtSessionExtensionsTest
     [DataRow(3)]
     public void WarmupLeavesMultiInputOutputSessionUsable(int warmupRuns)
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateTwoInputSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateTwoInputSession(env);
 
         session.Warmup(warmupRuns);
 
@@ -33,8 +33,8 @@ public class OrtSessionExtensionsTest
     [TestMethod]
     public void DisabledWarmupDoesNotCreateTensors()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateTwoInputSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateTwoInputSession(env);
 
         session.Warmup(warmupRuns: 0, warmupBatchSize: -1);
     }
@@ -59,8 +59,8 @@ public class OrtSessionExtensionsTest
     [DataRow(-1)]
     public void DynamicBatchSizeMustBePositive(int batchSize)
     {
-        using var environment = new OrtEnv();
-        using var session = new OrtSession(environment, TestOnnxModels.CreateIdentity(-1, 2));
+        using var env = new OrtEnv();
+        using var session = new OrtSession(env, TestOnnxModels.CreateIdentity(-1, 2));
 
         Assert.ThrowsExactly<ArgumentOutOfRangeException>(() =>
             session.Warmup(warmupBatchSize: batchSize));
@@ -69,8 +69,8 @@ public class OrtSessionExtensionsTest
 
     static void AssertIdentityWarmup(long[] modelDimensions, long[] inputDimensions, int batchSize)
     {
-        using var environment = new OrtEnv();
-        using var session = new OrtSession(environment, TestOnnxModels.CreateIdentity(modelDimensions));
+        using var env = new OrtEnv();
+        using var session = new OrtSession(env, TestOnnxModels.CreateIdentity(modelDimensions));
 
         session.Warmup(warmupRuns: 2, warmupBatchSize: batchSize);
 

@@ -6,9 +6,9 @@ namespace OnnxRuntimeSharp;
 
 public sealed unsafe class OrtEpDevice
 {
-    internal OrtEpDevice(OrtEnv environment, Ort.OrtEpDevice* pointer)
+    internal OrtEpDevice(OrtEnv env, Ort.OrtEpDevice* pointer)
     {
-        Environment = environment;
+        Env = env;
         Pointer = pointer;
         ExecutionProviderName = ReadString(Ort.EpDevice_EpName(pointer));
         ExecutionProviderVendor = ReadString(Ort.EpDevice_EpVendor(pointer));
@@ -30,7 +30,7 @@ public sealed unsafe class OrtEpDevice
     public IReadOnlyDictionary<string, string> ExecutionProviderOptions { get; }
     public OrtHardwareDeviceInfo HardwareDevice { get; }
 
-    internal OrtEnv Environment { get; }
+    internal OrtEnv Env { get; }
     internal Ort.OrtEpDevice* Pointer { get; }
 
     static string ReadString(sbyte* value) =>

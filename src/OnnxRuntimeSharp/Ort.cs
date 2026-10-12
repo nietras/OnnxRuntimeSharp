@@ -109,22 +109,22 @@ public static unsafe partial class Ort
         AllocatorFree(allocator, value).Ok();
     }
 
-    internal static OrtEnvHandle CreateEnvironment(string logId, OrtLoggingLevel loggingLevel)
+    internal static OrtEnvHandle CreateEnv(string logId, OrtLoggingLevel loggingLevel)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(logId);
         var utf8LogId = Utf8StringMarshaller.ConvertToUnmanaged(logId);
         try
         {
-            OrtEnvHandle environment;
-            CreateEnv(loggingLevel, (sbyte*)utf8LogId, &environment).Ok();
+            OrtEnvHandle env;
+            CreateEnv(loggingLevel, (sbyte*)utf8LogId, &env).Ok();
             try
             {
-                SetLanguageProjection(environment, OrtLanguageProjection.ORT_PROJECTION_CSHARP).Ok();
-                return environment;
+                SetLanguageProjection(env, OrtLanguageProjection.ORT_PROJECTION_CSHARP).Ok();
+                return env;
             }
             catch
             {
-                ReleaseEnv(environment);
+                ReleaseEnv(env);
                 throw;
             }
         }

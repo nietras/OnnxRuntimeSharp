@@ -17,7 +17,7 @@ public sealed unsafe class OrtEnv : OrtSafeHandle<Ort.OrtEnvHandle>
     public OrtEnv(string logId = "OnnxRuntimeSharp",
                   Ort.OrtLoggingLevel loggingLevel = Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING)
     {
-        var ortEnv = Ort.CreateEnvironment(logId, loggingLevel);
+        var ortEnv = Ort.CreateEnv(logId, loggingLevel);
         SetHandle(ortEnv.Value);
     }
 
