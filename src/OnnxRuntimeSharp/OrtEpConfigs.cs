@@ -134,37 +134,43 @@ public static unsafe class OrtEpConfigs
     /// Custom append delegates must only call APIs supported by the loaded runtime.
     /// </remarks>
     public static IReadOnlyList<OrtEpProbeResult> ProbeExecutionProviders(
-        OrtEnv environment, IReadOnlyList<OrtEpConfig>? prioritizedExecutionProvidersToTry = null)
+        OrtEnv env, IReadOnlyList<OrtEpConfig>? prioritizedExecutionProvidersToTry = null)
     {
-        ArgumentNullException.ThrowIfNull(environment);
-        ObjectDisposedException.ThrowIf(environment.IsClosed || environment.IsInvalid, environment);
+        ArgumentNullException.ThrowIfNull(env);
+        ObjectDisposedException.ThrowIf(env.IsClosed || env.IsInvalid, env);
         // Older runtimes accept unknown config keys but do not enforce CPU-fallback disabling.
         RequireApiVersion(16);
         var providers = prioritizedExecutionProvidersToTry ?? DefaultPrioritizedList;
         var results = new List<OrtEpProbeResult>(providers.Count);
         foreach (var provider in providers)
         {
-            try
-            {
-                using var options = new OrtSessionOptions();
-                options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
-                options.SetIntraOpThreadCount(1);
-                options.SetInterOpThreadCount(1);
-                if (!provider.AllowsCpuFallback)
-                {
-                    options.AddConfigEntry("session.disable_cpu_ep_fallback", "1");
-                }
-                provider.Append(environment, options);
-                using var session = new OrtSession(environment, ProbeModelOnnxBytes, options);
-                RunProbe(session);
-                results.Add(new(provider, null));
-            }
-            catch (Exception exception) when (exception is not OutOfMemoryException)
-            {
-                results.Add(new(provider, exception));
-            }
+            var result = ProbeExecutionProvider(env, provider);
+            results.Add(result);
         }
         return results.AsReadOnly();
+    }
+
+    public static OrtEpProbeResult ProbeExecutionProvider(OrtEnv env, OrtEpConfig provider)
+    {
+        try
+        {
+            using var options = new OrtSessionOptions();
+            options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
+            options.SetIntraOpThreadCount(1);
+            options.SetInterOpThreadCount(1);
+            if (!provider.AllowsCpuFallback)
+            {
+                options.AddConfigEntry("session.disable_cpu_ep_fallback", "1");
+            }
+            provider.Append(env, options);
+            using var session = new OrtSession(env, ProbeModelOnnxBytes, options);
+            RunProbe(session);
+            return new(provider, null);
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            return new(provider, exception);
+        }
     }
 
     /// <summary>Sets the process NVIDIA_TF32_OVERRIDE to 0 only when unset.</summary>
