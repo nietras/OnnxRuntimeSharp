@@ -21,11 +21,13 @@ public static class OrtSessionExtensions
     /// <param name="session">The inference session to warmup.</param>
     /// <param name="warmupRuns">Number of times to execute inference as warmup.
     /// If less than 1 nothing is done.</param>
-    /// <param name="warmupBatchSize">Batch size of inference run.</param>
+    /// <param name="warmupBatchSize">Positive batch size used for a dynamic
+    /// leading input dimension. Fixed dimensions and scalar inputs are preserved.</param>
     public unsafe static void Warmup(this OrtSession session,
         int warmupRuns = 1, int warmupBatchSize = 1)
     {
         if (warmupRuns < 1) { return; }
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(warmupBatchSize);
 
         OrtAllocator* allocator = null;
         GetAllocatorWithDefaultOptions(&allocator).Ok();
@@ -33,35 +35,36 @@ public static class OrtSessionExtensions
         var inputTensorInfos = session.Inputs.Span;
         var outputTensorInfos = session.Outputs.Span;
 
-        var inputNamePtrs = stackalloc sbyte*[inputTensorInfos.Length];
-        OrtValueHandle* inputOrtValues = stackalloc OrtValueHandle[inputTensorInfos.Length];
+        var inputCount = inputTensorInfos.Length;
+        var inputNamePtrs = stackalloc sbyte*[inputCount];
+        OrtValueHandle* inputOrtValues = stackalloc OrtValueHandle[inputCount];
         try
         {
-            for (var i = 0; i < inputTensorInfos.Length; i++)
+            for (var i = 0; i < inputCount; i++)
             {
                 var tensorInfo = inputTensorInfos[i];
                 inputNamePtrs[i] = tensorInfo.NamePointer;
                 inputOrtValues[i] = CreateOrtValueTensor(allocator, tensorInfo, warmupBatchSize);
             }
 
-            var outputNamePtrs = stackalloc sbyte*[outputTensorInfos.Length];
-            for (var i = 0; i < outputTensorInfos.Length; i++)
+            var outputCount = outputTensorInfos.Length;
+            var outputNamePtrs = stackalloc sbyte*[outputCount];
+            for (var i = 0; i < outputCount; i++)
             {
                 var tensorInfo = outputTensorInfos[i];
                 outputNamePtrs[i] = tensorInfo.NamePointer;
             }
 
             Trace.WriteLine($"Performing {warmupRuns} warmup run(s) on {nameof(OrtSession)}");
-
             for (var i = 0; i < warmupRuns; i++)
             {
-                TestRun(session, runOptions: null, inputNamePtrs, inputOrtValues, inputTensorInfos.Length,
-                        outputNamePtrs, outputTensorInfos.Length);
+                TestRun(session, runOptions: null, inputNamePtrs, inputOrtValues, inputCount,
+                        outputNamePtrs, outputCount);
             }
         }
         finally
         {
-            for (var i = 0; i < inputTensorInfos.Length; i++)
+            for (var i = 0; i < inputCount; i++)
             {
                 var ortValueHandle = inputOrtValues[i];
                 if (!ortValueHandle.IsNull) { ReleaseValue(ortValueHandle); }
@@ -73,7 +76,10 @@ public static class OrtSessionExtensions
             var dimensionsLength = tensorInfo.Dimensions.Length;
             var dimensionsPtr = stackalloc long[dimensionsLength];
             tensorInfo.Dimensions.Span.CopyTo(new(dimensionsPtr, dimensionsLength));
-            dimensionsPtr[0] = batchSize;
+            if (dimensionsLength > 0 && dimensionsPtr[0] < 0)
+            {
+                dimensionsPtr[0] = batchSize;
+            }
             OrtValueHandle valueHandle;
             CreateTensorAsOrtValue(allocator, dimensionsPtr, (nuint)dimensionsLength,
                                    tensorInfo.ElementType, &valueHandle).Ok();
