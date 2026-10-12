@@ -171,8 +171,8 @@ public class InferenceSafetyTest
             _ = session.OutputName;
             _ = session.InputDimensions;
             _ = session.OutputDimensions;
-            _ = session.Inputs[0].Name;
-            _ = session.Inputs[0].SymbolicDimensions;
+            _ = session.Inputs.Span[0].Name;
+            _ = session.Inputs.Span[0].SymbolicDimensions;
             _ = session.ModelMetadata.ProducerName;
             _ = session.ModelMetadata.GraphName;
             _ = session.ModelMetadata.GraphDescription;

@@ -7,19 +7,16 @@ namespace OnnxRuntimeSharp;
 public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
 {
     readonly OrtEnv _environment;
-    readonly OrtTensorInfo[] _inputs = [];
-    readonly OrtTensorInfo[] _outputs = [];
-    readonly OrtTensorInfo[] _overridableInitializers = [];
+    readonly ReadOnlyMemory<OrtTensorInfo> _inputs = ReadOnlyMemory<OrtTensorInfo>.Empty;
+    readonly ReadOnlyMemory<OrtTensorInfo> _outputs = ReadOnlyMemory<OrtTensorInfo>.Empty;
+    readonly ReadOnlyMemory<OrtTensorInfo> _overridableInitializers = ReadOnlyMemory<OrtTensorInfo>.Empty;
     readonly OrtModelMetadata _modelMetadata = null!;
     bool _environmentReferenceAdded;
 
     public OrtSession(OrtEnv environment, ReadOnlySpan<byte> model, OrtSessionOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(environment);
-        if (model.IsEmpty)
-        {
-            Throws.ThrowModelDataEmpty();
-        }
+        if (model.IsEmpty) { Throws.ThrowModelDataEmpty(); }
 
         _environment = environment;
         var ownsOptions = options is null;
@@ -114,11 +111,11 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
         }
     }
 
-    public IReadOnlyList<OrtTensorInfo> Inputs => _inputs;
+    public ReadOnlyMemory<OrtTensorInfo> Inputs => _inputs;
 
-    public IReadOnlyList<OrtTensorInfo> Outputs => _outputs;
+    public ReadOnlyMemory<OrtTensorInfo> Outputs => _outputs;
 
-    public IReadOnlyList<OrtTensorInfo> OverridableInitializers => _overridableInitializers;
+    public ReadOnlyMemory<OrtTensorInfo> OverridableInitializers => _overridableInitializers;
 
     public OrtModelMetadata ModelMetadata => _modelMetadata;
 
@@ -164,24 +161,24 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
         }
     }
 
-    public string InputName => _inputs[0].Name;
+    public string InputName => _inputs.Span[0].Name;
 
-    public string OutputName => _outputs[0].Name;
+    public string OutputName => _outputs.Span[0].Name;
 
-    public ReadOnlyMemory<long> InputDimensions => _inputs[0].Dimensions;
+    public ReadOnlyMemory<long> InputDimensions => _inputs.Span[0].Dimensions;
 
-    public ReadOnlyMemory<long> OutputDimensions => _outputs[0].Dimensions;
+    public ReadOnlyMemory<long> OutputDimensions => _outputs.Span[0].Dimensions;
 
     public OrtValueBinding CreateInputBinding(int index, OrtValue value)
     {
         ThrowIfDisposed();
-        return CreateBinding(_inputs, index, value);
+        return CreateBinding(_inputs.Span, index, value);
     }
 
     public OrtValueBinding CreateOutputBinding(int index, OrtValue value)
     {
         ThrowIfDisposed();
-        return CreateBinding(_outputs, index, value);
+        return CreateBinding(_outputs.Span, index, value);
     }
 
     public void Run(
@@ -207,8 +204,8 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
             input.DangerousAddRef(ref inputReferenceAdded);
             output.DangerousAddRef(ref outputReferenceAdded);
             runOptions?.DangerousAddRef(ref runOptionsReferenceAdded);
-            var inputName = _inputs[0].NamePointer;
-            var outputName = _outputs[0].NamePointer;
+            var inputName = _inputs.Span[0].NamePointer;
+            var outputName = _outputs.Span[0].NamePointer;
             var inputValue = input.Handle;
             var outputValue = output.Handle;
             Ort.Run(
@@ -271,29 +268,31 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
             runOptions?.DangerousAddRef(ref runOptionsReferenceAdded);
             for (var index = 0; index < inputs.Length; ++index)
             {
-                ValidateInputBinding(inputs[index], _inputs, index);
+                var inputBinding = inputs[index];
+                ValidateInputBinding(inputBinding, _inputs.Span, index);
                 var referenceAdded = false;
-                inputs[index].Value.DangerousAddRef(ref referenceAdded);
+                inputBinding.Value.DangerousAddRef(ref referenceAdded);
                 if (!referenceAdded)
                 {
-                    Throws.ThrowBindingValueDisposed(inputs[index].Value.GetType().Name);
+                    Throws.ThrowBindingValueDisposed(inputBinding.Value.GetType().Name);
                 }
                 ++referencedInputCount;
-                inputNames[index] = inputs[index].NamePointer;
-                inputValues[index] = inputs[index].ValueHandle;
+                inputNames[index] = inputBinding.NamePointer;
+                inputValues[index] = inputBinding.ValueHandle;
             }
             for (var index = 0; index < outputs.Length; ++index)
             {
-                ValidateOutputBinding(outputs[index], index, outputs);
+                var outputBinding = outputs[index];
+                ValidateOutputBinding(outputBinding, index, outputs);
                 var referenceAdded = false;
-                outputs[index].Value.DangerousAddRef(ref referenceAdded);
+                outputBinding.Value.DangerousAddRef(ref referenceAdded);
                 if (!referenceAdded)
                 {
-                    Throws.ThrowBindingValueDisposed(outputs[index].Value.GetType().Name);
+                    Throws.ThrowBindingValueDisposed(outputBinding.Value.GetType().Name);
                 }
                 ++referencedOutputCount;
-                outputNames[index] = outputs[index].NamePointer;
-                outputValues[index] = outputs[index].ValueHandle;
+                outputNames[index] = outputBinding.NamePointer;
+                outputValues[index] = outputBinding.ValueHandle;
             }
 
             Ort.Run(
@@ -341,7 +340,7 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
         var outputValues = stackalloc Ort.OrtValueHandle[_outputs.Length];
         for (var index = 0; index < _outputs.Length; ++index)
         {
-            outputNames[index] = _outputs[index].NamePointer;
+            outputNames[index] = _outputs.Span[index].NamePointer;
             outputValues[index] = default;
         }
 
@@ -356,7 +355,7 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
             runOptions?.DangerousAddRef(ref runOptionsReferenceAdded);
             for (var index = 0; index < inputs.Length; ++index)
             {
-                ValidateInputBinding(inputs[index], _inputs, index);
+                ValidateInputBinding(inputs[index], _inputs.Span, index);
                 var referenceAdded = false;
                 inputs[index].Value.DangerousAddRef(ref referenceAdded);
                 ++referencedInputCount;
@@ -446,15 +445,15 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
 
     protected override bool ReleaseHandle()
     {
-        foreach (var input in _inputs)
+        foreach (var input in _inputs.Span)
         {
             input.Dispose();
         }
-        foreach (var output in _outputs)
+        foreach (var output in _outputs.Span)
         {
             output.Dispose();
         }
-        foreach (var initializer in _overridableInitializers)
+        foreach (var initializer in _overridableInitializers.Span)
         {
             initializer.Dispose();
         }
@@ -463,7 +462,7 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
         return true;
     }
 
-    OrtValueBinding CreateBinding(OrtTensorInfo[] infos, int index, OrtValue value)
+    OrtValueBinding CreateBinding(ReadOnlySpan<OrtTensorInfo> infos, int index, OrtValue value)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(index);
         ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, infos.Length);
@@ -478,7 +477,7 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
 
     void ValidateInputBinding(
         OrtValueBinding binding,
-        OrtTensorInfo[] expectedInfos,
+        ReadOnlySpan<OrtTensorInfo> expectedInfos,
         int index)
     {
         if (!ReferenceEquals(binding.Session, this) || !ReferenceEquals(binding.Info, expectedInfos[index]))
@@ -492,7 +491,7 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
         int index,
         ReadOnlySpan<OrtValueBinding> precedingBindings)
     {
-        if (!ReferenceEquals(binding.Session, this) || Array.IndexOf(_outputs, binding.Info) < 0)
+        if (!ReferenceEquals(binding.Session, this) || _outputs.Span.IndexOf(binding.Info) < 0)
         {
             Throws.ThrowOutputBindingSessionMismatch(index);
         }

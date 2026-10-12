@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 
 namespace OnnxRuntimeSharp.Test;
 
@@ -157,10 +156,10 @@ public class OrtSessionInferenceTest
         using var environment = new OrtEnv();
         using var session = TestData.CreateMnistSession(environment);
 
-        Assert.AreEqual(session.Inputs[0].Name, session.InputName);
-        Assert.AreEqual(session.Outputs[0].Name, session.OutputName);
-        CollectionAssert.AreEqual(session.Inputs[0].Dimensions.ToArray(), session.InputDimensions.ToArray());
-        CollectionAssert.AreEqual(session.Outputs[0].Dimensions.ToArray(), session.OutputDimensions.ToArray());
+        Assert.AreEqual(session.Inputs.Span[0].Name, session.InputName);
+        Assert.AreEqual(session.Outputs.Span[0].Name, session.OutputName);
+        CollectionAssert.AreEqual(session.Inputs.Span[0].Dimensions.ToArray(), session.InputDimensions.ToArray());
+        CollectionAssert.AreEqual(session.Outputs.Span[0].Dimensions.ToArray(), session.OutputDimensions.ToArray());
     }
 
     [TestMethod]

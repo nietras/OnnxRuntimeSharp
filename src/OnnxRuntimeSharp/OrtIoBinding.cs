@@ -38,7 +38,7 @@ public sealed unsafe class OrtIoBinding : OrtSafeHandle<Ort.OrtIoBindingHandle>
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(memoryInfo);
-        var info = GetInfo(_session.Outputs, index, nameof(index));
+        var info = GetInfo(_session.Outputs.Span, index, nameof(index));
         AddBoundResource(
             _boundOutputs,
             memoryInfo,
@@ -128,7 +128,7 @@ public sealed unsafe class OrtIoBinding : OrtSafeHandle<Ort.OrtIoBindingHandle>
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(owner);
-        var info = GetInfo(_session.Inputs, index, nameof(index));
+        var info = GetInfo(_session.Inputs.Span, index, nameof(index));
         AddBoundValue(
             _boundInputs,
             owner,
@@ -139,17 +139,17 @@ public sealed unsafe class OrtIoBinding : OrtSafeHandle<Ort.OrtIoBindingHandle>
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(owner);
-        var info = GetInfo(_session.Outputs, index, nameof(index));
+        var info = GetInfo(_session.Outputs.Span, index, nameof(index));
         AddBoundValue(
             _boundOutputs,
             owner,
             value => Ort.BindOutput(Handle, info.NamePointer, value));
     }
 
-    static OrtTensorInfo GetInfo(IReadOnlyList<OrtTensorInfo> infos, int index, string parameterName)
+    static OrtTensorInfo GetInfo(ReadOnlySpan<OrtTensorInfo> infos, int index, string parameterName)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(index, parameterName);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, infos.Count, parameterName);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, infos.Length, parameterName);
         return infos[index];
     }
 
