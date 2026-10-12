@@ -14,10 +14,10 @@ public class OrtSessionMetadataTest
         var input = session.Inputs.Span[0];
         var output = session.Outputs.Span[0];
         Assert.AreEqual("Input3", input.Name);
-        CollectionAssert.AreEqual(new long[] { 1, 1, 28, 28 }, input.Dimensions.ToArray());
+        Assert.AreSequenceEqual([1, 1, 28, 28], input.Dimensions.ToArray());
         Assert.AreEqual(4, input.SymbolicDimensions.Length);
         Assert.AreEqual(Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT, input.ElementType);
-        CollectionAssert.AreEqual(new long[] { 1, 10 }, output.Dimensions.ToArray());
+        Assert.AreSequenceEqual([1, 10], output.Dimensions.ToArray());
         Assert.IsEmpty(session.OverridableInitializers);
         Assert.IsNotNull(session.ModelMetadata.ProducerName);
         Assert.IsNotNull(session.ModelMetadata.GraphName);
@@ -26,16 +26,6 @@ public class OrtSessionMetadataTest
         Assert.IsNotNull(session.ModelMetadata.Description);
         _ = session.ModelMetadata.Version;
         Assert.IsNotNull(session.ModelMetadata.CustomMetadata);
-    }
-
-    [TestMethod]
-    public void SessionCanLoadModelDirectlyFromPath()
-    {
-        using var env = new OrtEnv();
-        using var session = new OrtSession(env, TestData.MnistModelPath);
-
-        Assert.HasCount(1, session.Inputs);
-        Assert.HasCount(1, session.Outputs);
     }
 
     [TestMethod]

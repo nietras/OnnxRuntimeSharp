@@ -2,6 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <EnableGpuProviders Condition="'$(EnableGpuProviders)' == '' and '$(ContinuousIntegrationBuild)' == 'true'">false</EnableGpuProviders>
     <EnableGpuProviders Condition="'$(EnableGpuProviders)' == ''">true</EnableGpuProviders>
     <DefineConstants Condition="'$(EnableGpuProviders)' == 'true'">$(DefineConstants);ENABLE_GPU_PROVIDERS</DefineConstants>
@@ -25,6 +26,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\models\mnist-8.onnx" Link="mnist-8.onnx" CopyToOutputDirectory="PreserveNewest" />
+    <EmbeddedResource Include="..\..\models\mnist-8.onnx" LogicalName="mnist-8.onnx" />
   </ItemGroup>
 </Project>

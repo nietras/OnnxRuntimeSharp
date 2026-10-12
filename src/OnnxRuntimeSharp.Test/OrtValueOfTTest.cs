@@ -43,7 +43,7 @@ public class OrtValueOfTTest
         using var value = new OrtValue<float>(new float[6], dimensions);
         dimensions[0] = 6;
 
-        CollectionAssert.AreEqual(new long[] { 2, 3 }, value.Dimensions.ToArray());
+        Assert.AreSequenceEqual([2, 3], value.Dimensions.ToArray());
         Assert.AreEqual(6, value.GetTensorData().Length);
     }
 

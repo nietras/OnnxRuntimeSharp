@@ -7,6 +7,13 @@ namespace OnnxRuntimeSharp.Test;
 
 static class TestData
 {
+    public const string MnistModelFileName = "mnist-8.onnx";
+
+    // Keep the resource stream alive for the lifetime of the returned spans.
+    static readonly UnmanagedMemoryStream MnistModelStream =
+        (UnmanagedMemoryStream)(typeof(TestData).Assembly.GetManifestResourceStream(MnistModelFileName)
+            ?? throw new InvalidOperationException($"Embedded {MnistModelFileName} resource was not found."));
+
     public static unsafe bool HasPluginApi => Ort.Api->GetEpApi != null;
 
     public static void RequirePluginApi()
@@ -17,12 +24,11 @@ static class TestData
         }
     }
 
-    public static string MnistModelPath => Path.Combine(AppContext.BaseDirectory, "mnist-8.onnx");
-
-    public static byte[] ReadMnistModel() => File.ReadAllBytes(MnistModelPath);
+    public static unsafe ReadOnlySpan<byte> GetMnistModelBytes() =>
+        new(MnistModelStream.PositionPointer, checked((int)MnistModelStream.Length));
 
     public static OrtSession CreateMnistSession(OrtEnv env, OrtSessionOptions? options = null) =>
-        new(env, ReadMnistModel(), options);
+        new(env, GetMnistModelBytes(), options);
 
     public static OrtSession CreateTwoInputSession(
         OrtEnv env,

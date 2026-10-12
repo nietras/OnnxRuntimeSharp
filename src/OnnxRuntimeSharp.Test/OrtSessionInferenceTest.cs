@@ -35,7 +35,7 @@ public class OrtSessionInferenceTest
         {
             Assert.HasCount(1, outputs);
             var output = outputs[0];
-            CollectionAssert.AreEqual(new long[] { 1, 10 }, output.Dimensions.ToArray());
+            Assert.AreSequenceEqual([1, 10], output.Dimensions.ToArray());
             foreach (var value in output.GetTensorData<float>())
             {
                 Assert.IsTrue(float.IsFinite(value));
@@ -123,15 +123,14 @@ public class OrtSessionInferenceTest
     [TestMethod]
     public void SessionConstructorArgumentsAreValidated()
     {
-        var model = TestData.ReadMnistModel();
         using var env = new OrtEnv();
 
         Assert.ThrowsExactly<ArgumentNullException>(() =>
-            new OrtSession(null!, model));
+            new OrtSession(null!, TestData.GetMnistModelBytes()));
         Assert.ThrowsExactly<ArgumentException>(() =>
             new OrtSession(env, ReadOnlySpan<byte>.Empty));
         Assert.ThrowsExactly<ArgumentNullException>(() =>
-            new OrtSession(null!, TestData.MnistModelPath));
+            new OrtSession(null!, TestData.MnistModelFileName));
         Assert.ThrowsExactly<ArgumentException>(() =>
             new OrtSession(env, ""));
     }
@@ -142,7 +141,7 @@ public class OrtSessionInferenceTest
         using var env = new OrtEnv();
 
         var memoryException = Assert.ThrowsExactly<OrtException>(() =>
-            new OrtSession(env, new byte[] { 1, 2, 3, 4 }));
+            new OrtSession(env, [1, 2, 3, 4]));
         var pathException = Assert.ThrowsExactly<OrtException>(() =>
             new OrtSession(env, Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.onnx")));
 
@@ -158,8 +157,8 @@ public class OrtSessionInferenceTest
 
         Assert.AreEqual(session.Inputs.Span[0].Name, session.InputName);
         Assert.AreEqual(session.Outputs.Span[0].Name, session.OutputName);
-        CollectionAssert.AreEqual(session.Inputs.Span[0].Dimensions.ToArray(), session.InputDimensions.ToArray());
-        CollectionAssert.AreEqual(session.Outputs.Span[0].Dimensions.ToArray(), session.OutputDimensions.ToArray());
+        Assert.AreSequenceEqual(session.Inputs.Span[0].Dimensions.ToArray(), session.InputDimensions.ToArray());
+        Assert.AreSequenceEqual(session.Outputs.Span[0].Dimensions.ToArray(), session.OutputDimensions.ToArray());
     }
 
     [TestMethod]
