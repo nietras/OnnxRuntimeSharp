@@ -19,7 +19,7 @@ var concurrentTestDuration = TimeSpan.FromSeconds(1);
 int[] concurrentThreadCountsToTest = [1, 2, 4, 8, 16];
 OrtEpConfig[] configurations =
 [
-#if ENABLE_GPU_PROVIDERS
+#if false && ENABLE_GPU_PROVIDERS
     OrtEpConfigs.TensorRT,
     OrtEpConfigs.CUDA,
 #endif
@@ -49,16 +49,38 @@ Action<string> log = message =>
 };
 
 var workingDirectory = Environment.CurrentDirectory;
-var modelPaths = Directory.GetFiles(workingDirectory, SearchPattern, SearchOption.TopDirectoryOnly);
-Array.Sort(modelPaths, StringComparer.Ordinal);
+var models = Directory.GetFiles(workingDirectory, SearchPattern, SearchOption.TopDirectoryOnly)
+    .Order(StringComparer.Ordinal)
+    .Select(path => new ModelData(Path.GetFileName(path), Path.GetDirectoryName(path)!, () => File.ReadAllBytes(path)))
+    .ToArray();
+log($"Current directory: '{workingDirectory}'");
+log($"Found {models.Length} files for '{SearchPattern}': " +
+    $"{string.Join(", ", models.Select(model => $"'{model.FileName}'"))}");
+
+if (models.Length == 0)
+{
+    const string MnistEmbeddedFileName = "mnist-8.onnx";
+    log($"No ONNX models found. Run embedded {MnistEmbeddedFileName}? [y/N]");
+    var answer = Console.ReadLine()?.Trim() ?? string.Empty;
+    if (answer.StartsWith("y", StringComparison.OrdinalIgnoreCase))
+    {
+        var embeddedModelStream = (UnmanagedMemoryStream)(typeof(ModelData).Assembly
+            .GetManifestResourceStream(MnistEmbeddedFileName)
+            ?? throw new InvalidOperationException($"Embedded {MnistEmbeddedFileName} resource was not found."));
+        models = [new(MnistEmbeddedFileName, AppContext.BaseDirectory,
+                      () => GetEmbeddedModelBytes(embeddedModelStream), IsEmbedded: true)];
+    }
+    else
+    {
+        log("No model selected. Exiting.");
+        return;
+    }
+}
+
 AddNativeRuntimeDirectoryToPath();
 var probeResults = OrtEpConfigs.ProbeExecutionProviders(configurations);
 var availableConfigurations = probeResults.Where(result => result.IsAvailable)
     .Select(result => result.Provider).ToArray();
-
-log($"Current directory: '{workingDirectory}'");
-log($"Found {modelPaths.Length} files for '{SearchPattern}': " +
-    $"{string.Join(", ", modelPaths.Select(path => $"'{path}'"))}");
 var availableConfigurationNames = availableConfigurations.Select(configuration => configuration.Name);
 log($"Available configurations: {string.Join(", ", availableConfigurationNames)}");
 foreach (var result in probeResults.Where(result => !result.IsAvailable))
@@ -66,11 +88,12 @@ foreach (var result in probeResults.Where(result => !result.IsAvailable))
     log($"{result.Provider.Name,EPAlign};Unavailable: {result.Error?.Message}");
 }
 
-foreach (var modelPath in modelPaths)
+foreach (var modelData in models)
 {
+    var model = modelData.GetBytes();
     var reportPath = Path.Combine(
-        Path.GetDirectoryName(modelPath)!,
-        $"{Path.GetFileNameWithoutExtension(modelPath)}.onnxruntime-profiler.md");
+        modelData.DirectoryName,
+        $"{Path.GetFileNameWithoutExtension(modelData.FileName)}.onnxruntime-profiler.md");
 
     using var writer = new StreamWriter(reportPath);
     Action<string> report = message =>
@@ -79,7 +102,7 @@ foreach (var modelPath in modelPaths)
         writer.WriteLine(message);
     };
 
-    report($"# `{Path.GetRelativePath(workingDirectory, modelPath)}` ({new FileInfo(modelPath).Length} bytes)");
+    report($"# `{modelData.FileName}` ({model.Length} bytes){(modelData.IsEmbedded ? " (embedded)" : string.Empty)}");
     report(string.Empty);
     report("## Execution provider performance");
     report("```");
@@ -89,7 +112,11 @@ foreach (var modelPath in modelPaths)
     {
         try
         {
-            var profileReport = RunModel(modelPath, configuration, report, EnableProfiling);
+            var profilePrefix = EnableProfiling
+                ? Path.Combine(modelData.DirectoryName,
+                    $"{Path.GetFileNameWithoutExtension(modelData.FileName)}-onnxruntime-profile-{SanitizeFileName(configuration.Name)}")
+                : null;
+            var profileReport = RunModel(model, configuration, report, profilePrefix);
             configurationToProfilingInfo.Add((configuration.Name, profileReport));
         }
         catch (OrtException exception)
@@ -107,7 +134,7 @@ foreach (var modelPath in modelPaths)
     {
         try
         {
-            RunModelConcurrent(modelPath, configuration, concurrentThreadCountsToTest, concurrentTestDuration, report);
+            RunModelConcurrent(model, configuration, concurrentThreadCountsToTest, concurrentTestDuration, report);
         }
         catch (OrtException exception)
         {
@@ -120,31 +147,23 @@ foreach (var modelPath in modelPaths)
     {
         if (profileReport.Profiles.Count > 0)
         {
-            WriteNodeProfileSummary(configurationName, modelPath, profileReport, report);
+            WriteNodeProfileSummary(configurationName, modelData.FileName, profileReport, report);
         }
     }
     log($"Wrote report: '{reportPath}'.");
 }
 
-if (modelPaths.Length == 0)
-{
-    log($"No models found. Copy one or more '{SearchPattern}' files below '{workingDirectory}'.");
-}
+static unsafe ReadOnlySpan<byte> GetEmbeddedModelBytes(UnmanagedMemoryStream stream) =>
+    new(stream.PositionPointer, checked((int)stream.Length));
 
 static NodeProfileReport RunModel(
-    string modelPath,
+    ReadOnlySpan<byte> model,
     OrtEpConfig configuration,
     Action<string> log,
-    bool enableProfiling)
+    string? profilePrefix)
 {
-    var model = File.ReadAllBytes(modelPath);
     var env = OrtEnv.Instance();
     var configurationName = configuration.Name;
-    var profilePrefix = enableProfiling
-        ? Path.Combine(
-            Path.GetDirectoryName(modelPath)!,
-            $"{Path.GetFileNameWithoutExtension(modelPath)}-onnxruntime-profile-{SanitizeFileName(configurationName)}")
-        : null;
     using var options = CreateSessionOptions(env, configuration, profilePrefix);
     var beforeCreate = Stopwatch.GetTimestamp();
     using var session = new OrtSession(env, model, options);
@@ -185,7 +204,7 @@ static NodeProfileReport RunModel(
         log($"WARNING: `{configurationName}` inference allocated {allocatedBytes} managed bytes.");
     }
 
-    if (!enableProfiling)
+    if (profilePrefix is null)
     {
         return new(null, []);
     }
@@ -202,14 +221,12 @@ static NodeProfileReport RunModel(
 }
 
 static void RunModelConcurrent(
-    string modelPath,
+    ReadOnlySpan<byte> model,
     OrtEpConfig configuration,
     int[] threadCounts,
     TimeSpan duration,
     Action<string> log)
 {
-    var model = File.ReadAllBytes(modelPath);
-
     using var env = new OrtEnv();
     var configurationName = configuration.Name;
     using var options = CreateSessionOptions(env, configuration, null);
@@ -361,7 +378,7 @@ static IReadOnlyList<NodeProfile> ReadNodeProfiles(string profilePath)
 
 static void WriteNodeProfileSummary(
     string configurationName,
-    string modelPath,
+    string modelFileName,
     NodeProfileReport profileReport,
     Action<string> log)
 {
@@ -386,7 +403,7 @@ static void WriteNodeProfileSummary(
 
     log(string.Empty);
     log($"## CPU node profile: `{configurationName}`");
-    log($"Model: `{Path.GetFileName(modelPath)}`");
+    log($"Model: `{modelFileName}`");
     log($"Source trace: `{Path.GetFileName(profileReport.TracePath)}`");
     log("```");
     log(string.Format(null, headerFormat,
@@ -491,6 +508,8 @@ static void AddNativeRuntimeDirectoryToPath()
         string.Concat(nativeRuntimeDirectory, Path.PathSeparator, path),
         EnvironmentVariableTarget.Process);
 }
+
+sealed record ModelData(string FileName, string DirectoryName, Func<ReadOnlySpan<byte>> GetBytes, bool IsEmbedded = false);
 
 sealed record NodeProfileReport(string? TracePath, IReadOnlyList<NodeProfile> Profiles);
 
