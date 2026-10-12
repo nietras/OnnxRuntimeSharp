@@ -89,8 +89,8 @@ public class OrtOpenVinoPluginTest
 
     static void AssertAddOutputs(OrtSession session)
     {
-        using var first = new OrtValue<float>(new float[] { 2 }, [1]);
-        using var second = new OrtValue<float>(new float[] { 3 }, [1]);
+        using var first = new OrtValue<float>([2], [1]);
+        using var second = new OrtValue<float>([3], [1]);
         using var output = new OrtValue<float>(new float[1], [1]);
         var inputs = new[]
         {

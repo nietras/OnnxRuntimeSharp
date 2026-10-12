@@ -35,7 +35,7 @@ public class OrtSessionInferenceTest
         {
             Assert.HasCount(1, outputs);
             var output = outputs[0];
-            Assert.AreSequenceEqual(new long[] { 1, 10 }, output.Dimensions.ToArray());
+            Assert.AreSequenceEqual([1, 10], output.Dimensions.ToArray());
             foreach (var value in output.GetTensorData<float>())
             {
                 Assert.IsTrue(float.IsFinite(value));
@@ -141,7 +141,7 @@ public class OrtSessionInferenceTest
         using var env = new OrtEnv();
 
         var memoryException = Assert.ThrowsExactly<OrtException>(() =>
-            new OrtSession(env, new byte[] { 1, 2, 3, 4 }));
+            new OrtSession(env, [1, 2, 3, 4]));
         var pathException = Assert.ThrowsExactly<OrtException>(() =>
             new OrtSession(env, Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.onnx")));
 
