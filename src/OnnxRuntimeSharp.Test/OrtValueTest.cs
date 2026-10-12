@@ -29,8 +29,8 @@ public class OrtValueTest
     [TestMethod]
     public void OrtAllocatedTensorExposesTypedData()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
         using var input = TestData.CreateMnistInput();
         var inputs = new[] { session.CreateInputBinding(0, input) };
         var outputs = session.Run(inputs);
@@ -46,8 +46,8 @@ public class OrtValueTest
     [TestMethod]
     public void DisposedValueRejectsDataAccess()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
         using var input = TestData.CreateMnistInput();
         var outputs = session.Run([session.CreateInputBinding(0, input)]);
         Assert.HasCount(1, outputs);

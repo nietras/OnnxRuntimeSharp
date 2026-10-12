@@ -192,12 +192,12 @@ public sealed class OrtSessionOptions : OrtSafeHandle<Ort.OrtSessionOptionsHandl
     }
 
     public unsafe void AppendExecutionProvider(
-        OrtEnv environment,
+        OrtEnv env,
         ReadOnlySpan<OrtEpDevice> devices,
         IReadOnlyDictionary<string, string>? providerOptions = null)
     {
         ThrowIfDisposed();
-        ArgumentNullException.ThrowIfNull(environment);
+        ArgumentNullException.ThrowIfNull(env);
         if (devices.IsEmpty)
         {
             Throws.ThrowExecutionProviderDevicesEmpty();
@@ -207,7 +207,7 @@ public sealed class OrtSessionOptions : OrtSafeHandle<Ort.OrtSessionOptionsHandl
         for (var index = 0; index < devices.Length; ++index)
         {
             ArgumentNullException.ThrowIfNull(devices[index], nameof(devices));
-            if (!ReferenceEquals(devices[index].Environment, environment))
+            if (!ReferenceEquals(devices[index].Env, env))
             {
                 Throws.ThrowExecutionProviderDeviceEnvironmentMismatch();
             }
@@ -225,14 +225,14 @@ public sealed class OrtSessionOptions : OrtSafeHandle<Ort.OrtSessionOptionsHandl
         var optionCount = providerOptions?.Count ?? 0;
         var keys = stackalloc sbyte*[optionCount];
         var values = stackalloc sbyte*[optionCount];
-        var environmentReferenceAdded = false;
+        var envReferenceAdded = false;
         try
         {
-            environment.DangerousAddRef(ref environmentReferenceAdded);
+            env.DangerousAddRef(ref envReferenceAdded);
             using var nativePairs = new OrtUtf8KeyValuePairs(providerOptions, keys, values, optionCount);
             Ort.SessionOptionsAppendExecutionProvider_V2(
                 Handle,
-                environment.Handle,
+                env.Handle,
                 nativeDevices,
                 (nuint)devices.Length,
                 nativePairs.Keys,
@@ -241,9 +241,9 @@ public sealed class OrtSessionOptions : OrtSafeHandle<Ort.OrtSessionOptionsHandl
         }
         finally
         {
-            if (environmentReferenceAdded)
+            if (envReferenceAdded)
             {
-                environment.DangerousRelease();
+                env.DangerousRelease();
             }
         }
     }

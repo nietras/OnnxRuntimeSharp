@@ -138,16 +138,16 @@ static NodeProfileReport RunModel(
     bool enableProfiling)
 {
     var model = File.ReadAllBytes(modelPath);
-    var environment = OrtEnv.Instance();
+    var env = OrtEnv.Instance();
     var configurationName = configuration.Name;
     var profilePrefix = enableProfiling
         ? Path.Combine(
             Path.GetDirectoryName(modelPath)!,
             $"{Path.GetFileNameWithoutExtension(modelPath)}-onnxruntime-profile-{SanitizeFileName(configurationName)}")
         : null;
-    using var options = CreateSessionOptions(environment, configuration, profilePrefix);
+    using var options = CreateSessionOptions(env, configuration, profilePrefix);
     var beforeCreate = Stopwatch.GetTimestamp();
-    using var session = new OrtSession(environment, model, options);
+    using var session = new OrtSession(env, model, options);
     var createMilliseconds = ElapsedMilliseconds(beforeCreate);
     using var inputs = CreateInputBindings(session);
     using var outputs = CreateOutputBindings(session);
@@ -210,10 +210,10 @@ static void RunModelConcurrent(
 {
     var model = File.ReadAllBytes(modelPath);
 
-    using var environment = new OrtEnv();
+    using var env = new OrtEnv();
     var configurationName = configuration.Name;
-    using var options = CreateSessionOptions(environment, configuration, null);
-    using var session = new OrtSession(environment, model, options);
+    using var options = CreateSessionOptions(env, configuration, null);
+    using var session = new OrtSession(env, model, options);
 
     foreach (var threadCount in threadCounts)
     {
@@ -314,15 +314,12 @@ static void RunModelConcurrent(
     }
 }
 
-static OrtSessionOptions CreateSessionOptions(
-    OrtEnv environment,
-    OrtEpConfig configuration,
-    string? profilePrefix)
+static OrtSessionOptions CreateSessionOptions(OrtEnv env, OrtEpConfig configuration, string? profilePrefix)
 {
     var options = new OrtSessionOptions();
     // Preserve profiler optimization defaults; OpenVINO configurations override this.
     options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
-    configuration.Append(environment, options);
+    configuration.Append(env, options);
     if (profilePrefix is not null)
     {
         options.EnableProfiling(profilePrefix ?? throw new ArgumentNullException(nameof(profilePrefix)));

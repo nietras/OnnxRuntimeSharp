@@ -17,10 +17,10 @@ public class OrtOpenVinoPluginTest
         var registrationName = OpenVINORegistrationName;
         var libraryPath = OpenVINOLibraryPath;
         var executionProviderName = OpenVINOExecutionProviderName;
-        using var environment = new OrtEnv();
+        using var env = new OrtEnv();
         try
         {
-            environment.RegisterExecutionProviderLibrary(registrationName, libraryPath);
+            env.RegisterExecutionProviderLibrary(registrationName, libraryPath);
         }
         catch (OrtException ex) when (ex.Message.Contains("Failed to load"))
         {
@@ -29,7 +29,7 @@ public class OrtOpenVinoPluginTest
         }
         try
         {
-            var allDevices = environment.GetExecutionProviderDevices();
+            var allDevices = env.GetExecutionProviderDevices();
             var devices = allDevices
                 .Where(device => string.Equals(
                     device.ExecutionProviderName,
@@ -53,28 +53,28 @@ public class OrtOpenVinoPluginTest
             // A successful run must execute Add on OpenVINO, not silently fall back to CPU.
             options.AddConfigEntry("session.disable_cpu_ep_fallback", "1");
             options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_DISABLE_ALL);
-            options.AppendExecutionProvider(environment, [device]);
-            using var session = new OrtSession(environment, TestOnnxModels.Add, options);
+            options.AppendExecutionProvider(env, [device]);
+            using var session = new OrtSession(env, TestOnnxModels.Add, options);
             AssertAddOutputs(session);
         }
         finally
         {
-            environment.UnregisterExecutionProviderLibrary(OpenVINORegistrationName);
+            env.UnregisterExecutionProviderLibrary(OpenVINORegistrationName);
         }
     }
 
     [TestMethod]
     public void AddProbeModelProducesExpectedOutputsOnCpu()
     {
-        using var environment = new OrtEnv();
-        using var session = new OrtSession(environment, TestOnnxModels.Add);
+        using var env = new OrtEnv();
+        using var session = new OrtSession(env, TestOnnxModels.Add);
         AssertAddOutputs(session);
     }
 
     [TestMethod]
     public void AddProbeModelRejectsCpuFallbackWhenNoProviderIsAppended()
     {
-        using var environment = new OrtEnv();
+        using var env = new OrtEnv();
         using var options = new OrtSessionOptions();
         // Session creation is expected to fail; keep the exception without logging the error.
         options.SetLogSeverityLevel(Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_FATAL);
@@ -83,7 +83,7 @@ public class OrtOpenVinoPluginTest
 
         Assert.ThrowsExactly<OrtException>(() =>
         {
-            using var session = new OrtSession(environment, TestOnnxModels.Add, options);
+            using var session = new OrtSession(env, TestOnnxModels.Add, options);
         });
     }
 

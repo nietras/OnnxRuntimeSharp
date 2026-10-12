@@ -10,8 +10,8 @@ public class InferenceSafetyTest
     [TestMethod]
     public void CachedBindingsRunWithoutManagedAllocations()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
         var inputs = new[] { session.CreateInputBinding(0, input) };
@@ -34,8 +34,8 @@ public class InferenceSafetyTest
     [TestMethod]
     public void BindingCreationDoesNotAllocate()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
         _ = session.CreateInputBinding(0, input);
@@ -56,8 +56,8 @@ public class InferenceSafetyTest
     [TestMethod]
     public void TypedValuesRunDirectlyWithoutManagedAllocations()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
         for (var warmup = 0; warmup < 3; ++warmup)
@@ -144,10 +144,10 @@ public class InferenceSafetyTest
     [TestMethod]
     public void CachedPropertiesDoNotAllocate()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
         using var input = TestData.CreateMnistInput();
-        var device = TestData.HasPluginApi ? environment.GetExecutionProviderDevices()[0] : null;
+        var device = TestData.HasPluginApi ? env.GetExecutionProviderDevices()[0] : null;
 
         for (var warmup = 0; warmup < 3; ++warmup)
         {
@@ -196,8 +196,8 @@ public class InferenceSafetyTest
     [TestMethod]
     public void ConcurrentRunsOnSharedSessionComplete()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
         Exception? failure = null;
         var threads = Enumerable.Range(0, 4).Select(_ => new Thread(() =>
         {
@@ -231,8 +231,8 @@ public class InferenceSafetyTest
     [TestMethod]
     public void DisposedSessionRejectsInference()
     {
-        using var environment = new OrtEnv();
-        var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        var session = TestData.CreateMnistSession(env);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
         session.Dispose();
@@ -243,9 +243,9 @@ public class InferenceSafetyTest
     [TestMethod]
     public void SessionRetainsEnvironmentUntilSessionDisposal()
     {
-        var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
-        environment.Dispose();
+        var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
+        env.Dispose();
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
 
@@ -255,8 +255,8 @@ public class InferenceSafetyTest
     [TestMethod]
     public void IoBindingCanBeDisposedAfterSession()
     {
-        using var environment = new OrtEnv();
-        var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        var session = TestData.CreateMnistSession(env);
         var binding = session.CreateIoBinding();
 
         session.Dispose();

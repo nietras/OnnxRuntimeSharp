@@ -6,31 +6,31 @@ namespace OnnxRuntimeSharp;
 
 public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
 {
-    readonly OrtEnv _environment;
+    readonly OrtEnv _env;
     readonly ReadOnlyMemory<OrtTensorInfo> _inputs = ReadOnlyMemory<OrtTensorInfo>.Empty;
     readonly ReadOnlyMemory<OrtTensorInfo> _outputs = ReadOnlyMemory<OrtTensorInfo>.Empty;
     readonly ReadOnlyMemory<OrtTensorInfo> _overridableInitializers = ReadOnlyMemory<OrtTensorInfo>.Empty;
     readonly OrtModelMetadata _modelMetadata = null!;
-    bool _environmentReferenceAdded;
+    bool _envReferenceAdded;
 
-    public OrtSession(OrtEnv environment, ReadOnlySpan<byte> model, OrtSessionOptions? options = null)
+    public OrtSession(OrtEnv env, ReadOnlySpan<byte> model, OrtSessionOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(environment);
+        ArgumentNullException.ThrowIfNull(env);
         if (model.IsEmpty) { Throws.ThrowModelDataEmpty(); }
 
-        _environment = environment;
+        _env = env;
         var ownsOptions = options is null;
         options ??= new OrtSessionOptions();
         var optionsReferenceAdded = false;
         try
         {
-            environment.DangerousAddRef(ref _environmentReferenceAdded);
+            env.DangerousAddRef(ref _envReferenceAdded);
             options.DangerousAddRef(ref optionsReferenceAdded);
             fixed (byte* modelPointer = model)
             {
                 Ort.OrtSessionHandle session;
                 Ort.CreateSessionFromArray(
-                    environment.Handle,
+                    env.Handle,
                     modelPointer,
                     (nuint)model.Length,
                     options.Handle,
@@ -46,7 +46,7 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
         catch
         {
             Dispose();
-            ReleaseEnvironmentReference();
+            ReleaseEnvReference();
             throw;
         }
         finally
@@ -62,25 +62,25 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
         }
     }
 
-    public OrtSession(OrtEnv environment, string modelPath, OrtSessionOptions? options = null)
+    public OrtSession(OrtEnv env, string modelPath, OrtSessionOptions? options = null)
     {
-        ArgumentNullException.ThrowIfNull(environment);
+        ArgumentNullException.ThrowIfNull(env);
         ArgumentException.ThrowIfNullOrWhiteSpace(modelPath);
 
-        _environment = environment;
+        _env = env;
         var ownsOptions = options is null;
         options ??= new OrtSessionOptions();
         var optionsReferenceAdded = false;
         try
         {
-            environment.DangerousAddRef(ref _environmentReferenceAdded);
+            env.DangerousAddRef(ref _envReferenceAdded);
             options.DangerousAddRef(ref optionsReferenceAdded);
             Ort.OrtSessionHandle session;
             fixed (char* pathPointer = modelPath)
             {
                 using var nativePath = new OrtNativePath(modelPath, pathPointer);
                 Ort.CreateSession(
-                    environment.Handle,
+                    env.Handle,
                     nativePath.Pointer,
                     options.Handle,
                     &session).Ok();
@@ -95,7 +95,7 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
         catch
         {
             Dispose();
-            ReleaseEnvironmentReference();
+            ReleaseEnvReference();
             throw;
         }
         finally
@@ -458,7 +458,7 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
             initializer.Dispose();
         }
         Ort.ReleaseSession(Handle);
-        ReleaseEnvironmentReference();
+        ReleaseEnvReference();
         return true;
     }
 
@@ -504,15 +504,15 @@ public sealed unsafe class OrtSession : OrtSafeHandle<Ort.OrtSessionHandle>
         }
     }
 
-    void ReleaseEnvironmentReference()
+    void ReleaseEnvReference()
     {
-        if (!_environmentReferenceAdded)
+        if (!_envReferenceAdded)
         {
             return;
         }
 
-        _environment.DangerousRelease();
-        _environmentReferenceAdded = false;
+        _env.DangerousRelease();
+        _envReferenceAdded = false;
     }
 
     OrtTensorInfo[] GetOverridableInitializerInfos() =>

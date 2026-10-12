@@ -19,7 +19,7 @@ public class OrtSessionFactoryTest
     public void FactorySelectsFirstAvailableConfiguration()
     {
         var appended = new List<string>();
-        var environments = new List<OrtEnv>();
+        var envs = new List<OrtEnv>();
         var unavailable = new OrtEpConfig("Unavailable", _ =>
         {
             appended.Add("Unavailable");
@@ -28,7 +28,7 @@ public class OrtSessionFactoryTest
         var first = new OrtEpConfig("First", (env, _) =>
         {
             appended.Add("First");
-            environments.Add(env);
+            envs.Add(env);
         }, allowsCpuFallback: true);
         var second = new OrtEpConfig("Second", _ => appended.Add("Second"), allowsCpuFallback: true);
 
@@ -36,9 +36,9 @@ public class OrtSessionFactoryTest
             TestOnnxModels.TwoInputTwoOutput, [unavailable, first, second]);
 
         Assert.AreSequenceEqual(["Unavailable", "First", "Second", "First"], appended);
-        Assert.HasCount(2, environments);
-        Assert.AreSame(OrtEnv.Instance(), environments[0]);
-        Assert.AreSame(environments[0], environments[1]);
+        Assert.HasCount(2, envs);
+        Assert.AreSame(OrtEnv.Instance(), envs[0]);
+        Assert.AreSame(envs[0], envs[1]);
         AssertIdentityInference(session);
     }
 

@@ -24,8 +24,8 @@ do not allocate additional wrappers or copy the tensor data.
 ```csharp
 using OnnxRuntimeSharp;
 
-using var environment = new OrtEnv();
-using var session = new OrtSession(environment, File.ReadAllBytes("mnist-8.onnx"));
+using var env = new OrtEnv();
+using var session = new OrtSession(env, File.ReadAllBytes("mnist-8.onnx"));
 using var input = new OrtValue<float>(new float[28 * 28], [1, 1, 28, 28]);
 using var output = new OrtValue<float>(new float[10], [1, 10]);
 
@@ -40,7 +40,7 @@ profile to retrieve the trace file path.
 ```csharp
 using var options = new OrtSessionOptions();
 options.EnableProfiling("mnist-profile");
-using var session = new OrtSession(environment, model, options);
+using var session = new OrtSession(env, model, options);
 // Run inference.
 var profilePath = session.EndProfiling();
 ```
@@ -71,19 +71,19 @@ build. `OrtEpConfigs` checks runtime availability by running a small model
 and validating its outputs, with CPU fallback disabled for accelerators (API 16+).
 
 ```csharp
-var environment = OrtEnv.Instance();
+var env = OrtEnv.Instance();
 var available = OrtEpConfigs.FindAvailablePrioritizedExecutionProviders();
 // Default order: TensorRT, CUDA, DirectML, OpenVINO, CPU, None.
 
 using var options = new OrtSessionOptions();
 foreach (var provider in available)
 {
-    provider.Append(environment, options);
+    provider.Append(env, options);
 }
-using var session = new OrtSession(environment, model, options);
+using var session = new OrtSession(env, model, options);
 ```
 
 Pass a candidate list to change priority; use `ProbeExecutionProviders` for
-per-provider diagnostics. Overloads without an environment use `OrtEnv.Instance()`;
+per-provider diagnostics. Overloads without an env use `OrtEnv.Instance()`;
 do not dispose this shared instance. A successful probe does not guarantee support
 for your model, and native crashes are not contained.

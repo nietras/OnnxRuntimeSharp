@@ -8,8 +8,8 @@ public class OrtValueBindingTest
     [TestMethod]
     public void BindingExposesModelValueMetadata()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
         using var input = TestData.CreateMnistInput();
 
         var binding = session.CreateInputBinding(0, input);
@@ -22,9 +22,9 @@ public class OrtValueBindingTest
     [TestMethod]
     public void BindingFromAnotherSessionIsRejected()
     {
-        using var environment = new OrtEnv();
-        using var firstSession = TestData.CreateMnistSession(environment);
-        using var secondSession = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var firstSession = TestData.CreateMnistSession(env);
+        using var secondSession = TestData.CreateMnistSession(env);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
         var inputs = new[] { firstSession.CreateInputBinding(0, input) };
@@ -36,8 +36,8 @@ public class OrtValueBindingTest
     [TestMethod]
     public void NativeOutputsCanBeReusedThroughCommonValueBindings()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateTwoInputSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateTwoInputSession(env);
         using var firstInput = new OrtValue<float>([3], [1]);
         using var secondInput = new OrtValue<float>([7], [1]);
         var results = session.Run([
@@ -64,8 +64,8 @@ public class OrtValueBindingTest
     [TestMethod]
     public void DefaultBindingIsRejected()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
         using var output = TestData.CreateMnistOutput();
 
         Assert.ThrowsExactly<ArgumentException>(() =>

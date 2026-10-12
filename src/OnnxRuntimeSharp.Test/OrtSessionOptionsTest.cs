@@ -100,18 +100,18 @@ public class OrtSessionOptionsTest
     [TestMethod]
     public void ProviderDeviceArgumentsAreValidated()
     {
-        using var firstEnvironment = new OrtEnv();
-        using var secondEnvironment = new OrtEnv();
+        using var firstEnv = new OrtEnv();
+        using var secondEnv = new OrtEnv();
         using var options = new OrtSessionOptions();
 
         Assert.ThrowsExactly<ArgumentException>(() =>
-            options.AppendExecutionProvider(firstEnvironment, []));
+            options.AppendExecutionProvider(firstEnv, []));
         Assert.ThrowsExactly<ArgumentNullException>(() =>
-            options.AppendExecutionProvider(firstEnvironment, [null!]));
+            options.AppendExecutionProvider(firstEnv, [null!]));
         TestData.RequirePluginApi();
-        var firstDevice = firstEnvironment.GetExecutionProviderDevices()[0];
+        var firstDevice = firstEnv.GetExecutionProviderDevices()[0];
         Assert.ThrowsExactly<ArgumentException>(() =>
-            options.AppendExecutionProvider(secondEnvironment, [firstDevice]));
+            options.AppendExecutionProvider(secondEnv, [firstDevice]));
     }
 
     [TestMethod]
@@ -136,16 +136,13 @@ public class OrtSessionOptionsTest
     public void PluginProviderOptionsAreMarshalled()
     {
         TestData.RequirePluginApi();
-        using var environment = new OrtEnv();
-        var cpuDevice = environment.GetExecutionProviderDevices()
+        using var env = new OrtEnv();
+        var cpuDevice = env.GetExecutionProviderDevices()
             .First(device => device.ExecutionProviderName == "CPUExecutionProvider");
         using var options = new OrtSessionOptions();
-
         try
         {
-            options.AppendExecutionProvider(
-                environment,
-                [cpuDevice],
+            options.AppendExecutionProvider(env, [cpuDevice],
                 new Dictionary<string, string> { ["use_arena"] = "1" });
         }
         catch (OrtException exception)

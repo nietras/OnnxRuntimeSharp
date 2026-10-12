@@ -9,8 +9,8 @@ public class OrtSessionInferenceTest
     [TestMethod]
     public void PreallocatedInferenceProducesFiniteScores()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
 
@@ -25,8 +25,8 @@ public class OrtSessionInferenceTest
     [TestMethod]
     public void OrtAllocatedOutputsExposeTypeShapeAndData()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
         using var input = TestData.CreateMnistInput();
         var inputs = new[] { session.CreateInputBinding(0, input) };
 
@@ -53,8 +53,8 @@ public class OrtSessionInferenceTest
     [TestMethod]
     public void RunOptionsCanBeUsedForInference()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
         using var runOptions = new OrtRunOptions();
@@ -66,8 +66,8 @@ public class OrtSessionInferenceTest
     [TestMethod]
     public void WrongElementTypeBindingIsRejected()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
         using var input = new OrtValue<byte>(new byte[28 * 28], [1, 1, 28, 28]);
 
         Assert.ThrowsExactly<ArgumentException>(() => session.CreateInputBinding(0, input));
@@ -76,8 +76,8 @@ public class OrtSessionInferenceTest
     [TestMethod]
     public void SingleValueOverloadRejectsMultiValueAssumptionsThroughMetadata()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
 
         Assert.HasCount(1, session.Inputs);
         Assert.HasCount(1, session.Outputs);
@@ -87,10 +87,10 @@ public class OrtSessionInferenceTest
     public void ProfilingReturnsTracePath()
     {
         var prefix = Path.Combine(Path.GetTempPath(), $"ort-{Guid.NewGuid():N}");
-        using var environment = new OrtEnv();
+        using var env = new OrtEnv();
         using var options = new OrtSessionOptions();
         options.EnableProfiling(prefix);
-        using var session = TestData.CreateMnistSession(environment, options);
+        using var session = TestData.CreateMnistSession(env, options);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
         session.Run(input, output);
@@ -109,8 +109,8 @@ public class OrtSessionInferenceTest
     [TestMethod]
     public void OrtExceptionIncludesNativeErrorCode()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
         using var input = new OrtValue<float>(new float[28 * 28], [1, 1, 28, 28]);
         using var output = new OrtValue<float>(new float[9], [1, 9]);
 
@@ -124,27 +124,27 @@ public class OrtSessionInferenceTest
     public void SessionConstructorArgumentsAreValidated()
     {
         var model = TestData.ReadMnistModel();
-        using var environment = new OrtEnv();
+        using var env = new OrtEnv();
 
         Assert.ThrowsExactly<ArgumentNullException>(() =>
             new OrtSession(null!, model));
         Assert.ThrowsExactly<ArgumentException>(() =>
-            new OrtSession(environment, ReadOnlySpan<byte>.Empty));
+            new OrtSession(env, ReadOnlySpan<byte>.Empty));
         Assert.ThrowsExactly<ArgumentNullException>(() =>
             new OrtSession(null!, TestData.MnistModelPath));
         Assert.ThrowsExactly<ArgumentException>(() =>
-            new OrtSession(environment, ""));
+            new OrtSession(env, ""));
     }
 
     [TestMethod]
     public void InvalidModelsReturnStructuredErrorsWithoutLeaks()
     {
-        using var environment = new OrtEnv();
+        using var env = new OrtEnv();
 
         var memoryException = Assert.ThrowsExactly<OrtException>(() =>
-            new OrtSession(environment, new byte[] { 1, 2, 3, 4 }));
+            new OrtSession(env, new byte[] { 1, 2, 3, 4 }));
         var pathException = Assert.ThrowsExactly<OrtException>(() =>
-            new OrtSession(environment, Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.onnx")));
+            new OrtSession(env, Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid():N}.onnx")));
 
         Assert.AreNotEqual(Ort.OrtErrorCode.ORT_OK, memoryException.ErrorCode);
         Assert.AreNotEqual(Ort.OrtErrorCode.ORT_OK, pathException.ErrorCode);
@@ -153,8 +153,8 @@ public class OrtSessionInferenceTest
     [TestMethod]
     public void SingleValueConvenienceMetadataMatchesCollections()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
 
         Assert.AreEqual(session.Inputs.Span[0].Name, session.InputName);
         Assert.AreEqual(session.Outputs.Span[0].Name, session.OutputName);
@@ -165,8 +165,8 @@ public class OrtSessionInferenceTest
     [TestMethod]
     public void BindingIndexesAndCountsAreValidated()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
         using var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
         var inputBinding = session.CreateInputBinding(0, input);
@@ -186,8 +186,8 @@ public class OrtSessionInferenceTest
     [TestMethod]
     public void DisposedBoundTensorIsRejected()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateMnistSession(env);
         var input = TestData.CreateMnistInput();
         using var output = TestData.CreateMnistOutput();
         var inputs = new[] { session.CreateInputBinding(0, input) };
@@ -200,8 +200,8 @@ public class OrtSessionInferenceTest
     [TestMethod]
     public void DisposedSessionRejectsBindingAndProfilingOperations()
     {
-        using var environment = new OrtEnv();
-        var session = TestData.CreateMnistSession(environment);
+        using var env = new OrtEnv();
+        var session = TestData.CreateMnistSession(env);
         using var input = TestData.CreateMnistInput();
         session.Dispose();
 
@@ -213,8 +213,8 @@ public class OrtSessionInferenceTest
     [TestMethod]
     public void MultiInputOutputModelRunsWithBindings()
     {
-        using var environment = new OrtEnv();
-        using var session = TestData.CreateTwoInputSession(environment);
+        using var env = new OrtEnv();
+        using var session = TestData.CreateTwoInputSession(env);
         using var firstInput = new OrtValue<float>([3], [1]);
         using var secondInput = new OrtValue<float>([7], [1]);
         using var firstOutput = new OrtValue<float>(new float[1], [1]);
