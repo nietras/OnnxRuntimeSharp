@@ -9,6 +9,22 @@ static class TestOnnxModels
     public static byte[] TwoInputTwoOutput { get; } = CreateTwoInputTwoOutput();
     public static byte[] Add { get; } = CreateAdd();
 
+    public static byte[] CreateIdentity(params long[] dimensions)
+    {
+        var model = new ProtoWriter();
+        model.WriteInt64(1, 8);
+        model.WriteString(2, "OnnxRuntimeSharp.Test");
+        model.WriteMessage(7, graph =>
+        {
+            graph.WriteMessage(1, node => WriteIdentityNode(node, "input", "output"));
+            graph.WriteString(2, "Identity");
+            graph.WriteMessage(11, value => WriteFloatValueInfo(value, "input", dimensions));
+            graph.WriteMessage(12, value => WriteFloatValueInfo(value, "output", dimensions));
+        });
+        model.WriteMessage(8, opset => opset.WriteInt64(2, 13));
+        return model.ToArray();
+    }
+
     static byte[] CreateAdd()
     {
         var model = new ProtoWriter();
@@ -66,15 +82,31 @@ static class TestOnnxModels
         node.WriteString(4, "Identity");
     }
 
-    static void WriteFloatValueInfo(ProtoWriter valueInfo, string name)
+    static void WriteFloatValueInfo(ProtoWriter valueInfo, string name, long[]? dimensions = null)
     {
+        dimensions ??= [1];
         valueInfo.WriteString(1, name);
         valueInfo.WriteMessage(2, type =>
             type.WriteMessage(1, tensor =>
             {
                 tensor.WriteInt64(1, 1);
                 tensor.WriteMessage(2, shape =>
-                    shape.WriteMessage(1, dimension => dimension.WriteInt64(1, 1)));
+                {
+                    for (var i = 0; i < dimensions.Length; i++)
+                    {
+                        shape.WriteMessage(1, dimension =>
+                        {
+                            if (dimensions[i] < 0)
+                            {
+                                dimension.WriteString(2, $"dimension{i}");
+                            }
+                            else
+                            {
+                                dimension.WriteInt64(1, dimensions[i]);
+                            }
+                        });
+                    }
+                });
             }));
     }
 

@@ -408,17 +408,17 @@ static OrtValue<float> CreateFloatTensor(ReadOnlySpan<long> dimensions) =>
     new(new float[GetTensorElementCount(dimensions)], dimensions);
 
 static TensorBindings CreateInputBindings(OrtSession session) =>
-    CreateBindings(session.Inputs, session.CreateInputBinding);
+    CreateBindings(session.Inputs.Span, session.CreateInputBinding);
 
 static TensorBindings CreateOutputBindings(OrtSession session) =>
-    CreateBindings(session.Outputs, session.CreateOutputBinding);
+    CreateBindings(session.Outputs.Span, session.CreateOutputBinding);
 
 static TensorBindings CreateBindings(
-    IReadOnlyList<OrtTensorInfo> infos,
+    ReadOnlySpan<OrtTensorInfo> infos,
     Func<int, OrtValue<float>, OrtValueBinding> createBinding)
 {
-    var tensors = new OrtValue<float>[infos.Count];
-    var values = new OrtValueBinding[infos.Count];
+    var tensors = new OrtValue<float>[infos.Length];
+    var values = new OrtValueBinding[infos.Length];
     try
     {
         for (var index = 0; index < tensors.Length; ++index)

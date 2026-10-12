@@ -310,6 +310,13 @@ public static unsafe partial class Ort
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle IsTensor(OrtValueHandle value, int* @out) => Api->IsTensor(value, @out);
 
+    public static OrtStatusHandle GetTensorMutableData(OrtValueHandle value, out IntPtr @out)
+    {
+        void* ptr;
+        var status = Api->GetTensorMutableData(value, &ptr);
+        @out = (IntPtr)ptr;
+        return status;
+    }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static OrtStatusHandle GetTensorMutableData(OrtValueHandle value, void** @out) => Api->GetTensorMutableData(value, @out);
 

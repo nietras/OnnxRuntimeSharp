@@ -14,7 +14,7 @@ public class OrtValueBindingTest
 
         var binding = session.CreateInputBinding(0, input);
 
-        Assert.AreSame(session.Inputs[0], binding.Info);
+        Assert.AreSame(session.Inputs.Span[0], binding.Info);
         Assert.AreSame(input, binding.Value);
         Assert.AreEqual(input.Handle, binding.ValueHandle);
     }
