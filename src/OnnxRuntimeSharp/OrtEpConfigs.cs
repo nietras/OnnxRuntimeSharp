@@ -138,8 +138,6 @@ public static unsafe class OrtEpConfigs
     {
         ArgumentNullException.ThrowIfNull(env);
         ObjectDisposedException.ThrowIf(env.IsClosed || env.IsInvalid, env);
-        // Older runtimes accept unknown config keys but do not enforce CPU-fallback disabling.
-        RequireApiVersion(16);
         var providers = prioritizedExecutionProvidersToTry ?? DefaultPrioritizedList;
         var results = new List<OrtEpProbeResult>(providers.Count);
         foreach (var provider in providers)
@@ -152,6 +150,8 @@ public static unsafe class OrtEpConfigs
 
     public static OrtEpProbeResult ProbeExecutionProvider(OrtEnv env, OrtEpConfig provider)
     {
+        // Older runtimes accept unknown config keys but do not enforce CPU-fallback disabling.
+        RequireApiVersion(16);
         try
         {
             using var options = new OrtSessionOptions();

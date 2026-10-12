@@ -34,7 +34,6 @@ public static class OrtSessionExtensions
         var outputTensorInfos = session.Outputs.Span;
 
         var inputNamePtrs = stackalloc sbyte*[inputTensorInfos.Length];
-        var inputNames = new string[inputTensorInfos.Length];
         OrtValueHandle* inputOrtValues = stackalloc OrtValueHandle[inputTensorInfos.Length];
         try
         {
@@ -42,19 +41,14 @@ public static class OrtSessionExtensions
             {
                 var tensorInfo = inputTensorInfos[i];
                 inputNamePtrs[i] = tensorInfo.NamePointer;
-                inputNames[i] = tensorInfo.Name;
                 inputOrtValues[i] = CreateOrtValueTensor(allocator, tensorInfo, warmupBatchSize);
             }
 
             var outputNamePtrs = stackalloc sbyte*[outputTensorInfos.Length];
-            var outputNames = new string[outputTensorInfos.Length];
-            //Span<OrtValueHandle> outputOrtValues = stackalloc OrtValueHandle[outputTensorInfos.Length];
             for (var i = 0; i < outputTensorInfos.Length; i++)
             {
                 var tensorInfo = outputTensorInfos[i];
                 outputNamePtrs[i] = tensorInfo.NamePointer;
-                outputNames[i] = tensorInfo.Name;
-                //outputOrtValues[i] = CreateOrtValueTensor(allocator, tensorInfo, warmupBatchSize);
             }
 
             Trace.WriteLine($"Performing {warmupRuns} warmup run(s) on {nameof(OrtSession)}");
@@ -98,7 +92,7 @@ public static class OrtSessionExtensions
         var allocatedBefore = GC.GetAllocatedBytesForCurrentThread();
 
         Run(session.Handle, runOptions?.Handle ?? default, inputNames,
-            inputs, (nuint)inputCount, outputNames, (nuint)outputCount, outputValuesPtr);
+            inputs, (nuint)inputCount, outputNames, (nuint)outputCount, outputValuesPtr).Ok();
 
         var allocatedBytes = GC.GetAllocatedBytesForCurrentThread() - allocatedBefore;
         try
@@ -109,7 +103,7 @@ public static class OrtSessionExtensions
             }
             for (var i = 0; i < outputCount; i++)
             {
-                GetTensorMutableData(outputValuesPtr[i], out var outputValueIntPtr);
+                GetTensorMutableData(outputValuesPtr[i], out var outputValueIntPtr).Ok();
                 var outputValuePtr = (float*)outputValueIntPtr;
                 // Output not used for anything just touched to be sure it's not optimized away
             }
