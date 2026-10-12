@@ -38,7 +38,7 @@ public class OrtValueTest
         using var output = outputs[0];
 
         Assert.AreEqual(Ort.ONNXTensorElementDataType.ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT, output.ElementType);
-        CollectionAssert.AreEqual(new long[] { 1, 10 }, output.Dimensions.ToArray());
+        Assert.AreSequenceEqual(new long[] { 1, 10 }, output.Dimensions.ToArray());
         Assert.AreEqual(10, output.GetTensorData<float>().Length);
         Assert.ThrowsExactly<InvalidOperationException>(() => { _ = output.GetTensorData<int>().Length; });
     }
