@@ -38,7 +38,13 @@ public static unsafe partial class Ort
             if (api is not null)
             {
                 apiVersion = version;
-                return version == MaxApiVersion ? api : CopyApi(api, version);
+                // Keep OrtApi pointer directly if version is greater than or
+                // equal to current max api version, as later versions should
+                // only increase the number of function pointers in the struct,
+                // and we can safely call them. Otherwise, copy the struct to a
+                // new memory location with only the supported function pointers
+                // and remaining being `null`.
+                return version >= MaxApiVersion ? api : CopyApi(api, version);
             }
         }
         Throws.ThrowApiVersionUnavailable(MaxApiVersion);
@@ -71,7 +77,7 @@ public static unsafe partial class Ort
             102, 119, 125, 127, 150, 158, 162, 170, 192, 204, // Version 01-10
             210, 219, 225, 239, 255, 266, 276, 280, 280, 285, // Version 11-20
             285, 318, 390, 415, 419, 419, 422, 424, 425, 426, // Version 21-30
-            428 // Version 31 adds two slots
+            428 // Version 31
         ];
         Debug.Assert(ApiPointerCounts[^1] == sizeof(OrtApi) / sizeof(nint));
         // Never read the missing tail of an older runtime's native table.
