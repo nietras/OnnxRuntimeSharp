@@ -12,6 +12,9 @@ updates:
       BenchmarkDotNet:
         patterns:
           - "BenchmarkDotNet*"
+      NtvLibsOnnxRuntime:
+        patterns:
+          - "NtvLibs.OnnxRuntime*"
     open-pull-requests-limit: 10
 
   - package-ecosystem: "github-actions"
