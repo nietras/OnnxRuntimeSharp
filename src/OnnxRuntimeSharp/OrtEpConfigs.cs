@@ -71,14 +71,8 @@ public static unsafe class OrtEpConfigs
 
     public static OrtEpConfig OpenVINO { get; } = CreateOpenVINO(OpenVINOName);
 
-    public static OrtEpConfig OpenVINOCPUSingleThread { get; } = CreateOpenVINO(
-        $"{OpenVINOName} CPU 1×Thread 1×Stream",
-        new Dictionary<string, string>
-        {
-            { "device_type", "CPU" },
-            { "num_of_threads", "1" },
-            { "num_streams", "1" },
-        });
+    public static OrtEpConfig OpenVINOCPUSingleThread { get; } = CreateOpenVINOCPU(
+        $"{OpenVINOName} CPU 1×Thread 1×Stream", threadCount: 1, streamCount: 1);
 
     public static OrtEpConfig CPU { get; } = new("CPU", options =>
         options.SetCpuMemoryArenaEnabled(true), allowsCpuFallback: true);
@@ -94,6 +88,14 @@ public static unsafe class OrtEpConfigs
 
     public static IReadOnlyList<OrtEpConfig> DefaultPrioritizedList { get; } =
         Array.AsReadOnly([TensorRT, CUDA, DirectML, OpenVINO, CPU, None]);
+
+    public static OrtEpConfig CreateOpenVINOCPU(string name, int threadCount, int streamCount) =>
+        CreateOpenVINO(name, new Dictionary<string, string>
+        {
+            { "device_type", "CPU" },
+            { "num_of_threads", threadCount.ToString() },
+            { "num_streams", streamCount.ToString() },
+        });
 
     public static OrtEpConfig CreateOpenVINO(string name,
         IReadOnlyDictionary<string, string>? providerOptions = null)
