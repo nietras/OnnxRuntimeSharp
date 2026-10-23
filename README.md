@@ -67,12 +67,12 @@ runtime requirements.
 ## Execution providers
 
 `Ort.GetAvailableExecutionProviders()` reports providers enabled in the native
-build. `OrtEpConfigs` checks runtime availability by running a small model
-and validating its outputs, with CPU fallback disabled for accelerators (API 16+).
+build. `OrtEpProbing` checks runtime availability by running a small model and
+validating its outputs, with CPU fallback disabled for accelerators (API 16+).
 
 ```csharp
-var env = OrtEnv.Instance();
-var available = OrtEpConfigs.FindAvailablePrioritizedExecutionProviders();
+var env = OrtEnv.Instance;
+var available = OrtEpProbing.ProbeAvailablePrioritizedExecutionProviders();
 // Default order: TensorRT, CUDA, DirectML, OpenVINO, CPU, None.
 
 using var options = new OrtSessionOptions();
@@ -84,6 +84,6 @@ using var session = new OrtSession(env, model, options);
 ```
 
 Pass a candidate list to change priority; use `ProbeExecutionProviders` for
-per-provider diagnostics. Overloads without an env use `OrtEnv.Instance()`;
+per-provider diagnostics. Overloads without an env use `OrtEnv.Instance`;
 do not dispose this shared instance. A successful probe does not guarantee support
 for your model, and native crashes are not contained.

@@ -12,7 +12,7 @@ public class OrtSessionFactoryTest
         using var session = OrtSessionFactory.CreateOnCPUSingleThread(TestOnnxModels.TwoInputTwoOutput);
 
         AssertIdentityInference(session);
-        Assert.IsFalse(OrtEnv.Instance().IsClosed);
+        Assert.IsFalse(OrtEnv.Instance.IsClosed);
     }
 
     [TestMethod]
@@ -37,7 +37,7 @@ public class OrtSessionFactoryTest
 
         Assert.AreSequenceEqual(["Unavailable", "First", "Second", "First"], appended);
         Assert.HasCount(2, envs);
-        Assert.AreSame(OrtEnv.Instance(), envs[0]);
+        Assert.AreSame(OrtEnv.Instance, envs[0]);
         Assert.AreSame(envs[0], envs[1]);
         AssertIdentityInference(session);
     }

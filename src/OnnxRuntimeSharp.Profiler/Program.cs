@@ -75,7 +75,7 @@ if (models.Length == 0)
 }
 
 AddNativeRuntimeDirectoryToPath();
-var probeResults = OrtEpConfigs.ProbeExecutionProviders(configurations);
+var probeResults = OrtEpProbing.ProbeExecutionProviders(configurations);
 var availableConfigurations = probeResults.Where(result => result.IsAvailable)
     .Select(result => result.Provider).ToArray();
 var availableConfigurationNames = availableConfigurations.Select(configuration => configuration.Name);
@@ -159,7 +159,7 @@ static NodeProfileReport RunModel(
     Action<string> log,
     string? profilePrefix)
 {
-    var env = OrtEnv.Instance();
+    var env = OrtEnv.Instance;
     var configurationName = configuration.Name;
     using var options = CreateSessionOptions(env, configuration, profilePrefix);
     var beforeCreate = Stopwatch.GetTimestamp();

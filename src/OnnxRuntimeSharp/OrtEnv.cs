@@ -12,7 +12,7 @@ public sealed unsafe class OrtEnv : OrtSafeHandle<Ort.OrtEnvHandle>
     /// <remarks>
     /// Do not dispose the shared instance. Use the constructor for an independently owned environment.
     /// </remarks>
-    public static OrtEnv Instance() => _instance.Value;
+    public static OrtEnv Instance => _instance.Value;
 
     public OrtEnv(string logId = "OnnxRuntimeSharp",
                   Ort.OrtLoggingLevel loggingLevel = Ort.OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING)

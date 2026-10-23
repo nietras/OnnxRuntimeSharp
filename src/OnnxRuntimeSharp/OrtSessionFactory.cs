@@ -7,8 +7,7 @@ public static class OrtSessionFactory
 {
     static readonly IReadOnlyList<OrtEpConfig> CPUSingleThreadList = [OrtEpConfigs.CPUSingleThread];
     static readonly Lazy<bool> IsFastGpuExecutionProviderAvailableCache =
-        new(() => OrtEpConfigs.ProbeExecutionProvider(OrtEnv.Instance(),
-                    OrtEpConfigs.TensorRT).IsAvailable);
+        new(() => OrtEpProbing.ProbeExecutionProvider(OrtEpConfigs.TensorRT).IsAvailable);
 
     public static bool IsFastGpuExecutionProviderAvailable() => IsFastGpuExecutionProviderAvailableCache.Value;
 
@@ -20,14 +19,14 @@ public static class OrtSessionFactory
         IReadOnlyList<OrtEpConfig> prioritizedOrtEpConfigsToTry,
         int warmupRuns = 1, int warmupBatchSize = 1)
     {
-        var env = OrtEnv.Instance();
+        var env = OrtEnv.Instance;
 
         using var options = new OrtSessionOptions();
         // IMPORTANT: This must be ALL to ensure model executes fast enough
         options.SetGraphOptimizationLevel(Ort.GraphOptimizationLevel.ORT_ENABLE_ALL);
 
-        var availablePrioritizedOrtEpConfigs = OrtEpConfigs
-            .FindAvailablePrioritizedExecutionProviders(
+        var availablePrioritizedOrtEpConfigs = OrtEpProbing
+            .ProbeAvailablePrioritizedExecutionProviders(
                 prioritizedOrtEpConfigsToTry);
         if (availablePrioritizedOrtEpConfigs.Count > 0)
         {
