@@ -10,8 +10,8 @@ public class OrtEnvTest
     [TestMethod]
     public void InstanceReturnsSameEnvironment()
     {
-        var env = OrtEnv.Instance();
-        var repeated = OrtEnv.Instance();
+        var env = OrtEnv.Instance;
+        var repeated = OrtEnv.Instance;
 
         Assert.AreSame(env, repeated);
         Assert.IsFalse(env.IsClosed);
@@ -21,12 +21,12 @@ public class OrtEnvTest
     [TestMethod]
     public void DisposingExplicitEnvironmentDoesNotCloseInstance()
     {
-        var env = OrtEnv.Instance();
+        var env = OrtEnv.Instance;
         using (var explicitEnv = new OrtEnv())
         {
             Assert.AreNotSame(env, explicitEnv);
         }
-        var repeated = OrtEnv.Instance();
+        var repeated = OrtEnv.Instance;
         using var session = new OrtSession(env, TestOnnxModels.Add);
 
         Assert.AreSame(env, repeated);
