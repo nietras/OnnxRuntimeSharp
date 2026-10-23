@@ -89,6 +89,10 @@ public static unsafe class OrtEpConfigs
     public static IReadOnlyList<OrtEpConfig> DefaultPrioritizedList { get; } =
         Array.AsReadOnly([TensorRT, CUDA, DirectML, OpenVINO, CPU, None]);
 
+    public static OrtEpConfig CreateOpenVINOCPU(int threadCount, int streamCount) =>
+        CreateOpenVINOCPU($"{OpenVINOName} CPU {threadCount}×Threads {streamCount}×Streams",
+                          threadCount, streamCount);
+
     public static OrtEpConfig CreateOpenVINOCPU(string name, int threadCount, int streamCount) =>
         CreateOpenVINO(name, new Dictionary<string, string>
         {

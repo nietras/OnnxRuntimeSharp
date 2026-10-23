@@ -16,7 +16,8 @@ const bool EnableProfiling = false;
 const double TargetRunDurationMilliseconds = 1_000;
 const int EPAlign = -38;
 var concurrentTestDuration = TimeSpan.FromSeconds(1);
-int[] concurrentThreadCountsToTest = [1, 2, 4, 8, 16];
+int processorCount = Environment.ProcessorCount;
+int[] concurrentThreadCountsToTest = [1, 2, 4, 8, 16, processorCount - 1];
 OrtEpConfig[] configurations =
 [
 #if false && ENABLE_GPU_PROVIDERS
@@ -25,12 +26,8 @@ OrtEpConfig[] configurations =
 #endif
     OrtEpConfigs.OpenVINO,
     OrtEpConfigs.OpenVINOCPUSingleThread,
-    OrtEpConfigs.CreateOpenVINO("OpenVINO CPU 16×Threads 8×Streams", new Dictionary<string, string>
-        {
-            { "device_type", "CPU" },
-            { "num_of_threads", "16" },
-            { "num_streams", "8" },
-        }),
+    OrtEpConfigs.CreateOpenVINOCPU(threadCount: processorCount, streamCount: processorCount/2),
+    OrtEpConfigs.CreateOpenVINOCPU(threadCount: 16, streamCount: 8),
     OrtEpConfigs.CreateOpenVINO("OpenVINO CPU 16×Threads 8×Streams bf16", new Dictionary<string, string>
         {
             { "device_type", "CPU" },
